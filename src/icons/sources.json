@@ -292,7 +292,7 @@
         "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@a23613fa38ece047b7d7a943e6f141e4aa1ef1e3/icons/krita.svg"
     },
     {
-        "package":  "launchy",
+        "package":  "winget-codejelly.launchy",
         "url":  "https://raw.githubusercontent.com/virtualex-itv/chocolatey-packages/308914d82035771688e37b5245152d507258b7c1/icons/launchy.png"
     },
     {

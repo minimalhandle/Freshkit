@@ -484,6 +484,15 @@ namespace Freshkit
         void OnAddResult(object sender, RoutedEventArgs e)
         {
             var b = e.OriginalSource as Button;
+            if (b != null && "open-homepage".Equals(b.Tag))
+            {
+                var site = b.DataContext as SearchResult;
+                Uri url;
+                if (site != null && Uri.TryCreate(site.Homepage, UriKind.Absolute, out url) && url.Scheme == Uri.UriSchemeHttps)
+                    try { Process.Start(new ProcessStartInfo(url.AbsoluteUri) { UseShellExecute = true }); }
+                    catch (Exception ex) { Get<TextBlock>("SheetStatus").Text = "Couldn't open the website: " + ex.Message; }
+                return;
+            }
             if (b == null || !"add-result".Equals(b.Tag)) return;
             var r = b.DataContext as SearchResult;
             if (r == null || r.Added) return;

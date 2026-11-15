@@ -80,6 +80,8 @@ namespace Freshkit
             WriteResource("Runner.ps1", Path.Combine(root, "Runner.ps1"));
             foreach (string n in ScriptNames) WriteResource("scripts/" + n, Path.Combine(root, n));
             WriteResource("payload/Freshkit.Status.ps1", Path.Combine(root, "Freshkit.Status.ps1"));
+            // Updates.ps1 and Schedule.ps1 reuse the engine's GitHub-release installer.
+            WriteResource("payload/Install-Chocolatey.Core.psm1", Path.Combine(root, "Install-Chocolatey.Core.psm1"));
             bool external;
             File.WriteAllText(Path.Combine(root, "lists.txt"), CurrentListText(out external), new UTF8Encoding(false));
             return root;

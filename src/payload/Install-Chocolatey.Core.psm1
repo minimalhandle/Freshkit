@@ -247,12 +247,42 @@ function Select-SetupGitHubAsset {
     if(-not $ranked.Count){return $null}
     return $ranked[0]
 }
+function Get-SetupGitHubWebRelease {
+    # github.com's own pages: /releases/latest redirects to the tag, and expanded_assets lists each file with its
+    # SHA-256. Unlike api.github.com these aren't limited to 60 requests an hour per network.
+    param([string]$Repo)
+    $request=[Net.HttpWebRequest]::Create('https://github.com/'+$Repo+'/releases/latest')
+    $request.AllowAutoRedirect=$false;$request.UserAgent='Freshkit';$request.Timeout=30000
+    try{$response=$request.GetResponse()}catch{$ex=$_.Exception;while($ex -and -not ($ex -is [Net.WebException])){$ex=$ex.InnerException};$response=if($ex){$ex.Response}else{$null}}
+    # github.com closes the connection (rather than answering 404) for repositories without releases.
+    if(-not $response){throw ('github.com/'+$Repo+' has no published release, or github.com could not be reached.')}
+    try{$location=[string]$response.Headers['Location'];$status=[int]$response.StatusCode}finally{$response.Close()}
+    if($status -lt 300 -or $status -ge 400 -or $location -notmatch '/releases/tag/(?<tag>[^/?#]+)\z'){throw ('github.com/'+$Repo+' has no published release.')}
+    $tag=[Uri]::UnescapeDataString($Matches.tag)
+    $html=(Invoke-WebRequest -Uri ('https://github.com/'+$Repo+'/releases/expanded_assets/'+[Uri]::EscapeDataString($tag)) -UseBasicParsing -TimeoutSec 60 -Headers @{'User-Agent'='Freshkit'}).Content
+    $prefix='/'+$Repo+'/releases/download/'
+    $links=[regex]::Matches($html,'href="(?<href>/[^"]+/releases/download/[^"]+)"')
+    $assets=@()
+    for($i=0;$i -lt $links.Count;$i++){
+        $href=[Net.WebUtility]::HtmlDecode($links[$i].Groups['href'].Value)
+        if(-not $href.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){continue}
+        # The checksum shown for an asset sits between its link and the next asset's link.
+        $end=if($i+1 -lt $links.Count){$links[$i+1].Index}else{$html.Length}
+        $digest=[regex]::Match($html.Substring($links[$i].Index,$end-$links[$i].Index),'sha256:[0-9a-f]{64}')
+        $assets+=[pscustomobject]@{name=[Uri]::UnescapeDataString(($href -split '/')[-1]);browser_download_url=('https://github.com'+$href);size=$null;digest=$(if($digest.Success){$digest.Value}else{$null})}
+    }
+    return [pscustomobject]@{tag_name=$tag;assets=$assets}
+}
 function Get-SetupGitHubRelease {
     param([string]$Repo)
     if(-not (Test-SetupGitHubRepo $Repo)){throw "Invalid GitHub repository: $Repo"}
-    [Net.ServicePointManager]::SecurityProtocol=[Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-    try{return Invoke-RestMethod -Uri ('https://api.github.com/repos/'+$Repo+'/releases/latest') -Headers @{'User-Agent'='Freshkit';'Accept'='application/vnd.github+json'} -UseBasicParsing -TimeoutSec 60}
-    catch{throw ('Could not read the latest GitHub release of '+$Repo+': '+$_.Exception.Message)}
+    [Net.ServicePointManager]::SecurityProtocol=[Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+    try{return Get-SetupGitHubWebRelease $Repo}
+    catch{
+        $web=$_.Exception.Message
+        try{return Invoke-RestMethod -Uri ('https://api.github.com/repos/'+$Repo+'/releases/latest') -Headers @{'User-Agent'='Freshkit';'Accept'='application/vnd.github+json'} -UseBasicParsing -TimeoutSec 60}
+        catch{throw ('Could not read the latest GitHub release of '+$Repo+': '+$web+' / API: '+$_.Exception.Message)}
+    }
 }
 function Get-SetupInstallerKind {
     param([string]$Path)
@@ -329,4 +359,4 @@ function Open-ChocolateyAppWindow {
     # its temporary scripts only after every elevated consumer has finished.
     Start-Process -FilePath (Join-Path ([Environment]::SystemDirectory) 'cmd.exe') -ArgumentList $arguments -WorkingDirectory ([Environment]::SystemDirectory) -Wait | Out-Null
 }
-Export-ModuleMember -Function Test-SetupAdministrator,Get-ChocolateyLatestVersion,Convert-ChocolateyLatestVersion,Get-SetupChocolateyPath,Assert-ChocolateyReady,Initialize-SetupChocolatey,Get-ChocolateyAppPlan,Get-ChocolateyInstallArguments,Invoke-ChocolateyAppPlan,Get-SetupEncodedCommand,Open-ChocolateyAppWindow,Get-SetupWingetPath,Test-SetupWingetInstalled,Invoke-SetupWingetApp,Test-SetupGitHubInstalled,Invoke-SetupGitHubApp,Select-SetupGitHubAsset
+Export-ModuleMember -Function Test-SetupAdministrator,Get-ChocolateyLatestVersion,Convert-ChocolateyLatestVersion,Get-SetupChocolateyPath,Assert-ChocolateyReady,Initialize-SetupChocolatey,Get-ChocolateyAppPlan,Get-ChocolateyInstallArguments,Invoke-ChocolateyAppPlan,Get-SetupEncodedCommand,Open-ChocolateyAppWindow,Get-SetupWingetPath,Test-SetupWingetInstalled,Invoke-SetupWingetApp,Test-SetupGitHubRepo,Test-SetupGitHubInstalled,Invoke-SetupGitHubApp,Select-SetupGitHubAsset,Get-SetupGitHubRelease

@@ -104,6 +104,16 @@ namespace Freshkit
                 var whatsapp = all.Find(a => a.Name == "WhatsApp");
                 Check(whatsapp != null && whatsapp.IsStore && whatsapp.Id == "9NKSQGP7F2NH" && whatsapp.Artwork.Image != null && all.Exists(a => a.Id == "9PKTQ5699M62") && all.Exists(a => a.Id == "9N7JSXC1SJK6"), "WhatsApp, iCloud and Blip come from the Microsoft Store with bundled logos");
                 Check(all.TrueForAll(a => a.Artwork.Image != null || a.Id == "nonexistent"), "Every built-in catalog app has a bundled logo");
+                string updateArgs = (string)typeof(MainUi).GetMethod("UpdateArguments", BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, new object[] { new List<UpdateItem> {
+                    new UpdateItem { Source = "choco", Id = "vlc", Name = "VLC" }, new UpdateItem { Source = "store", Id = "9NKSQGP7F2NH", Name = "WhatsApp" },
+                    new UpdateItem { Source = "github", Id = "minimalhandle/Afterclip", Name = "After;clip" } } });
+                Check(updateArgs.Contains("-Choco \"vlc\"") && updateArgs.Contains("-Store \"9NKSQGP7F2NH\"") && updateArgs.Contains("-GitHub \"minimalhandle/Afterclip|After clip\""), "Store and GitHub updates reach Updates.ps1 with safe separators");
+                string scheduleArgs = (string)Call(ui, "StoreGitHubArgs");
+                Check(scheduleArgs.Contains("9NKSQGP7F2NH") && scheduleArgs.Contains("9PKTQ5699M62") && scheduleArgs.Contains("minimalhandle/SleekMeeter|Sleekmeeter") && scheduleArgs.Contains("minimalhandle/Afterclip|Afterclip"), "The weekly task receives the Store and GitHub apps from the list");
+                var detail = new SearchResult { Source = "store", Id = "9N7JSXC1SJK6", Name = "Blip", Homepage = "https://apps.microsoft.com/detail/9N7JSXC1SJK6", Publisher = "Blip Studio Inc." };
+                Check(detail.InstalledVisibility == Visibility.Collapsed && detail.HomepageVisibility == Visibility.Visible, "Search results show a website link and no Installed badge until detected");
+                detail.InstalledVersion = "1.2.8.0"; var unversioned = new SearchResult { InstalledVersion = "" }; var unsafeLink = new SearchResult { Homepage = "http://example.com" };
+                Check(detail.InstalledText == "Installed v1.2.8.0" && unversioned.InstalledText == "Installed" && unsafeLink.HomepageVisibility == Visibility.Collapsed, "Installed badges show the version, and non-https links are hidden");
                 Check(!Data.IsGitHubRepo("../etc") && !Data.IsGitHubRepo("owner/..") && Data.IsGitHubRepo("minimalhandle/Afterclip"), "GitHub repository IDs are validated");
                 Check(all.Find(a => a.Id == "googlechrome").Category == "Browsers" && !all.Find(a => a.Id == "googlechrome").DefaultOn, "Catalog ::GROUP sections drive categories and new apps start unticked");
                 Check(!all.Find(a => a.Id == "dotnet-7.0-desktopruntime").DefaultOn, "End-of-life .NET 7 runtime is not selected by default");
