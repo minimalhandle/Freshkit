@@ -381,6 +381,7 @@ namespace Freshkit
             notes = failed.Count > 0 ? string.Join(" and ", failed.ToArray()) + " couldn't be searched (" + firstError + ")." : "";
             List<SearchResult> ranked = Rank(query, all);
             MarkInstalled(ranked);
+            PickBest(ranked);
             return ranked;
         }
 
@@ -458,8 +459,28 @@ namespace Freshkit
             }
             ranked.Sort(delegate (SearchResult a, SearchResult b) { int c = b.Score.CompareTo(a.Score); return c != 0 ? c : string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase); });
             if (ranked.Count > 40) ranked.RemoveRange(40, ranked.Count - 40);
-            if (ranked.Count > 0 && ranked[0].Score >= 80) ranked[0].IsBest = true;
+            PickBest(ranked);
             return ranked;
+        }
+
+        /// Marks the top result as the best match, unless a same-named project from the same source makes it a guess
+        /// (GitHub namesakes such as panzergen/AfterClip and minimalhandle/Afterclip). When exactly one of the
+        /// namesakes is installed on this PC, that one is moved to the top and marked instead.
+        internal static void PickBest(List<SearchResult> ranked)
+        {
+            foreach (SearchResult r in ranked) r.IsBest = false;
+            if (ranked.Count == 0 || ranked[0].Score < 80) return;
+            string key = NameKey(ranked[0].Name);
+            List<SearchResult> namesakes = ranked.FindAll(r => r.Score >= 80 && NameKey(r.Name) == key);
+            List<SearchResult> installed = namesakes.FindAll(r => r.InstalledVersion != null);
+            if (namesakes.Count > 1 && installed.Count == 1)
+            {
+                ranked.Remove(installed[0]); ranked.Insert(0, installed[0]);
+                installed[0].IsBest = true;
+                return;
+            }
+            SearchResult top = ranked[0];
+            if (!namesakes.Exists(r => r != top && r.Source == top.Source)) top.IsBest = true;
         }
 
         static double ScoreOf(string q, SearchResult r)
@@ -539,6 +560,30 @@ namespace Freshkit
                 string family = null;
                 if (r.Source == "store") lock (storeFamilies) storeFamilies.TryGetValue(r.Id, out family);
                 r.InstalledVersion = r.Source == "store" ? StoreInstalledVersion(family) : InstalledVersion(r.Name);
+            }
+            AttributeInstalled(results);
+        }
+
+        /// Installed apps are matched by display name, so same-named results all look installed. When one of them
+        /// releases exactly the installed version, only that one keeps the badge (Afterclip 1.5.0 is
+        /// minimalhandle/Afterclip v1.5.0, not panzergen/AfterClip v0.3.0).
+        internal static void AttributeInstalled(List<SearchResult> results)
+        {
+            var groups = new Dictionary<string, List<SearchResult>>();
+            foreach (SearchResult r in results)
+            {
+                if (r.InstalledVersion == null || r.Source == "store") continue;
+                string key = NameKey(r.Name);
+                List<SearchResult> g;
+                if (!groups.TryGetValue(key, out g)) groups[key] = g = new List<SearchResult>();
+                g.Add(r);
+            }
+            foreach (List<SearchResult> g in groups.Values)
+            {
+                if (g.Count < 2) continue;
+                List<SearchResult> exact = g.FindAll(r => { int? c = Data.CompareVersions(r.Version, r.InstalledVersion); return c.HasValue && c.Value == 0; });
+                if (exact.Count == 0) continue;
+                foreach (SearchResult r in g) if (!exact.Contains(r)) r.InstalledVersion = null;
             }
         }
 

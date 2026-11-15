@@ -81,6 +81,13 @@ namespace Freshkit
                     new SearchResult { Source = "github", Id = "minimalhandle/Afterclip", Name = "Afterclip", Meta = "y", Popularity = 3 },
                     new SearchResult { Source = "github", Id = "other/Afterclip", Name = "Afterclip", Meta = "z", Popularity = 1 } });
                 Check(twins.Count == 3 && twins[0].Id == "minimalhandle/Afterclip", "An exact app name outranks a repository-name match, and same-source namesakes stay separate");
+                Check(!twins.Exists(r => r.IsBest), "Same-named GitHub projects are not guessed as the best match");
+                var namesakes = Sources.Rank("afterclip", new List<SearchResult> {
+                    new SearchResult { Source = "github", Id = "panzergen/AfterClip", Name = "AfterClip", Version = "0.3.0", Meta = "p", Popularity = 200 },
+                    new SearchResult { Source = "github", Id = "minimalhandle/Afterclip", Name = "Afterclip", Version = "1.5.0", Meta = "m", Popularity = 3 } });
+                foreach (SearchResult r in namesakes) r.InstalledVersion = "1.5.0";   // both match the "Afterclip" Installed apps entry by name
+                Sources.AttributeInstalled(namesakes); Sources.PickBest(namesakes);
+                Check(namesakes[0].Id == "minimalhandle/Afterclip" && namesakes[0].IsBest && namesakes[0].InstalledVersion == "1.5.0" && namesakes[1].InstalledVersion == null && !namesakes[1].IsBest, "An installed app is attributed to the namesake releasing its version, which becomes the best match");
                 var newest = Sources.Rank("icloud", new List<SearchResult> {
                     new SearchResult { Source = "choco", Id = "icloud", Name = "iCloud", Version = "7.21.0.23", Meta = "icloud", Popularity = 50000 },
                     new SearchResult { Source = "store", Id = "9PKTQ5699M62", Name = "iCloud", Version = "15.8.118.0", Meta = "9PKTQ5699M62" } });
