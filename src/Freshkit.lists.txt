@@ -1,0 +1,237 @@
+:: Freshkit built-in catalog: embedded in Freshkit.exe at build time. Edits made in the app last for the session only.
+::BEGIN_PACKAGES
+:: Ticked by default: ::PACKAGE package-id|Display name|Optional package parameters
+:: Listed but unticked: ::DISABLED package-id|Display name|Optional package parameters
+:: ::GROUP lines name the Apps page section for the packages below them.
+::GROUP Browsers
+::PACKAGE Firefox|Mozilla Firefox|/l:en-GB
+::DISABLED googlechrome|Google Chrome|
+::DISABLED microsoft-edge|Microsoft Edge|
+::DISABLED brave|Brave|
+::DISABLED vivaldi|Vivaldi|
+::DISABLED opera|Opera|
+::GROUP Messaging
+::PACKAGE discord|Discord|
+::PACKAGE chatterino|Chatterino|
+::PACKAGE tutanota|Tuta Mail|
+::DISABLED zoom|Zoom|
+::DISABLED microsoft-teams-new-bootstrapper|Microsoft Teams|
+::DISABLED slack|Slack|
+::DISABLED telegram|Telegram|
+::DISABLED thunderbird|Thunderbird|
+::DISABLED pidgin|Pidgin|
+::DISABLED trillian|Trillian|
+::GROUP Media
+::PACKAGE spotify|Spotify|
+::PACKAGE vlc|VLC media player|
+::PACKAGE mpvio.install|mpv|
+::PACKAGE audacity|Audacity|
+::PACKAGE obs-studio|OBS Studio|
+::PACKAGE streamlink|Streamlink|
+::PACKAGE streamlink-twitch-gui|Streamlink Twitch GUI|
+::PACKAGE stremio|Stremio|
+::DISABLED handbrake|HandBrake|
+::DISABLED foobar2000|foobar2000|
+::DISABLED musicbee|MusicBee|
+::DISABLED aimp|AIMP|
+::DISABLED winamp|Winamp|
+::DISABLED mediamonkey|MediaMonkey|
+::DISABLED itunes|iTunes|
+::DISABLED k-litecodecpack-standard|K-Lite Codec Pack|
+::DISABLED cccp|CCCP codec pack|
+::GROUP Imaging & 3D
+::PACKAGE greenshot|Greenshot|
+::DISABLED sharex|ShareX|
+::DISABLED paint.net|Paint.NET|
+::DISABLED gimp|GIMP|
+::DISABLED krita|Krita|
+::DISABLED inkscape|Inkscape|
+::DISABLED irfanview|IrfanView|
+::DISABLED xnview|XnView|
+::DISABLED fsviewer|FastStone Image Viewer|
+::DISABLED blender|Blender|
+::DISABLED bambustudio|Bambu Studio|
+::DISABLED cura-new|UltiMaker Cura|
+::GROUP Documents & AI
+::PACKAGE claude|Claude|
+::PACKAGE adobereader|Adobe Acrobat Reader|
+::DISABLED sumatrapdf.install|SumatraPDF|
+::DISABLED foxitreader|Foxit PDF Reader|
+::DISABLED libreoffice-fresh|LibreOffice|
+::DISABLED openoffice|Apache OpenOffice|
+::DISABLED pdf24|PDF24 Creator|
+::DISABLED cutepdf|CutePDF Writer|
+::DISABLED ghostscript|Ghostscript|
+::DISABLED evernote|Evernote|
+::DISABLED grammarly-for-windows|Grammarly|
+::DISABLED googleearthpro|Google Earth Pro|
+::DISABLED nvda|NVDA screen reader|
+::GROUP Gaming & devices
+::PACKAGE steam|Steam|
+::PACKAGE epicgameslauncher|Epic Games Launcher|
+::PACKAGE rockstar-launcher|Rockstar Games Launcher|
+::PACKAGE playnite|Playnite|
+::PACKAGE lghub|Logitech G HUB|
+::PACKAGE openrgb.install|OpenRGB|
+::PACKAGE pawnio|PawnIO|
+::GROUP Security
+::PACKAGE 1password|1Password|
+::DISABLED bitwarden|Bitwarden|
+::DISABLED keepassxc|KeePassXC|
+::DISABLED keepass|KeePass 2|
+::DISABLED malwarebytes|Malwarebytes|
+::DISABLED avastfreeantivirus|Avast Free Antivirus|
+::DISABLED avgantivirusfree|AVG AntiVirus Free|
+::DISABLED avirafreeantivirus|Avira Free Antivirus|
+::DISABLED spybot|Spybot Search & Destroy|
+::DISABLED superantispyware|SUPERAntiSpyware|
+::GROUP Cloud & downloads
+::PACKAGE ab-download-manager|AB Download Manager|
+::PACKAGE transmission|Transmission|
+::DISABLED qbittorrent|qBittorrent|
+::DISABLED dropbox|Dropbox|
+::DISABLED googledrive|Google Drive|
+::DISABLED onedrive|Microsoft OneDrive|
+::DISABLED sugarsync|SugarSync|
+::GROUP Remote & network
+::PACKAGE windscribe|Windscribe|
+::DISABLED tailscale|Tailscale|
+::DISABLED wireguard|WireGuard|
+::DISABLED rustdesk|RustDesk|
+::DISABLED anydesk.install|AnyDesk|
+::DISABLED teamviewer|TeamViewer|
+::DISABLED tightvnc|TightVNC|
+::DISABLED ultravnc|UltraVNC|
+::DISABLED advanced-ip-scanner|Advanced IP Scanner|
+::DISABLED wireshark|Wireshark|
+::GROUP Utilities
+::PACKAGE 7zip.install|7-Zip|
+::PACKAGE windirstat|WinDirStat|
+::PACKAGE rpi-imager|Raspberry Pi Imager|
+::DISABLED everything|Everything search|
+::DISABLED powertoys|Microsoft PowerToys|
+::DISABLED peazip|PeaZip|
+::DISABLED winrar|WinRAR|
+::DISABLED wiztree|WizTree|
+::DISABLED teracopy|TeraCopy|
+::DISABLED revo-uninstaller|Revo Uninstaller|
+::DISABLED open-shell|Open-Shell|
+::DISABLED launchy|Launchy|
+::DISABLED imgburn|ImgBurn|
+::DISABLED cdburnerxp|CDBurnerXP|
+::DISABLED infrarecorder|InfraRecorder|
+::DISABLED ccleaner|CCleaner|
+::DISABLED glaryutilities-free|Glary Utilities|
+::GROUP Developer
+::PACKAGE git.install|Git for Windows|
+::PACKAGE gh|GitHub CLI|
+::PACKAGE nodejs.install|Node.js Current|
+::PACKAGE notepadplusplus|Notepad++|
+::PACKAGE innosetup|Inno Setup|
+::PACKAGE putty.install|PuTTY|
+::PACKAGE winscp|WinSCP|
+::DISABLED vscode|Visual Studio Code|
+::DISABLED cursoride|Cursor|
+::DISABLED sublimetext4|Sublime Text 4|
+::DISABLED github-desktop|GitHub Desktop|
+::DISABLED nodejs-lts|Node.js LTS|
+::DISABLED python3|Python 3|
+::DISABLED python2|Python 2.7 (legacy)|
+::DISABLED docker-desktop|Docker Desktop|
+::DISABLED winmerge|WinMerge|
+::DISABLED filezilla|FileZilla|
+::DISABLED eclipse|Eclipse IDE|
+::GROUP Runtimes
+::PACKAGE vcredist-all|Visual C++ runtimes (all versions)|
+::PACKAGE dotnet-desktopruntime|.NET Desktop Runtime (latest)|
+::PACKAGE dotnet-8.0-desktopruntime|.NET Desktop Runtime 8|
+::DISABLED dotnet-7.0-desktopruntime|.NET Desktop Runtime 7 (end of life)|
+::DISABLED dotnet-9.0-desktopruntime|.NET Desktop Runtime 9|
+::DISABLED dotnet-10.0-desktopruntime|.NET Desktop Runtime 10|
+::DISABLED dotnet-8.0-aspnetruntime|ASP.NET Core Runtime 8|
+::DISABLED dotnet-9.0-aspnetruntime|ASP.NET Core Runtime 9|
+::DISABLED dotnet-10.0-aspnetruntime|ASP.NET Core Runtime 10|
+::DISABLED netfx-4.8.1|.NET Framework 4.8.1|
+::DISABLED webview2-runtime|Edge WebView2 Runtime|
+::DISABLED vstor2010|Visual Studio Tools for Office Runtime|
+::DISABLED vcredist140|Visual C++ 2015-2022|
+::DISABLED vcredist2013|Visual C++ 2013|
+::DISABLED vcredist2012|Visual C++ 2012|
+::DISABLED vcredist2010|Visual C++ 2010|
+::DISABLED vcredist2008|Visual C++ 2008|
+::DISABLED vcredist2005|Visual C++ 2005|
+::DISABLED temurin25jre|Java 25 (Temurin JRE)|
+::DISABLED temurin21jre|Java 21 (Temurin JRE)|
+::DISABLED temurin17jre|Java 17 (Temurin JRE)|
+::DISABLED temurin11jre|Java 11 (Temurin JRE)|
+::DISABLED temurin8jre|Java 8 (Temurin JRE)|
+::DISABLED temurin25|JDK 25 (Temurin)|
+::DISABLED temurin21|JDK 21 (Temurin)|
+::DISABLED temurin17|JDK 17 (Temurin)|
+::DISABLED temurin11|JDK 11 (Temurin)|
+::DISABLED temurin8|JDK 8 (Temurin)|
+::DISABLED corretto25jdk|JDK 25 (Amazon Corretto)|
+::DISABLED corretto21jdk|JDK 21 (Amazon Corretto)|
+::DISABLED corretto17jdk|JDK 17 (Amazon Corretto)|
+::DISABLED corretto11jdk|JDK 11 (Amazon Corretto)|
+::DISABLED corretto8jdk|JDK 8 (Amazon Corretto)|
+::DISABLED corretto8jre|Java 8 (Amazon Corretto JRE)|
+::END_PACKAGES
+::BEGIN_CONFIG
+:: Settings backup rules: ::CONFIG app-id|Display name|Root|Relative path|Processes to close (optional)
+:: Roots: APPDATA, LOCALAPPDATA, USERPROFILE, DOCUMENTS, HKCU. A path can be a folder, a single file or (HKCU) a registry key.
+:: Display name must start like the app's name in Settings > Apps > Installed apps, or restore will say it isn't installed.
+:: Processes (comma-separated, no .exe): an app that's still running is skipped rather than backed up mid-write.
+:: Use one line per path with the same app-id. Change CONFIG to NOCONFIG to disable a rule.
+::CONFIG afterclip|Afterclip|LOCALAPPDATA|Afterclip\settings.json
+::CONFIG afterclip|Afterclip|LOCALAPPDATA|Afterclip\library.json
+::CONFIG chatterino|Chatterino|APPDATA|Chatterino2
+::CONFIG lghub|Logitech G HUB|LOCALAPPDATA|LGHUB\settings.db
+::CONFIG lghub|Logitech G HUB|LOCALAPPDATA|LGHUB\settings.db-wal
+::CONFIG lghub|Logitech G HUB|LOCALAPPDATA|LGHUB\settings.db-shm
+::CONFIG lghub|Logitech G HUB|LOCALAPPDATA|LGHUB\scripts
+::CONFIG lghub|Logitech G HUB|APPDATA|lghub
+::CONFIG mpv|mpv|APPDATA|mpv
+::CONFIG obs-studio|OBS Studio (profiles/scenes; no service keys/browser sessions)|APPDATA|obs-studio
+::CONFIG openrgb|OpenRGB profiles|APPDATA|OpenRGB
+::CONFIG putty|PuTTY sessions and SSH host keys|HKCU|Software\SimonTatham\PuTTY
+::CONFIG silage|Silage|APPDATA|Silage\Config\ui.json
+::CONFIG sleekmeeter|Sleekmeeter|APPDATA|Sleekmeeter\settings.json
+::CONFIG sleekmeeter|Sleekmeeter|APPDATA|Sleekmeeter\audio-events.json
+::CONFIG sleekmeeter|Sleekmeeter|APPDATA|Sleekmeeter\scenes
+::CONFIG sleekmeeter|Sleekmeeter|APPDATA|Sleekmeeter\sounds
+::CONFIG streamlink|Streamlink|APPDATA|streamlink
+::CONFIG vlc|VLC preferences|APPDATA|vlc\vlcrc
+::CONFIG vlc|VLC preferences|APPDATA|vlc\vlc-qt-interface.ini
+::CONFIG winscp|WinSCP sites/preferences (password values excluded)|HKCU|Software\Martin Prikryl\WinSCP 2
+::END_CONFIG
+::BEGIN_WINGET
+:: winget apps: ::WINGET Winget.Id|Display name|Optional --override arguments (::DISABLED = unticked).
+:: Microsoft Store product IDs (9... or XP...) install from the msstore source. The Store is a last resort: use it only for
+:: Store-only apps (WhatsApp, Blip) or when its release is clearly newer than every other source (iCloud).
+::GROUP Documents & AI
+::DISABLED OpenAI.ChatGPT|ChatGPT|
+::GROUP Remote & network
+::DISABLED Microsoft.WindowsApp|Windows App (Remote Desktop)|
+::GROUP Messaging
+::DISABLED 9NKSQGP7F2NH|WhatsApp|
+::GROUP Cloud & downloads
+::DISABLED 9PKTQ5699M62|iCloud|
+::DISABLED 9N7JSXC1SJK6|Blip|
+::END_WINGET
+::BEGIN_GITHUB
+:: GitHub releases: ::GITHUB owner/repo|Display name|Optional silent installer arguments (::DISABLED = unticked).
+:: Freshkit installs the latest release's x64 .msi or setup .exe silently (MSI, NSIS and Inno Setup are detected automatically).
+:: The display name must match the app's name in Settings > Apps > Installed apps.
+::GROUP Media
+::GITHUB minimalhandle/SleekMeeter|Sleekmeeter|
+::GROUP Gaming & devices
+::GITHUB minimalhandle/Afterclip|Afterclip|
+::END_GITHUB
+::BEGIN_PROFILES
+:: Starter selections. ::PROFILE Name|apps=id,winget:Id,... (omit tweaks=/remove= to leave Windows tweaks unchanged).
+::PROFILE Starter: essentials|apps=Firefox,7zip.install,vlc,notepadplusplus,sumatrapdf.install,everything,powertoys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: gaming|apps=Firefox,discord,steam,epicgameslauncher,playnite,obs-studio,spotify,7zip.install,vlc,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: developer|apps=Firefox,git.install,gh,github-desktop,vscode,nodejs-lts,python3,notepadplusplus,winmerge,putty.install,winscp,7zip.install,everything,powertoys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: office & family|apps=Firefox,libreoffice-fresh,sumatrapdf.install,zoom,vlc,7zip.install,bitwarden,malwarebytes,vcredist-all,dotnet-desktopruntime
+::END_PROFILES

@@ -1,0 +1,674 @@
+﻿[
+    {
+        "package":  "1password",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@c1a3d39ea26e859ef0f4c1f1f9eacd95b340c332/icons/1password8.png"
+    },
+    {
+        "package":  "7zip.install",
+        "url":  "https://raw.githubusercontent.com/ferventcoder/chocolatey-packages/02c21bebe5abb495a56747cbb9b4b5415c933fc0/icons/7zip.svg"
+    },
+    {
+        "package":  "ab-download-manager",
+        "url":  "https://raw.githubusercontent.com/Aurocosh/chocolatey-packages/master/automatic/ab-download-manager/img/icon.png"
+    },
+    {
+        "package":  "adobereader",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/ChocoPackages@fb3fc3a/icons/adobereader.png"
+    },
+    {
+        "package":  "advanced-ip-scanner",
+        "url":  "site icon: https://www.advanced-ip-scanner.com/"
+    },
+    {
+        "package":  "aimp",
+        "url":  "http://3.bp.blogspot.com/-t8xzAOs7YbQ/U4ppFniZjGI/AAAAAAAAD2A/UkAMbEeWCGE/w200/AIM3anthzoblog.png"
+    },
+    {
+        "package":  "anydesk.install",
+        "url":  "https://cdn.statically.io/gh/Aurocosh/chocolatey-packages/master/automatic/anydesk.install/img/icon.png"
+    },
+    {
+        "package":  "audacity",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/audacity.svg"
+    },
+    {
+        "package":  "avastfreeantivirus",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/ChocoPackages@6cf2f9f5/icons/avastfreeantivirus.png"
+    },
+    {
+        "package":  "avgantivirusfree",
+        "url":  "https://cdn.jsdelivr.net/gh/Thilas/chocolatey-packages@02aa2a68eb365843accd2b582985118e151c531e/avgantivirusfree/icon.png"
+    },
+    {
+        "package":  "avirafreeantivirus",
+        "url":  "site icon: https://www.avira.com/"
+    },
+    {
+        "package":  "bambustudio",
+        "url":  "https://raw.githubusercontent.com/strausmann/ChocolateyPackages/2c34b56b9ed7520943c70939f8c4e33ec8196bc6/icons/bambulab.png"
+    },
+    {
+        "package":  "bitwarden",
+        "url":  "https://raw.githubusercontent.com/bitwarden/brand/master/icons/256x256.png"
+    },
+    {
+        "package":  "blender",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/e4a49519947c3cff55c17a0b08266c56b0613e64/icons/blender.svg"
+    },
+    {
+        "package":  "brave",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@a23ca306537e2537a574ddc55e9c28dc1151ab30/icons/brave.svg"
+    },
+    {
+        "package":  "cccp",
+        "url":  "https://cdn.jsdelivr.net/gh/dtgm/chocolatey-packages@408ded4dd91e2df4543abc86857677fb7e10c0d3/icons/cccp.png"
+    },
+    {
+        "package":  "ccleaner",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/182294b9b95166915fdc2265a90ef37c6b24efd9/icons/ccleaner.png"
+    },
+    {
+        "package":  "cdburnerxp",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/c8d48758cdc18d43e6c1525824720377c8b9ba24/icons/cdburnerxp.png"
+    },
+    {
+        "package":  "chatterino",
+        "url":  "https://raw.githubusercontent.com/ALazyMeme/chocolatey-packages/d70404b7cc75800b71d2f920a8a72fe55acfb046/manual/icons/chatterino.png"
+    },
+    {
+        "package":  "claude",
+        "url":  "https://cdn.jsdelivr.net/gh/targed/chocolatey-projects@main/Claude/logo.png"
+    },
+    {
+        "package":  "corretto11jdk",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "corretto17jdk",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "corretto21jdk",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "corretto25jdk",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "corretto8jdk",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "corretto8jre",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/aws-corretto.png"
+    },
+    {
+        "package":  "cura-new",
+        "url":  "https://raw.githubusercontent.com/Ultimaker/Cura/2986a17c/icons/cura-128.png"
+    },
+    {
+        "package":  "cursoride",
+        "url":  "https://cdn.jsdelivr.net/gh/targed/chocolatey-projects@main/Cursor/logo.png"
+    },
+    {
+        "package":  "cutepdf",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@f5c1e4da40598a029269040ecb56fa8d90cf2985/icons/cutepdf.png"
+    },
+    {
+        "package":  "discord",
+        "url":  "https://cdn.jsdelivr.net/gh/kilobyte1024/chocolatey-packages/icons/discord.svg"
+    },
+    {
+        "package":  "docker-desktop",
+        "url":  "https://raw.githubusercontent.com/riezebosch/BoxstarterPackages/master/docker-for-windows/docker.png"
+    },
+    {
+        "package":  "dotnet-10.0-aspnetruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-10.0-desktopruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-7.0-desktopruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-8.0-aspnetruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-8.0-desktopruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-9.0-aspnetruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-9.0-desktopruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dotnet-desktopruntime",
+        "url":  "https://raw.githubusercontent.com/dotnetcore-chocolatey/dotnetcore-chocolateypackages/5a90ffc61572e8403cb88c325f88cf6989de8c79/icons/dotnetcore.png"
+    },
+    {
+        "package":  "dropbox",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@797be4455d8f66a1989713e741137ed8293dd322/icons/dropbox.svg"
+    },
+    {
+        "package":  "eclipse",
+        "url":  "https://cdn.jsdelivr.net/gh/Thilas/chocolatey-packages@8e49b572ba0d78626a9cff9c09d932d76274795b/eclipse/icon.png"
+    },
+    {
+        "package":  "epicgameslauncher",
+        "url":  "https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg"
+    },
+    {
+        "package":  "evernote",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@27fed6f8dd2798ffab4521d990b1b8d893e65a62/icons/evernote.png"
+    },
+    {
+        "package":  "everything",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@cf277846cf6b5436461ebd5f21b00efd67ee9910/icons/everything.png"
+    },
+    {
+        "package":  "filezilla",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/938aeca0853717399b72289f38b9dddad0417640/icons/filezilla.svg"
+    },
+    {
+        "package":  "firefox",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@8a7376cf4e5b7cde0eb1c6a608529601bfcd9546/icons/firefox.svg"
+    },
+    {
+        "package":  "foobar2000",
+        "url":  "https://raw.githubusercontent.com/majkinetor/au-packages/f24528888103cdacdd420a3a348565b061ad81e7/foobar2000/icon.png"
+    },
+    {
+        "package":  "foxitreader",
+        "url":  "https://raw.githubusercontent.com/ComFreek/chocolatey-packages/695c150e199b34151a923fa4953e46c3065a2e30/icons/FoxitReader.png"
+    },
+    {
+        "package":  "fsviewer",
+        "url":  "site icon: https://www.faststone.org/"
+    },
+    {
+        "package":  "gh",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/chocopackages/icons/gh.png"
+    },
+    {
+        "package":  "ghostscript",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/ghostscript.svg"
+    },
+    {
+        "package":  "gimp",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/50fd97744110dcbce1acde889c0870599c9d5584/icons/gimp.svg"
+    },
+    {
+        "package":  "git.install",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/10a8d98b2f320b565fa5349a4352e79666db71ff/icons/git.svg"
+    },
+    {
+        "package":  "github-desktop",
+        "url":  "https://cdn.statically.io/gh/TheCakeIsNaOH/chocolatey-packages@775ac37179c4c8bc14ed55d62af30795eba9d3e2/Icons/github-desktop.png"
+    },
+    {
+        "package":  "github-minimalhandle-afterclip",
+        "url":  "https://raw.githubusercontent.com/minimalhandle/Afterclip/main/branding/afterclip-icon-1024.png"
+    },
+    {
+        "package":  "github-minimalhandle-sleekmeeter",
+        "url":  "https://raw.githubusercontent.com/minimalhandle/SleekMeeter/main/src-tauri/icons/icon.png"
+    },
+    {
+        "package":  "glaryutilities-free",
+        "url":  "http://www.glarysoft.com/images/update/updatelogo.png"
+    },
+    {
+        "package":  "googlechrome",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/chrome.svg"
+    },
+    {
+        "package":  "googledrive",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@a29d2dfbd5e87d84c7f629753f3a8fc524007e6f/icons/googledrive.svg"
+    },
+    {
+        "package":  "googleearthpro",
+        "url":  "https://cdn.jsdelivr.net/gh/mikeee/ChocoPackages/icons/googleearthpro.png"
+    },
+    {
+        "package":  "grammarly-for-windows",
+        "url":  "https://static-web.grammarly.com/cms/master/public/favicon.ico"
+    },
+    {
+        "package":  "greenshot",
+        "url":  "http://upload.wikimedia.org/wikipedia/commons/9/95/GreenshotLogo.png"
+    },
+    {
+        "package":  "handbrake",
+        "url":  "https://raw.githubusercontent.com/jtcmedia/chocolatey-packages/dc3481ee/icons/handbrake.png"
+    },
+    {
+        "package":  "imgburn",
+        "url":  "https://raw.githubusercontent.com/mikecole/chocolatey-packages/0a31f062cb8f0cdacd72c368853839e3a090e0dd/icons/imgburn.png"
+    },
+    {
+        "package":  "infrarecorder",
+        "url":  "https://raw.github.com/calwell/nugetpackages/master/InfraRecorder/InfaRecorder.png"
+    },
+    {
+        "package":  "inkscape",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/84a3a84e256daa3255c4a896eefbf8f5589fb842/icons/InkScape.svg"
+    },
+    {
+        "package":  "innosetup",
+        "url":  "https://jrsoftware.org/favicon.ico"
+    },
+    {
+        "package":  "irfanview",
+        "url":  "site icon: https://www.irfanview.com/"
+    },
+    {
+        "package":  "itunes",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/849eb1042625bdc77a95f0b92491857e9dfc326d/icons/itunes.png"
+    },
+    {
+        "package":  "keepass",
+        "url":  "site icon: https://keepass.info/"
+    },
+    {
+        "package":  "keepassxc",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@4315dbe8325d644de2026206bdc5c16a11c1f5cc/icons/keepassxc.svg"
+    },
+    {
+        "package":  "k-litecodecpack-standard",
+        "url":  "https://cdn.jsdelivr.net/gh/zersh01/chocolatey-k-litecodecpack-standart@master/KLite.png"
+    },
+    {
+        "package":  "krita",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@a23613fa38ece047b7d7a943e6f141e4aa1ef1e3/icons/krita.svg"
+    },
+    {
+        "package":  "launchy",
+        "url":  "https://raw.githubusercontent.com/virtualex-itv/chocolatey-packages/308914d82035771688e37b5245152d507258b7c1/icons/launchy.png"
+    },
+    {
+        "package":  "lghub",
+        "url":  "https://raw.githubusercontent.com/virtualex-itv/chocolatey-packages/96d8d5005c0b04d2f497379838c0ff8f3f941ce0/icons/lghub.png"
+    },
+    {
+        "package":  "libreoffice-fresh",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/libreoffice.svg"
+    },
+    {
+        "package":  "malwarebytes",
+        "url":  "https://raw.githubusercontent.com/aronovgj/chocolatey/master/icons/malwarebytes.png"
+    },
+    {
+        "package":  "mediamonkey",
+        "url":  "https://raw.githubusercontent.com/TomOne/various/5385eb7b6e3f7a06aa2fc85c7f025d6f89f7f57f/mediamonkey.png"
+    },
+    {
+        "package":  "microsoft-edge",
+        "url":  "https://raw.githubusercontent.com/DennisGaida/chocolatey-packages/master/microsoft-edge/icon.png"
+    },
+    {
+        "package":  "microsoft-teams-new-bootstrapper",
+        "url":  "https://raw.githubusercontent.com/flcdrg/au-packages/a441d3dd9b117e3e3c34fc6b06f070a382718ba6/microsoft-teams-new-bootstrapper/icons/teams-new.png"
+    },
+    {
+        "package":  "mpvio.install",
+        "url":  "https://cdn.jsdelivr.net/gh/aeliussaionji/chocopkgs@97b5178c6416b601511ccbf3d050f0387c33680b/icons/mpv.png"
+    },
+    {
+        "package":  "musicbee",
+        "url":  "http://upload.wikimedia.org/wikipedia/en/c/cf/MusicBee_Logo.png"
+    },
+    {
+        "package":  "netfx-4.8.1",
+        "url":  "https://raw.githubusercontent.com/jberezanski/ChocolateyPackages/f0b24b6aef7a58ec03550035644ce872aba13c23/icons/dotnet.png"
+    },
+    {
+        "package":  "nodejs.install",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@ba5adf020e09cd0e51107206ef3ec390035a6e90/icons/nodejs.png"
+    },
+    {
+        "package":  "nodejs-lts",
+        "url":  "https://raw.githubusercontent.com/jtcmedia/chocolatey-packages/76f0c59ddbe130f082a19bd6908398e5dc22ba83/icons/nodejs-lts.png"
+    },
+    {
+        "package":  "notepadplusplus",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@8a927ff286164545446171f26f19b436622e69b5/icons/notepadplusplus.png"
+    },
+    {
+        "package":  "nvda",
+        "url":  "https://raw.githubusercontent.com/nvaccess/nvda/master/source/images/nvda.ico"
+    },
+    {
+        "package":  "obs-studio",
+        "url":  "https://cdn.jsdelivr.net/gh/aeliussaionji/chocopkgs@979a823c98cedde055c6004aebfc6d8a7bdef796/icons/obs-studio.png"
+    },
+    {
+        "package":  "onedrive",
+        "url":  "https://cdn.jsdelivr.net/gh/teknowledgist/Chocolatey-packages@3ecd8fd600c16dfcb9bb0a8e43819c2b52ca9ce1/Icons/onedrive_icon.png"
+    },
+    {
+        "package":  "openoffice",
+        "url":  "https://raw.githubusercontent.com/TomOne/various/6c2a4343d5563bbac17623c3c3e8dfa921789b1c/openoffice.svg"
+    },
+    {
+        "package":  "openrgb.install",
+        "url":  "https://cdn.jsdelivr.net/gh/brogers5/chocolatey-package-openrgb.install@4559dfe2a59c5e2a7df1cb69957ab8e5125d4401/openrgb.install.png"
+    },
+    {
+        "package":  "open-shell",
+        "url":  "https://cdn.statically.io/gh/TheCakeIsNaOH/chocolatey-packages@97fc87d57673255d9490a64e54bea94a3db79616/Icons/open-shell.png"
+    },
+    {
+        "package":  "opera",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@b7466aa44fbbc7e8022c05be2d866e63cd915c8d/icons/opera.svg"
+    },
+    {
+        "package":  "paint.net",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@b89548a8e0a21620abe8643335fd7ba0c5b03ca1/icons/paint.net.png"
+    },
+    {
+        "package":  "pawnio",
+        "url":  "https://cdn.jsdelivr.net/gh/brogers5/chocolatey-package-pawnio@b79ae1a797ce5b7cfcfaf37b228322b1c1c620aa/pawnio.png"
+    },
+    {
+        "package":  "pdf24",
+        "url":  "https://cdn.jsdelivr.net/gh/teknowledgist/Chocolatey-packages@cc4b1558ccc7853df6d0cb4f1f79cb63caede42b/Icons/pdf24_icon.png"
+    },
+    {
+        "package":  "peazip",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@a09d7c32df1ac4b8028df11d2b2b5196b8de2435/icons/peazip.svg"
+    },
+    {
+        "package":  "pidgin",
+        "url":  "https://raw.githubusercontent.com/aronovgj/chocolatey/1161fabf55c0beec4b0357f937c3a08bad348553/icons/pidgin.png"
+    },
+    {
+        "package":  "playnite",
+        "url":  "https://raw.githubusercontent.com/TheCakeIsNaOH/chocolatey-packages/36cdec772744c373abeaf3e791fca7a60742d69d/Icons/playnite.png"
+    },
+    {
+        "package":  "powertoys",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@783a3b629ad9948830e24567739a7a884537d9a4/icons/powertoys.png"
+    },
+    {
+        "package":  "putty.install",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/911ce256e74048c93c3d64feb2a36751d0a19dfd/icons/putty.png"
+    },
+    {
+        "package":  "python2",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/e4a49519947c3cff55c17a0b08266c56b0613e64/icons/python.svg"
+    },
+    {
+        "package":  "python3",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/python.svg"
+    },
+    {
+        "package":  "qbittorrent",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/qbittorrent.png"
+    },
+    {
+        "package":  "revo-uninstaller",
+        "url":  "site icon: https://www.revouninstaller.com/"
+    },
+    {
+        "package":  "rockstar-launcher",
+        "url":  "https://cdn.jsdelivr.net/gh/Zoullx/chocolatey-packages/rockstar-launcher/rockstar.png"
+    },
+    {
+        "package":  "rpi-imager",
+        "url":  "https://raw.githubusercontent.com/eugbaranov/chocolatey-packages/master/rpi-imager/RPi-Logo-SCREEN.png"
+    },
+    {
+        "package":  "rustdesk",
+        "url":  "https://cdn.jsdelivr.net/gh/rustdesk/rustdesk@05e269a0bb0f6f67e63c33d1aadaf9cb875af7d1/128x128@2x.png"
+    },
+    {
+        "package":  "sharex",
+        "url":  "site icon: https://getsharex.com/"
+    },
+    {
+        "package":  "slack",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@63378edac68e986a45f67eb8ac2eb845fc502321/icons/slack.png"
+    },
+    {
+        "package":  "spotify",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@4ad26e5a5ab2b5280e4d57e5b14fcc9d4c6a22c5/icons/spotify.png"
+    },
+    {
+        "package":  "spybot",
+        "url":  "https://cdn.jsdelivr.net/gh/tunisiano187/Chocolatey-packages@7cc8d197a0daa3297060d92a75902352d1cce156/icons/spybot.png"
+    },
+    {
+        "package":  "steam",
+        "url":  "http://cdn.uproxx.com/wp-content/uploads/2012/07/steam-logo-great-prices.gif"
+    },
+    {
+        "package":  "streamlink",
+        "url":  "https://raw.githubusercontent.com/streamlink/streamlink/master/icon.svg"
+    },
+    {
+        "package":  "streamlink-twitch-gui",
+        "url":  "https://raw.githubusercontent.com/streamlink/streamlink-twitch-gui/master/src/img/icon-256.png"
+    },
+    {
+        "package":  "stremio",
+        "url":  "https://cdn.jsdelivr.net/gh/chtof/chocolatey-packages/automatic/stremio/stremio.png"
+    },
+    {
+        "package":  "sublimetext4",
+        "url":  "https://cdn.jsdelivr.net/gh/jack1142/choco-auto@ac2ee3f251f28874c5967cc153686e7ef25c5bb6/automatic/sublimetext4/icons/sublimetext4.png"
+    },
+    {
+        "package":  "sugarsync",
+        "url":  "https://www.sugarsync.com/images/main-logo.png"
+    },
+    {
+        "package":  "sumatrapdf.install",
+        "url":  "site icon: https://www.sumatrapdfreader.org/"
+    },
+    {
+        "package":  "superantispyware",
+        "url":  "https://cdn.jsdelivr.net/gh/mikeee/ChocoPackages/icons/superantispyware.png"
+    },
+    {
+        "package":  "tailscale",
+        "url":  "https://cdn.jsdelivr.net/gh/tailscale/tailscale-chocolatey@main/icon/Tailscale.png"
+    },
+    {
+        "package":  "teamviewer",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/ChocoPackages@46f969b5/icons/teamviewer.png"
+    },
+    {
+        "package":  "telegram",
+        "url":  "https://raw.githubusercontent.com/SebastianK90/chocolateyautomaticpackages/31d0b9851a02b653471474a4aef34e0b9a90e4c1/icons/telegram.png"
+    },
+    {
+        "package":  "temurin11",
+        "url":  "shared: temurin21.png"
+    },
+    {
+        "package":  "temurin11jre",
+        "url":  "shared: temurin21.png"
+    },
+    {
+        "package":  "temurin17",
+        "url":  "shared: temurin21.png"
+    },
+    {
+        "package":  "temurin17jre",
+        "url":  "shared: temurin21.png"
+    },
+    {
+        "package":  "temurin21",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/temurin-light.png"
+    },
+    {
+        "package":  "temurin21jre",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/temurin-light.png"
+    },
+    {
+        "package":  "temurin25",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/temurin-light.png"
+    },
+    {
+        "package":  "temurin25jre",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/temurin-light.png"
+    },
+    {
+        "package":  "temurin8",
+        "url":  "https://raw.githubusercontent.com/ajshastri/chocolatey-packages/a698d21b3c63b9ff7e01f442f37cdb7ecf89925a/icons/temurin-light.png"
+    },
+    {
+        "package":  "temurin8jre",
+        "url":  "shared: temurin21.png"
+    },
+    {
+        "package":  "teracopy",
+        "url":  "https://upload.wikimedia.org/wikipedia/en/5/58/TeraCopy_icon.png"
+    },
+    {
+        "package":  "thunderbird",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@edba4a5849ff756e767cba86641bea97ff5721fe/icons/thunderbird.png"
+    },
+    {
+        "package":  "tightvnc",
+        "url":  "http://www.tightvnc.com/logo/tightvnc-logo-90x90.png"
+    },
+    {
+        "package":  "transmission",
+        "url":  "https://cdn.jsdelivr.net/gh/tunisiano187/Chocolatey-packages@58a6d860646264781f989d7ec9cda64c6fff0572/icons/transmission.svg"
+    },
+    {
+        "package":  "trillian",
+        "url":  "site icon: https://trillian.im/"
+    },
+    {
+        "package":  "tutanota",
+        "url":  "https://cdn.jsdelivr.net/gh/tutao/tutanota@master/resources/desktop-icons/icon/512.png"
+    },
+    {
+        "package":  "ultravnc",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@793b0f9445b2258a192e23bba3d482e7df9db46b/icons/ultravnc.png"
+    },
+    {
+        "package":  "vcredist140",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-coreteampackages@d8a28da83b3b9bf058e1fbbeed5ce74329b73245/icons/vcredist140.png"
+    },
+    {
+        "package":  "vcredist2005",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "vcredist2008",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "vcredist2010",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "vcredist2012",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "vcredist2013",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "vcredist-all",
+        "url":  "https://raw.githubusercontent.com/jberezanski/ChocolateyPackages/17d25f2fb8a31d40b93a696e345c22a77913418f/icons/vs2017.png"
+    },
+    {
+        "package":  "vivaldi",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/ChocoPackages@55d09a2/icons/vivaldi.png"
+    },
+    {
+        "package":  "vlc",
+        "url":  "https://github.com/ferventcoder/nugetpackages/raw/master/vlc/largeVLC.png"
+    },
+    {
+        "package":  "vscode",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@00a000c7e5d8cc0d8416468e164eef281f843bff/icons/vscode.png"
+    },
+    {
+        "package":  "vstor2010",
+        "url":  "shared: vcredist-all.png"
+    },
+    {
+        "package":  "webview2-runtime",
+        "url":  "https://cdn.jsdelivr.net/gh/pauby/ChocoPackages@1f90182/icons/webview2-runtime.png"
+    },
+    {
+        "package":  "winamp",
+        "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/fd66d6390d7a1521a22aa1235dabff5eff38147b/icons/winamp.png"
+    },
+    {
+        "package":  "windirstat",
+        "url":  "https://raw.githubusercontent.com/ferventcoder/chocolatey-packages/02c21bebe5abb495a56747cbb9b4b5415c933fc0/icons/windirstat.svg"
+    },
+    {
+        "package":  "windscribe",
+        "url":  "https://cdn.jsdelivr.net/gh/joachimschmidt557/chocolatey-packages-manual-automatic@d0d7eb53637456056867aac9cdb51a755c677313/icons/Windscribe.png"
+    },
+    {
+        "package":  "winget-microsoft.windowsapp",
+        "url":  "https://cdn.jsdelivr.net/gh/dgalbraith/chocolatey-packages@557720006f4961d40c36ae5ba129a6f923fb9a6e/icons/remote-desktop-client.png"
+    },
+    {
+        "package":  "winget-9n7jsxc1sjk6",
+        "url":  "https://store-images.s-microsoft.com/image/apps.14067.14068186488847955.52d98a9f-9bdf-400b-ac16-428f73d933b2.6f21a5ed-5c72-421f-9969-55b0953f894d"
+    },
+    {
+        "package":  "winget-9nksqgp7f2nh",
+        "url":  "https://store-images.s-microsoft.com/image/apps.61550.13655054093851568.04a4d8fc-dd15-4e4e-bd00-4bbe4247c42e.4dd0157a-c203-418d-a741-6540a3a1320b"
+    },
+    {
+        "package":  "winget-9pktq5699m62",
+        "url":  "https://store-images.s-microsoft.com/image/apps.11608.14255546098955437.c2922c50-eb00-4f80-b393-4e513d9f81c7.4345eb8f-f893-40a2-aec5-20f4758af165"
+    },
+    {
+        "package":  "winget-openai.chatgpt",
+        "url":  "https://cdn.jsdelivr.net/gh/asheroto/chocolatey-projects-forked@main/ChatGPT/logo.png"
+    },
+    {
+        "package":  "winmerge",
+        "url":  "https://cdn.jsdelivr.net/gh/tunisiano187/Chocolatey-packages@c50a453e5159f9b856288b523fe2c9e4e2cea0a9/icons/winmerge.png"
+    },
+    {
+        "package":  "winrar",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@51247a81a30c4c8d14434fcbc61c7a0b750c0945/icons/winrar.png"
+    },
+    {
+        "package":  "winscp",
+        "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@6528e6936f5dc088aa67e03532d06101cdf4ed70/icons/winscp.png"
+    },
+    {
+        "package":  "wireguard",
+        "url":  "https://cdn.jsdelivr.net/gh/chtof/chocolatey-packages/automatic/wireguard/wireguard.png"
+    },
+    {
+        "package":  "wireshark",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@faf506da98b6ae7e18f12faa1c0c30daa386db65/icons/wireshark.png"
+    },
+    {
+        "package":  "wiztree",
+        "url":  "https://cdn.jsdelivr.net/gh/teknowledgist/Chocolatey-packages@2b0f9ae47d47b9b699977be5d6a6c98f0f910180/Icons/wiztree_icon.png"
+    },
+    {
+        "package":  "xnview",
+        "url":  "http://www.xnview.com/assets/img/app-xnview-512.png"
+    },
+    {
+        "package":  "zoom",
+        "url":  "https://cdn.statically.io/gh/mikecole/chocolatey-packages/master/icons/zoom.png"
+    }
+]

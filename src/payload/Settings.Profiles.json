@@ -1,0 +1,343 @@
+﻿{
+    "schemaVersion":  1,
+    "profiles":  [
+                     {
+                         "id":  "7zip",
+                         "name":  "7-Zip",
+                         "packageId":  "7zip.install",
+                         "versionPattern":  "^7-Zip",
+                         "processes":  [
+                                           "7zFM",
+                                           "7zG"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "HKCU",
+                                           "path":  "Software\\7-Zip"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "*.log"
+                                     ],
+                         "evidence":  "https://www.7-zip.org/"
+                     },
+                     {
+                         "id":  "git",
+                         "name":  "Git for Windows",
+                         "packageId":  "git.install",
+                         "versionPattern":  "^Git(?: version.*)?$",
+                         "processes":  [
+
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "USERPROFILE",
+                                           "path":  ".gitconfig"
+                                       },
+                                       {
+                                           "root":  "USERPROFILE",
+                                           "path":  ".config\\git"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "*credentials*",
+                                         "*.log"
+                                     ],
+                         "evidence":  "https://git-scm.com/docs/git-config"
+                     },
+                     {
+                         "id":  "github-cli",
+                         "name":  "GitHub CLI preferences (no login tokens)",
+                         "packageId":  "gh",
+                         "versionPattern":  "^GitHub CLI",
+                         "processes":  [
+
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "GitHub CLI\\config.yml"
+                                       },
+                                       {
+                                           "root":  "USERPROFILE",
+                                           "path":  ".config\\gh\\config.yml"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "hosts.yml"
+                                     ],
+                         "evidence":  "https://cli.github.com/manual/gh_help_environment"
+                     },
+                     {
+                         "id":  "notepadplusplus",
+                         "name":  "Notepad++",
+                         "packageId":  "notepadplusplus",
+                         "versionPattern":  "^Notepad\\+\\+",
+                         "processes":  [
+                                           "notepad++"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Notepad++"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "backup",
+                                         "backup/*",
+                                         "session.xml",
+                                         "*.log",
+                                         "*.tmp"
+                                     ],
+                         "evidence":  "https://npp-user-manual.org/docs/config-files/"
+                     },
+                     {
+                         "id":  "obs-studio",
+                         "name":  "OBS Studio (profiles/scenes; no service keys/browser sessions)",
+                         "packageId":  "obs-studio",
+                         "versionPattern":  "^OBS Studio",
+                         "processes":  [
+                                           "obs64",
+                                           "obs32"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "obs-studio"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "logs",
+                                         "crashes",
+                                         "profiler_data",
+                                         "updates",
+                                         "cache",
+                                         "GPUCache",
+                                         "obs-browser",
+                                         "service.json*",
+                                         "auth*.json",
+                                         "oauth*.json",
+                                         "Cookies*",
+                                         "Login Data*",
+                                         "*.log",
+                                         "*.tmp"
+                                     ],
+                         "evidence":  "https://obsproject.com/kb/profiles"
+                     },
+                     {
+                         "id":  "openrgb",
+                         "name":  "OpenRGB profiles",
+                         "packageId":  "openrgb.install",
+                         "versionPattern":  "^OpenRGB$",
+                         "processes":  [
+                                           "OpenRGB"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "OpenRGB"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "*.log",
+                                         "*.tmp",
+                                         "cache"
+                                     ],
+                         "evidence":  "https://openrgb.org/"
+                     },
+                     {
+                         "id":  "putty",
+                         "name":  "PuTTY sessions and SSH host keys",
+                         "packageId":  "putty.install",
+                         "versionPattern":  "^PuTTY",
+                         "processes":  [
+                                           "putty",
+                                           "pageant",
+                                           "psftp",
+                                           "pscp"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "HKCU",
+                                           "path":  "Software\\SimonTatham\\PuTTY"
+                                       }
+                                   ],
+                         "exclude":  [
+
+                                     ],
+                         "evidence":  "https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html"
+                     },
+                     {
+                         "id":  "vlc",
+                         "name":  "VLC preferences",
+                         "packageId":  "vlc",
+                         "versionPattern":  "^VLC media player",
+                         "processes":  [
+                                           "vlc"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "vlc\\vlcrc"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "vlc\\vlc-qt-interface.ini"
+                                       }
+                                   ],
+                         "exclude":  [
+
+                                     ],
+                         "evidence":  "https://wiki.videolan.org/Preferences/"
+                     },
+                     {
+                         "id":  "winscp",
+                         "name":  "WinSCP sites/preferences (password values excluded)",
+                         "packageId":  "winscp",
+                         "versionPattern":  "^WinSCP",
+                         "processes":  [
+                                           "WinSCP"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "HKCU",
+                                           "path":  "Software\\Martin Prikryl\\WinSCP 2"
+                                       }
+                                   ],
+                         "exclude":  [
+
+                                     ],
+                         "evidence":  "https://winscp.net/eng/docs/config"
+                     },
+                     {
+                         "id":  "lghub",
+                         "name":  "Logitech G HUB",
+                         "packageId":  "lghub",
+                         "versionPattern":  "^Logitech G HUB",
+                         "processes":  [
+                                           "lghub",
+                                           "lghub_agent",
+                                           "lghub_system_tray"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "LGHUB\\settings.db"
+                                       },
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "LGHUB\\settings.db-wal"
+                                       },
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "LGHUB\\settings.db-shm"
+                                       },
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "LGHUB\\scripts"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "lghub"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "*.log",
+                                         "*.tmp",
+                                         "sentry*"
+                                     ],
+                         "evidence":  "Observed: G HUB keeps devices, profiles and assignments in %LOCALAPPDATA%\\LGHUB\\settings.db (SQLite; -wal/-shm kept with it) and Lua scripts in LGHUB\\scripts."
+                     },
+                     {
+                         "id":  "afterclip",
+                         "name":  "Afterclip",
+                         "packageId":  "afterclip",
+                         "versionPattern":  "^Afterclip(?:\\s|$)",
+                         "processes":  [
+                                           "afterclip",
+                                           "afterclip-engine",
+                                           "afterclip-media"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "Afterclip\\settings.json"
+                                       },
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "Afterclip\\library.json"
+                                       }
+                                   ],
+                         "exclude":  [
+
+                                     ],
+                         "evidence":  "Afterclip source: settings.json and library.json (favourites, tags) in %LOCALAPPDATA%\\Afterclip. api-token.txt is deliberately excluded."
+                     },
+                     {
+                         "id":  "sleekmeeter",
+                         "name":  "Sleekmeeter",
+                         "packageId":  "sleekmeeter",
+                         "versionPattern":  "^Sleekmeeter(?:\\s|$)",
+                         "processes":  [
+                                           "sleekmeeter"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Sleekmeeter\\settings.json"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Sleekmeeter\\audio-events.json"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Sleekmeeter\\scenes"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Sleekmeeter\\sounds"
+                                       }
+                                   ],
+                         "exclude":  [
+                                         "*.log",
+                                         "*.tmp"
+                                     ],
+                         "evidence":  "Observed: %APPDATA%\\Sleekmeeter settings.json, audio-events.json, scenes\\ and sounds\\. logs\\, backups\\ and usage.json are left out."
+                     },
+                     {
+                         "id":  "mpv",
+                         "name":  "mpv",
+                         "packageId":  "mpvio.install",
+                         "versionPattern":  "^mpv(?:\\s|$)",
+                         "processes":  ["mpv"],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "mpv"
+                                       }
+                                   ],
+                         "exclude":  ["*.log", "*.tmp", "cache", "shader-cache", "watch_later"],
+                         "evidence":  "https://mpv.io/manual/stable/#files-on-windows"
+                     },
+                     {
+                         "id":  "silage",
+                         "name":  "Silage",
+                         "packageId":  "silage",
+                         "versionPattern":  "^Silage(?:\\s|$)",
+                         "processes":  [
+                                           "silage"
+                                       ],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Silage\\Config\\ui.json"
+                                       }
+                                   ],
+                         "exclude":  [
+
+                                     ],
+                         "evidence":  "Silage source: UI preferences in %APPDATA%\\Silage\\Config\\ui.json. device-id and the remembered sign-in (Data\\session.json) are deliberately excluded."
+                     }
+                 ]
+}

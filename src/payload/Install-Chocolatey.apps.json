@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "source": "https://community.chocolatey.org/api/v2/",
+  "apps": [
+    {
+      "id": "1password",
+      "name": "1Password",
+      "packageId": "1password",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "7zip.install",
+      "name": "7-Zip",
+      "packageId": "7zip.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "ab-download-manager",
+      "name": "AB Download Manager",
+      "packageId": "ab-download-manager",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "adobereader",
+      "name": "Adobe Acrobat Reader",
+      "packageId": "adobereader",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "audacity",
+      "name": "Audacity",
+      "packageId": "audacity",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "chatterino",
+      "name": "Chatterino",
+      "packageId": "chatterino",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "claude",
+      "name": "Claude",
+      "packageId": "claude",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "packageId": "discord",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "epicgameslauncher",
+      "name": "Epic Games Launcher",
+      "packageId": "epicgameslauncher",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "git.install",
+      "name": "Git for Windows (x64)",
+      "packageId": "git.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "gh",
+      "name": "GitHub CLI (x64)",
+      "packageId": "gh",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "greenshot",
+      "name": "Greenshot (Windows x64-compatible)",
+      "packageId": "greenshot",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "innosetup",
+      "name": "Inno Setup",
+      "packageId": "innosetup",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "phase": 2,
+      "note": "Enabled in the editable package list."
+    },
+    {
+      "id": "lghub",
+      "name": "Logitech G HUB",
+      "packageId": "lghub",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "dotnet-desktopruntime",
+      "name": "Microsoft .NET Desktop Runtime (latest stable)",
+      "packageId": "dotnet-desktopruntime",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "dotnet-7.0-desktopruntime",
+      "name": "Microsoft .NET Desktop Runtime 7.0",
+      "packageId": "dotnet-7.0-desktopruntime",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "dotnet-8.0-desktopruntime",
+      "name": "Microsoft .NET Desktop Runtime 8.0",
+      "packageId": "dotnet-8.0-desktopruntime",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "vcredist-all",
+      "name": "Microsoft Visual C++ runtimes (all versions)",
+      "packageId": "vcredist-all",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": "Explicitly requested compatibility runtime bundle."
+    },
+    {
+      "id": "firefox",
+      "name": "Mozilla Firefox (en-GB, x64)",
+      "packageId": "Firefox",
+      "status": "Chocolatey",
+      "packageParameters": "/l:en-GB",
+      "note": ""
+    },
+    {
+      "id": "mpvio.install",
+      "name": "mpv (Install)",
+      "packageId": "mpvio.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "nodejs.install",
+      "name": "Node.js Current (x64)",
+      "packageId": "nodejs.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "notepadplusplus",
+      "name": "Notepad++ (x64)",
+      "packageId": "notepadplusplus",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "obs-studio",
+      "name": "OBS Studio (x64)",
+      "packageId": "obs-studio",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "openrgb.install",
+      "name": "OpenRGB",
+      "packageId": "openrgb.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "pawnio",
+      "name": "PawnIO",
+      "packageId": "pawnio",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "playnite",
+      "name": "Playnite",
+      "packageId": "playnite",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "putty.install",
+      "name": "PuTTY (64-bit)",
+      "packageId": "putty.install",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "rpi-imager",
+      "name": "Raspberry Pi Imager",
+      "packageId": "rpi-imager",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "rockstar-launcher",
+      "name": "Rockstar Games Launcher",
+      "packageId": "rockstar-launcher",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify",
+      "packageId": "spotify",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "packageId": "steam",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "streamlink",
+      "name": "Streamlink Runtime (64-bit)",
+      "packageId": "streamlink",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "streamlink-twitch-gui",
+      "name": "Streamlink Twitch GUI",
+      "packageId": "streamlink-twitch-gui",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "stremio",
+      "name": "Stremio",
+      "packageId": "stremio",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "transmission",
+      "name": "Transmission",
+      "packageId": "transmission",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "tutanota",
+      "name": "Tuta Mail (Tutanota)",
+      "packageId": "tutanota",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "vlc",
+      "name": "VLC media player",
+      "packageId": "vlc",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "windirstat",
+      "name": "WinDirStat",
+      "packageId": "windirstat",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "windscribe",
+      "name": "Windscribe",
+      "packageId": "windscribe",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    },
+    {
+      "id": "winscp",
+      "name": "WinSCP",
+      "packageId": "winscp",
+      "status": "Chocolatey",
+      "packageParameters": "",
+      "note": ""
+    }
+  ]
+}
