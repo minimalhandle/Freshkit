@@ -1,0 +1,3 @@
+﻿Vendored from https://github.com/Raphire/Win11Debloat at commit c465292add087b875b8c3ed7ec3120c0802001b5 2026-11-13 (MIT License, see LICENSE).
+Excluded: .git, .github, Tests, Tools, Scripts/Get.ps1 (online downloader).
+Freshkit embeds this folder as a ZIP and runs Win11Debloat.ps1 -Silent with the tweaks you pick.

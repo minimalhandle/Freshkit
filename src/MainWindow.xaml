@@ -1,0 +1,1382 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Freshkit" Width="1280" Height="840" MinWidth="1080" MinHeight="680"
+        WindowStartupLocation="CenterScreen" Background="#0E1014"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13.5" Foreground="#E8EAED"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Display">
+  <Window.Resources>
+    <SolidColorBrush x:Key="Bg" Color="#0E1014"/>
+    <SolidColorBrush x:Key="Side" Color="#13161C"/>
+    <SolidColorBrush x:Key="Card" Color="#181C23"/>
+    <SolidColorBrush x:Key="CardHover" Color="#1F242C"/>
+    <SolidColorBrush x:Key="Line" Color="#272C35"/>
+    <SolidColorBrush x:Key="Text" Color="#E8EAED"/>
+    <SolidColorBrush x:Key="Muted" Color="#B0B8C5"/>
+    <SolidColorBrush x:Key="Subtle" Color="#949EAE"/>
+    <SolidColorBrush x:Key="Accent" Color="#2DD4BF"/>
+    <SolidColorBrush x:Key="AccentHover" Color="#5EEAD4"/>
+    <SolidColorBrush x:Key="AccentText" Color="#042F2A"/>
+    <SolidColorBrush x:Key="AccentTint" Color="#14302E"/>
+    <SolidColorBrush x:Key="Warn" Color="#FBBF24"/>
+    <FontFamily x:Key="Icons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <LinearGradientBrush x:Key="LogoBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#2DD4BF" Offset="0"/>
+      <GradientStop Color="#0EA5E9" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Scrollbars -->
+    <DataTemplate x:Key="AppIconTemplate">
+      <Border Width="36" Height="36" CornerRadius="9" Background="#26333A">
+        <Grid>
+          <Image Source="{Binding Image}" Width="28" Height="28" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+          <TextBlock Text="{Binding Monogram}" FontWeight="Bold" Foreground="{StaticResource Subtle}" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers><DataTrigger Binding="{Binding Image}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </Grid>
+      </Border>
+    </DataTemplate>
+
+    <ControlTemplate x:Key="VScroll" TargetType="ScrollBar">
+      <Grid Background="Transparent">
+        <Track x:Name="PART_Track" IsDirectionReversed="True">
+          <Track.Thumb>
+            <Thumb>
+              <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                  <Border x:Name="t" CornerRadius="4" Background="#353B46" Margin="2,2,2,2"/>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="t" Property="Background" Value="#4B5363"/></Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track.Thumb>
+        </Track>
+      </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="HScroll" TargetType="ScrollBar">
+      <Grid Background="Transparent">
+        <Track x:Name="PART_Track" IsDirectionReversed="False">
+          <Track.Thumb>
+            <Thumb>
+              <Thumb.Template>
+                <ControlTemplate TargetType="Thumb">
+                  <Border CornerRadius="4" Background="#353B46" Margin="2"/>
+                </ControlTemplate>
+              </Thumb.Template>
+            </Thumb>
+          </Track.Thumb>
+        </Track>
+      </Grid>
+    </ControlTemplate>
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="10"/>
+      <Setter Property="MinWidth" Value="10"/>
+      <Setter Property="Template" Value="{StaticResource VScroll}"/>
+      <Style.Triggers>
+        <Trigger Property="Orientation" Value="Horizontal">
+          <Setter Property="Width" Value="Auto"/>
+          <Setter Property="MinWidth" Value="0"/>
+          <Setter Property="Height" Value="10"/>
+          <Setter Property="MinHeight" Value="10"/>
+          <Setter Property="Template" Value="{StaticResource HScroll}"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- Buttons -->
+    <Style x:Key="BaseButton" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Padding" Value="16,8"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Background" Value="{StaticResource Card}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource CardHover}"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.85"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bd" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Secondary" TargetType="Button" BasedOn="{StaticResource BaseButton}"/>
+    <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+      <Setter Property="Background" Value="{StaticResource Accent}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+      <Setter Property="Foreground" Value="{StaticResource AccentText}"/>
+      <Setter Property="Padding" Value="20,9"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource AccentHover}"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="bd" Property="Opacity" Value="0.85"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bd" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Ghost" TargetType="Button" BasedOn="{StaticResource BaseButton}">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="FontWeight" Value="Normal"/>
+      <Setter Property="Padding" Value="10,6"/>
+    </Style>
+    <Style x:Key="Link" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <TextBlock x:Name="tb" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" Foreground="{TemplateBinding Foreground}"/>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="tb" Property="TextDecorations" Value="Underline"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="tb" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Sidebar navigation -->
+    <Style x:Key="Nav" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="Margin" Value="0,0,0,4"/>
+      <Setter Property="GroupName" Value="nav"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="8" Padding="12,9">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <TextBlock x:Name="ic" Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="16" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+                <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#1A1E25"/>
+                <Setter Property="Foreground" Value="{StaticResource Text}"/>
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#1D232B"/>
+                <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                <Setter TargetName="ic" Property="Foreground" Value="{StaticResource Accent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Toggle switch -->
+    <Style x:Key="Switch" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" Background="Transparent">
+              <Border x:Name="track" Width="40" Height="22" CornerRadius="11" Background="#252A33" BorderBrush="#4B5563" BorderThickness="1" VerticalAlignment="Center">
+                <Ellipse x:Name="knob" Width="12" Height="12" Fill="#C9CED6" HorizontalAlignment="Left" Margin="5,0,0,0"/>
+              </Border>
+              <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="track" Property="Background" Value="{StaticResource Accent}"/>
+                <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="knob" Property="Margin" Value="0,0,5,0"/>
+                <Setter TargetName="knob" Property="Fill" Value="{StaticResource AccentText}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+
+    <SolidColorBrush x:Key="Ok" Color="#34D399"/>
+    <SolidColorBrush x:Key="Bad" Color="#F87171"/>
+
+    <!-- ComboBox (dark) -->
+    <ControlTemplate x:Key="ComboToggle" TargetType="ToggleButton">
+      <Border x:Name="bd" Background="#12151A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8">
+        <TextBlock Text="&#xE70D;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{StaticResource Muted}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0"/>
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#161A20"/></Trigger>
+        <Trigger Property="IsChecked" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate>
+    <Style TargetType="ComboBox">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="MinHeight" Value="34"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <ToggleButton Template="{StaticResource ComboToggle}" Focusable="False" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press"/>
+              <ContentPresenter IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" Margin="11,0,30,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+              <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                <Border Background="#1B1F27" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Margin="0,4,0,0" Padding="4" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="320">
+                  <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="ComboBoxItem">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBoxItem">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="6" Padding="10,7"><ContentPresenter/></Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="bd" Property="Background" Value="#262C36"/></Trigger>
+              <Trigger Property="IsSelected" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource AccentTint}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Context menu (dark) -->
+    <Style TargetType="ContextMenu">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ContextMenu">
+            <Border Background="#1B1F27" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="4"><ItemsPresenter/></Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="MenuItem">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="MenuItem">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="6" Padding="12,7"><ContentPresenter ContentSource="Header"/></Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="bd" Property="Background" Value="#262C36"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Tooltip (dark) -->
+    <Style TargetType="ToolTip">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToolTip">
+            <Border Background="#1B1F27" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8" Padding="10,8" MaxWidth="380">
+              <TextBlock Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" TextWrapping="Wrap" Foreground="{StaticResource Text}" FontSize="12.5"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Tweak card -->
+    <Style x:Key="TweakCard" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Width" Value="300"/>
+      <Setter Property="Margin" Value="0,0,10,10"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="bd" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,11" MinHeight="58">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Label}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource Text}" Margin="0,0,10,0"/>
+                <Border x:Name="track" Grid.Column="1" Width="36" Height="20" CornerRadius="10" Background="#252A33" BorderBrush="#4B5563" BorderThickness="1" VerticalAlignment="Center">
+                  <Ellipse x:Name="knob" Width="10" Height="10" Fill="#C9CED6" HorizontalAlignment="Left" Margin="4,0,0,0"/>
+                </Border>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource CardHover}"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="BorderBrush" Value="#2A8F84"/>
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentTint}"/>
+                <Setter TargetName="track" Property="Background" Value="{StaticResource Accent}"/>
+                <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right"/>
+                <Setter TargetName="knob" Property="Margin" Value="0,0,4,0"/>
+                <Setter TargetName="knob" Property="Fill" Value="{StaticResource AccentText}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Row checkbox (lists) -->
+    <Style x:Key="RowCheck" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="8" Padding="10,8">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <Border x:Name="box" Width="18" Height="18" CornerRadius="5" BorderThickness="1.5" BorderBrush="#4B5563" VerticalAlignment="Center">
+                  <TextBlock x:Name="glyph" Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentText}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                </Border>
+                <ContentPresenter Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#1C2028"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="box" Property="Background" Value="{StaticResource Accent}"/>
+                <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                <Setter TargetName="glyph" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Segmented toggle -->
+    <Style x:Key="Segment" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="7" Padding="14,6"><ContentPresenter/></Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#262C36"/>
+                <Setter Property="Foreground" Value="{StaticResource Text}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="Pill" TargetType="Border">
+      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="Padding" Value="7,1"/>
+      <Setter Property="Margin" Value="6,0,0,0"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="SectionHead" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11.5"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="Margin" Value="2,6,0,10"/>
+    </Style>
+
+    <!-- App card: compact, fills the column width set in code (AppCardWidth) -->
+    <sys:Double x:Key="AppCardWidth">252</sys:Double>
+    <SolidColorBrush x:Key="SelTint" Color="#12241F"/>
+    <SolidColorBrush x:Key="SelLine" Color="#26786F"/>
+    <Style x:Key="AppCard" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Width" Value="{DynamicResource AppCardWidth}"/>
+      <Setter Property="Margin" Value="0,0,10,10"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="bd" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="10,9,12,9">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Border Width="34" Height="34" CornerRadius="8" Background="{Binding TileBrush}">
+                  <Grid>
+                    <Image Source="{Binding Artwork.Image}" Width="24" Height="24" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="{Binding Monogram}" Foreground="{Binding TileForeground}" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Visibility" Value="Collapsed"/>
+                          <Style.Triggers><DataTrigger Binding="{Binding Artwork.Image}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource Text}" TextTrimming="CharacterEllipsis"/>
+                  <DockPanel Margin="0,3,0,0" LastChildFill="True">
+                    <Border DockPanel.Dock="Right" Background="#12352B" CornerRadius="4" Padding="5,1" Margin="6,0,0,0" Visibility="{Binding InstalledVisibility}"><TextBlock Text="Installed" FontSize="10" Foreground="#6EE7B7"/></Border>
+                    <Border DockPanel.Dock="Right" Background="#232D3E" CornerRadius="4" Padding="5,1" Margin="6,0,0,0" Visibility="{Binding WingetVisibility}"><TextBlock Text="{Binding SourceLabel}" FontSize="10" Foreground="#BED5F5"/></Border>
+                    <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="{StaticResource Subtle}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                  </DockPanel>
+                </StackPanel>
+                <Border x:Name="tick" Grid.Column="2" Width="20" Height="20" CornerRadius="6" BorderThickness="1.5" BorderBrush="#4B5563" VerticalAlignment="Center">
+                  <TextBlock x:Name="glyph" Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentText}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                </Border>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource CardHover}"/><Setter TargetName="tick" Property="BorderBrush" Value="#6B7280"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource SelLine}"/>
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource SelTint}"/>
+                <Setter TargetName="tick" Property="Background" Value="{StaticResource Accent}"/>
+                <Setter TargetName="tick" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                <Setter TargetName="glyph" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="bd" Property="Opacity" Value="0.5"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Category rail item -->
+    <Style x:Key="RailItem" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="GroupName" Value="AppCategory"/>
+      <Setter Property="Margin" Value="0,0,0,2"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="bd" Background="Transparent" CornerRadius="7" Padding="10,7">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Ellipse Width="7" Height="7" Fill="{Binding Dot}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock x:Name="name" Grid.Column="1" Text="{Binding Name}" Foreground="{TemplateBinding Foreground}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                <TextBlock x:Name="count" Grid.Column="2" Text="{Binding Count}" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#191D24"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#1F252E"/>
+                <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                <Setter TargetName="name" Property="FontWeight" Value="SemiBold"/>
+                <Setter TargetName="count" Property="Foreground" Value="{StaticResource Accent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Chip toggle -->
+    <Style x:Key="Chip" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="bd" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="12,6">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="glyph" Text="&#xE73E;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,7,0" Visibility="Collapsed"/>
+                <TextBlock Text="{Binding Name}" Foreground="{StaticResource Text}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="{StaticResource CardHover}"/></Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentTint}"/>
+                <Setter TargetName="bd" Property="BorderBrush" Value="#2A8F84"/>
+                <Setter TargetName="glyph" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Text input with placeholder in Tag -->
+    <Style x:Key="Input" TargetType="TextBox">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="CaretBrush" Value="{StaticResource Text}"/>
+      <Setter Property="Padding" Value="10,7"/>
+      <Setter Property="SelectionBrush" Value="{StaticResource Accent}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <!-- WPF applies TextBox.Padding to PART_ContentHost; pad only the placeholder here. -->
+            <Border x:Name="bd" Background="#12151A" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8">
+              <Grid>
+                <TextBlock x:Name="ph" Text="{TemplateBinding Tag}" Foreground="{StaticResource Subtle}" Visibility="Collapsed" IsHitTestVisible="False" Padding="{TemplateBinding Padding}" Margin="2,0,0,0" VerticalAlignment="Center"/>
+                <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="Text" Value=""><Setter TargetName="ph" Property="Visibility" Value="Visible"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="Background" Value="#161A20"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ReviewExpander" TargetType="Expander">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Expander">
+            <StackPanel>
+              <ToggleButton Content="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}" HorizontalContentAlignment="Left" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <Border Background="Transparent" Padding="0,3" BorderThickness="1" BorderBrush="Transparent" x:Name="headerBorder">
+                      <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="arrow" Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ContentPresenter VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True"><Setter TargetName="arrow" Property="Text" Value="&#xE70D;"/></Trigger>
+                      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="headerBorder" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <ContentPresenter x:Name="body" Visibility="Collapsed"/>
+            </StackPanel>
+            <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True"><Setter TargetName="body" Property="Visibility" Value="Visible"/></Trigger></ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="CardBorder" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource Card}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="12"/>
+      <Setter Property="Padding" Value="22"/>
+    </Style>
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="26"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
+    </Style>
+    <Style x:Key="PageSub" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="0,6,0,0"/>
+      <Setter Property="MaxWidth" Value="760"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style x:Key="CardTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="16"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style x:Key="CardText" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="0,6,0,16"/>
+      <Setter Property="LineHeight" Value="20"/>
+    </Style>
+    <Style x:Key="IconBadge" TargetType="Border">
+      <Setter Property="Width" Value="42"/>
+      <Setter Property="Height" Value="42"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Background" Value="{StaticResource AccentTint}"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+      <Setter Property="Margin" Value="0,0,0,14"/>
+    </Style>
+    <Style x:Key="BadgeGlyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
+      <Setter Property="FontSize" Value="19"/>
+      <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+      <Setter Property="HorizontalAlignment" Value="Center"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    </Window.Resources>
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="240"/>
+      <ColumnDefinition/>
+    </Grid.ColumnDefinitions>
+
+    <!-- ===== Sidebar ===== -->
+    <Border x:Name="SidebarSurface" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+      <DockPanel Margin="14,20,14,16">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,26">
+          <Border Width="38" Height="38" CornerRadius="10" Background="{StaticResource LogoBrush}">
+            <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="19" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="Freshkit" FontSize="18" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+            <TextBlock Text="Fresh Windows setup" FontSize="11.5" Foreground="{StaticResource Subtle}"/>
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom">
+          <Border x:Name="ResumeBanner" Visibility="Collapsed" Background="#2A2410" BorderBrush="#5C4A12" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,12" Cursor="Hand">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Warn}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="ResumeBannerTitle" Text="Install in progress" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="8,0,0,0"/>
+              </StackPanel>
+              <TextBlock Text="Open Progress to follow it." TextWrapping="Wrap" FontSize="12" Foreground="#D6C79A" Margin="0,4,0,0"/>
+            </StackPanel>
+          </Border>
+          <Border Background="#171A21" CornerRadius="10" Padding="12,10">
+            <StackPanel>
+              <TextBlock Text="THIS PC" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource Subtle}" Margin="0,0,0,6"/>
+              <TextBlock x:Name="SysWindows" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="SysChoco" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="SysNet" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel>
+          <RadioButton x:Name="NavApps" Style="{StaticResource Nav}" Tag="&#xE71D;" Content="Apps" IsChecked="True"/>
+          <RadioButton x:Name="NavTweaks" Style="{StaticResource Nav}" Tag="&#xE90F;" Content="Windows tweaks"/>
+          <RadioButton x:Name="NavDrivers" Style="{StaticResource Nav}" Tag="&#xE7F4;" Content="Drivers &amp; offline kit"/>
+          <RadioButton x:Name="NavProgress" Style="{StaticResource Nav}" Tag="&#xE916;" Content="Progress"/>
+          <RadioButton x:Name="NavUpdates" Style="{StaticResource Nav}" Tag="&#xE895;" Content="Updates"/>
+          <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE777;" Content="Settings backup"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- ===== Content ===== -->
+    <Grid x:Name="ContentSurface" Grid.Column="1">
+      <Grid.RowDefinitions>
+        <RowDefinition/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <!-- ================= Apps ================= -->
+      <Grid x:Name="PageApps" Margin="32,26,24,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="0,0,8,0">
+          <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="Apps" Style="{StaticResource PageTitle}"/>
+            <TextBlock x:Name="AppsSub" Style="{StaticResource PageSub}" Text="Pick what to install, then review everything before setup starts."/>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,4,0,0">
+            <Button x:Name="BtnScan" Style="{StaticResource Secondary}" Margin="0,0,8,0" ToolTip="Check which apps are already installed on this PC and find others to add to your list.">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBlock Text="Scan this PC"/></StackPanel>
+            </Button>
+            <Button x:Name="BtnAddApps" Style="{StaticResource Secondary}" ToolTip="Search Chocolatey and winget for more apps.">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,8,0"/><TextBlock Text="Add apps"/></StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+
+        <!-- toolbar: search, profile, more -->
+        <Grid Grid.Row="1" Margin="0,18,8,14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="360"/><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <Grid>
+            <TextBox x:Name="SearchBox" Style="{StaticResource Input}" Tag="Search 160+ apps" Padding="32,7,10,7"/>
+            <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Subtle}" VerticalAlignment="Center" Margin="11,0,0,0" IsHitTestVisible="False" FontSize="12"/>
+          </Grid>
+          <TextBlock x:Name="ScanSummary" Grid.Column="1" Foreground="{StaticResource Subtle}" VerticalAlignment="Center" FontSize="12" Margin="14,0,10,0" TextTrimming="CharacterEllipsis"/>
+          <TextBlock Grid.Column="2" Text="Profile" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+          <ComboBox x:Name="ProfileBox" Grid.Column="3" Width="210" ToolTip="Apply a starter selection or a profile saved this session."/>
+          <Button x:Name="BtnAppsMore" Grid.Column="4" Style="{StaticResource Ghost}" Margin="6,0,0,0" Padding="10,8" ToolTip="Profiles, list editing and reset">
+            <TextBlock Text="&#xE712;" FontFamily="{StaticResource Icons}" FontSize="14"/>
+          </Button>
+          <!-- Commands reached from the More menu (kept as named buttons for their handlers). -->
+          <StackPanel Grid.Column="4" Visibility="Collapsed">
+            <Button x:Name="BtnSaveProfile"/>
+            <Button x:Name="BtnDeleteProfile"/>
+            <Button x:Name="BtnEditList"/>
+            <Button x:Name="BtnReload"/>
+            <Button x:Name="BtnAll"/>
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="216"/><ColumnDefinition/></Grid.ColumnDefinitions>
+          <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,0">
+            <StackPanel>
+              <TextBlock Text="CATEGORIES" Style="{StaticResource SectionHead}" Margin="10,0,0,8" FontSize="11"/>
+              <ItemsControl x:Name="CategoryRail">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <RadioButton Style="{StaticResource RailItem}" IsChecked="{Binding IsChecked, Mode=TwoWay}" ToolTip="{Binding Name}"/>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+          <ScrollViewer x:Name="AppScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+            <StackPanel>
+              <ItemsControl x:Name="GroupList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Visibility="{Binding Visibility}" Margin="0,0,0,14">
+                      <DockPanel Margin="2,0,10,10">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource Link}" Content="{Binding ToggleText}" Tag="group-toggle" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal">
+                          <Ellipse Width="8" Height="8" Fill="{Binding Dot}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                          <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Text}" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding CountText}" FontSize="12" Foreground="{StaticResource Subtle}" Margin="10,1,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </DockPanel>
+                      <ItemsControl ItemsSource="{Binding Items}" Focusable="False">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <CheckBox Style="{StaticResource AppCard}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Visibility="{Binding Visibility}" ToolTip="{Binding Tooltip}">
+                              <CheckBox.ContextMenu>
+                                <ContextMenu>
+                                  <MenuItem Header="Remove from list" Tag="remove-app"/>
+                                </ContextMenu>
+                              </CheckBox.ContextMenu>
+                            </CheckBox>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <StackPanel x:Name="NoResults" Visibility="Collapsed" Margin="2,24,0,0" HorizontalAlignment="Left">
+                <TextBlock x:Name="NoResultsText" Text="No apps match your search." FontWeight="SemiBold"/>
+                <TextBlock Text="Try another name, or use Add apps to search Chocolatey and winget." Foreground="{StaticResource Subtle}" Margin="0,4,0,0"/>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="3" Margin="0,8,8,18" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="18,12">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="SelCount" FontWeight="SemiBold"/>
+              <TextBlock x:Name="SelExtra" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+              <Button x:Name="BtnDefaults" Style="{StaticResource Ghost}" Content="Defaults" ToolTip="Restore the built-in default selection"/>
+              <Button x:Name="BtnNone" Style="{StaticResource Ghost}" Content="Clear" ToolTip="Untick every app shown"/>
+            </StackPanel>
+            <Button x:Name="BtnInstall" Grid.Column="2" Style="{StaticResource Primary}" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,9,0" FontWeight="Bold"/>
+                <TextBlock x:Name="InstallText" Text="Install"/>
+              </StackPanel>
+            </Button>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <Grid x:Name="PageTweaks" Visibility="Collapsed" Margin="32,26,24,0">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel>
+          <TextBlock Text="Windows tweaks" Style="{StaticResource PageTitle}"/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Privacy, Start menu, taskbar, File Explorer and AI settings, plus removal of preinstalled apps. Powered by Win11Debloat (built in). Selected tweaks run as part of the next install, or apply them now."/>
+        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,18,8,14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <Grid>
+            <TextBox x:Name="TweakSearch" Style="{StaticResource Input}" Tag="Search tweaks and apps" Padding="32,7,10,7"/>
+            <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Subtle}" VerticalAlignment="Center" Margin="11,0,0,0" IsHitTestVisible="False" FontSize="12"/>
+          </Grid>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+            <Button x:Name="BtnTweakRecommended" Style="{StaticResource Ghost}" Content="Recommended" ToolTip="Win11Debloat's recommended defaults"/>
+            <Button x:Name="BtnTweakClear" Style="{StaticResource Ghost}" Content="Clear all"/>
+          </StackPanel>
+          <Button x:Name="BtnDebloatGui" Grid.Column="2" Style="{StaticResource Ghost}" ToolTip="Opens Win11Debloat's own window with every option. Its data is removed when you close it.">
+            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,7,0"/><TextBlock Text="Open Win11Debloat (all options)"/></StackPanel>
+          </Button>
+        </Grid>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+          <StackPanel>
+            <TextBlock x:Name="TweaksUnavailable" Visibility="Collapsed" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="2,0,0,12"/>
+            <ItemsControl x:Name="TweakGroups">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Visibility="{Binding Visibility}" Margin="0,0,0,14">
+                    <StackPanel Orientation="Horizontal" Margin="2,0,0,10">
+                      <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                      <TextBlock Text="{Binding Header}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding CountText}" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Choices}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <Border Width="300" Margin="0,0,10,10" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,9" MinHeight="58" Visibility="{Binding Visibility}" ToolTip="{Binding Tooltip}">
+                            <StackPanel VerticalAlignment="Center">
+                              <TextBlock Text="{Binding Label}" Foreground="{StaticResource Text}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                              <ComboBox ItemsSource="{Binding Options}" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"/>
+                            </StackPanel>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding Toggles}">
+                      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <CheckBox Style="{StaticResource TweakCard}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Visibility="{Binding Visibility}" ToolTip="{Binding Tooltip}"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- app removal -->
+            <StackPanel x:Name="RemovalSection" Margin="0,4,0,16">
+              <StackPanel Orientation="Horizontal" Margin="2,0,0,10">
+                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                <TextBlock Text="REMOVE PREINSTALLED APPS" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="RemovalCount" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="8,0,14,0" VerticalAlignment="Center"/>
+                <Button x:Name="BtnRemovalRecommended" Style="{StaticResource Link}" Content="Recommended" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                <Button x:Name="BtnRemovalNone" Style="{StaticResource Link}" Content="None" VerticalAlignment="Center"/>
+              </StackPanel>
+              <ItemsControl x:Name="RemovalPresets" Margin="0,0,0,6">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate><Button Style="{StaticResource Secondary}" Padding="12,5" Margin="0,0,8,8" FontWeight="Normal" Content="{Binding Label}" Tag="removal-preset"/></DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <ItemsControl x:Name="RemovalList">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate><CheckBox Style="{StaticResource Chip}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="{Binding Tooltip}" Visibility="{Binding Visibility}"/></DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <CheckBox x:Name="ForceEdgeSwitch" Style="{StaticResource Switch}" Margin="0,10,0,0"><TextBlock Text="Also force-remove Microsoft Edge (not recommended: some Windows features rely on it)" TextWrapping="Wrap"/></CheckBox>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="3" Margin="0,8,8,18" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="18,12">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="TweakCount" FontWeight="SemiBold"/>
+              <CheckBox x:Name="RestorePointSwitch" Style="{StaticResource Switch}" IsChecked="True" Margin="0,8,0,0" Content="Create a System Restore point first"/>
+            </StackPanel>
+            <Button x:Name="BtnApplyTweaks" Grid.Column="1" Style="{StaticResource Primary}" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,9,0"/><TextBlock Text="Apply now"/></StackPanel>
+            </Button>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- ================= Drivers & kit ================= -->
+      <ScrollViewer x:Name="PageDrivers" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,26,32,24">
+          <TextBlock Text="Drivers &amp; offline kit" Style="{StaticResource PageTitle}"/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Freshkit detects your chipset and graphics hardware and installs matching driver packages as the first step of every install. The offline kit gets a fresh install online before Windows has your network driver."/>
+          <TextBlock Text="HARDWARE DRIVERS" Style="{StaticResource SectionHead}" Margin="2,24,0,10"/>
+          <UniformGrid Columns="2">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE9D9;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Preview hardware"/>
+                <TextBlock Style="{StaticResource CardText}" Text="See which devices were found and which driver packages match them. Nothing is downloaded or installed."/>
+                <Button x:Name="BtnDriverPlan" Style="{StaticResource Secondary}" Content="Scan hardware" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE7F4;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Install drivers only"/>
+                <TextBlock Style="{StaticResource CardText}" Text="Installs matching chipset and display drivers without any apps. Restarts happen automatically. Sign back in to continue."/>
+                <Button x:Name="BtnDrivers" Style="{StaticResource Primary}" Content="Install drivers" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Border>
+          </UniformGrid>
+          <TextBlock Foreground="{StaticResource Subtle}" FontSize="12" Margin="2,12,0,0" TextWrapping="Wrap" Text="NVIDIA/AMD matching is by vendor and device class. It doesn't fully verify model or OEM compatibility."/>
+
+          <TextBlock Text="OPTIONAL DRIVER EXPORT" Style="{StaticResource SectionHead}" Margin="2,28,0,10"/>
+          <UniformGrid Columns="2">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE74E;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Create kit from this PC"/>
+                <TextBlock Style="{StaticResource CardText}" Text="Choose a folder to export drivers before wiping Windows. This optional export is separate from Freshkit; only the EXE is needed to run the app."/>
+                <ComboBox x:Name="KitModeBox" HorizontalAlignment="Stretch" Margin="0,0,0,12">
+                  <ComboBoxItem Content="Network drivers only (small, recommended)" IsSelected="True"/>
+                  <ComboBoxItem Content="All third-party drivers (can be several GB)"/>
+                </ComboBox>
+                <CheckBox x:Name="KitWifiSwitch" Style="{StaticResource Switch}" Margin="0,0,0,16"><TextBlock Text="Include saved Wi-Fi networks (passwords are stored in plain text)" TextWrapping="Wrap"/></CheckBox>
+                <Button x:Name="BtnKitCreate" Style="{StaticResource Secondary}" Content="Create offline kit" HorizontalAlignment="Left"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock x:Name="KitGlyph" Style="{StaticResource BadgeGlyph}" Text="&#xE8B7;"/></Border>
+                <TextBlock x:Name="KitStatus" Style="{StaticResource CardTitle}" Text="No kit found"/>
+                <TextBlock x:Name="KitDetail" Style="{StaticResource CardText}" Text=""/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnKitInstall" Style="{StaticResource Primary}" Content="Install from kit" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnKitOpen" Style="{StaticResource Ghost}" Content="Choose kit folder"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </UniformGrid>
+          <TextBlock Foreground="{StaticResource Subtle}" FontSize="12" Margin="2,12,0,0" TextWrapping="Wrap" Text="Apps still download during install. Chocolatey's community repository can't cache installers for offline use (that's a paid Chocolatey feature), and most packages fetch their installer from the vendor at install time."/>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- ================= Progress ================= -->
+      <Grid x:Name="PageProgress" Visibility="Collapsed" Margin="32,26,24,0">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+        <StackPanel>
+          <TextBlock Text="Progress" Style="{StaticResource PageTitle}"/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Live status of the current install, including after restarts. Freshkit reopens itself when you sign back in."/>
+        </StackPanel>
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,22,8,16">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/></Grid.ColumnDefinitions>
+              <Border Style="{StaticResource IconBadge}" Margin="0,0,14,0"><TextBlock x:Name="RunGlyph" Style="{StaticResource BadgeGlyph}" Text="&#xE916;"/></Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock x:Name="RunTitle" Style="{StaticResource CardTitle}" Text="Nothing running"/>
+                <TextBlock x:Name="RunDetail" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextWrapping="Wrap" Text="Start an install from Apps, and its progress shows here."/>
+              </StackPanel>
+            </Grid>
+            <ProgressBar x:Name="RunBar" Height="6" Margin="0,16,0,0" Foreground="{StaticResource Accent}" Background="#1F242C" BorderThickness="0" Maximum="1" Value="0"/>
+            <ItemsControl x:Name="SetupSteps" Margin="0,12,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,3">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="76"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource Text}"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Status}" FontSize="12" FontWeight="SemiBold">
+                      <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource Muted}"/><Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="Done"><Setter Property="Foreground" Value="{StaticResource Ok}"/></DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Failed"><Setter Property="Foreground" Value="{StaticResource Bad}"/></DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Running"><Setter Property="Foreground" Value="{StaticResource Accent}"/></DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Blocked"><Setter Property="Foreground" Value="{StaticResource Warn}"/></DataTrigger>
+                      </Style.Triggers></Style></TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Grid.Column="2" Text="{Binding Detail}" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}"/>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <Border x:Name="ChipOk" Style="{StaticResource Pill}" Margin="0,0,8,0" Background="#12352B" Padding="10,3"><TextBlock x:Name="ChipOkText" Foreground="{StaticResource Ok}" FontSize="12"/></Border>
+              <Border x:Name="ChipBad" Style="{StaticResource Pill}" Margin="0,0,8,0" Background="#3A1A1A" Padding="10,3"><TextBlock x:Name="ChipBadText" Foreground="{StaticResource Bad}" FontSize="12"/></Border>
+              <Border x:Name="ChipSkip" Style="{StaticResource Pill}" Margin="0,0,8,0" Background="#23272F" Padding="10,3"><TextBlock x:Name="ChipSkipText" Foreground="{StaticResource Muted}" FontSize="12"/></Border>
+              <Border x:Name="ChipQueue" Style="{StaticResource Pill}" Margin="0,0,8,0" Background="#23272F" Padding="10,3"><TextBlock x:Name="ChipQueueText" Foreground="{StaticResource Muted}" FontSize="12"/></Border>
+            </StackPanel>
+            <WrapPanel Margin="0,16,0,0">
+              <Button x:Name="BtnRetryFailed" Style="{StaticResource Primary}" Content="Retry failed" Margin="0,0,10,0"/>
+              <Button x:Name="BtnResume" Style="{StaticResource Secondary}" Content="Continue saved install" Margin="0,0,10,0"/>
+              <Button x:Name="BtnCancelResume" Style="{StaticResource Secondary}" Content="Cancel saved install" Margin="0,0,10,0"/>
+              <Button x:Name="BtnOpenLogs" Style="{StaticResource Ghost}" Content="Open log folder"/>
+              <Button x:Name="BtnDeleteLogs" Style="{StaticResource Ghost}" Content="Delete logs" Visibility="Collapsed" ToolTip="Removes Freshkit's logs and install reports from this PC."/>
+            </WrapPanel>
+          </StackPanel>
+        </Border>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0" Margin="0,0,0,12">
+          <ItemsControl x:Name="RunItems">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="9" Padding="14,9" Margin="0,0,0,6">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="28"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" Foreground="{Binding GlyphBrush}" FontSize="14" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                      <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Subtle}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding Detail}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0">
+                      <TextBlock Text="{Binding StatusText}" Foreground="{Binding GlyphBrush}" HorizontalAlignment="Right" FontSize="12.5"/>
+                      <TextBlock Text="{Binding Kind}" Foreground="{StaticResource Subtle}" HorizontalAlignment="Right" FontSize="11"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+
+      <!-- ================= Updates ================= -->
+      <ScrollViewer x:Name="PageUpdates" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,26,32,24">
+          <TextBlock Text="Updates" Style="{StaticResource PageTitle}"/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Keep everything current: apps installed with Chocolatey or winget, whether or not Freshkit installed them."/>
+          <Border Style="{StaticResource CardBorder}" Margin="0,24,0,0">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Style="{StaticResource CardTitle}" Text="Available updates"/>
+                  <TextBlock x:Name="UpdatesStatus" Foreground="{StaticResource Muted}" Margin="0,4,0,0" Text="Check to see what can be updated."/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                  <Button x:Name="BtnCheckUpdates" Style="{StaticResource Secondary}" Content="Check for updates" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnUpdateAll" Style="{StaticResource Primary}" Content="Update everything"/>
+                </StackPanel>
+              </Grid>
+              <ItemsControl x:Name="UpdateList" Margin="0,14,0,0">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <CheckBox Style="{StaticResource RowCheck}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                      <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                          <TextBlock Text="{Binding Id}" Foreground="{StaticResource Subtle}" FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding VersionText}" Foreground="{StaticResource Muted}" FontSize="12.5" VerticalAlignment="Center"/>
+                          <Border Style="{StaticResource Pill}" Background="#23272F" Margin="10,0,0,0"><TextBlock Text="{Binding Source}" FontSize="11" Foreground="{StaticResource Muted}"/></Border>
+                        </StackPanel>
+                      </Grid>
+                    </CheckBox>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button x:Name="BtnUpdateSelected" Style="{StaticResource Secondary}" Content="Update selected" HorizontalAlignment="Left" Margin="0,12,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+          </Border>
+          <UniformGrid Columns="2" Margin="0,16,0,0">
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE787;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Automatic weekly updates"/>
+                <TextBlock x:Name="ScheduleStatus" Style="{StaticResource CardText}" Text="Off"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                  <ComboBox x:Name="ScheduleDay" Width="140" Margin="0,0,10,0"/>
+                  <ComboBox x:Name="ScheduleTime" Width="100"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnScheduleOn" Style="{StaticResource Primary}" Content="Turn on" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnScheduleOff" Style="{StaticResource Secondary}" Content="Turn off"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE7B8;"/></Border>
+                <TextBlock x:Name="ChocoStatus" Style="{StaticResource CardTitle}"/>
+                <TextBlock x:Name="ChocoDetail" Style="{StaticResource CardText}"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnBootstrap" Style="{StaticResource Secondary}" Content="Install / update Chocolatey" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnList" Style="{StaticResource Ghost}" Content="Install order"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </UniformGrid>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- ================= Settings backup ================= -->
+      <ScrollViewer x:Name="PageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,26,32,24">
+          <TextBlock Text="Settings backup" Style="{StaticResource PageTitle}"/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Check which settings are available, then save a backup ZIP to a location you choose. Backups are optional outputs; Freshkit itself needs only the EXE."/>
+          <StackPanel Orientation="Horizontal" Margin="2,24,0,10">
+            <TextBlock Text="APPS TO INCLUDE" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+            <Button x:Name="BtnProfAll" Style="{StaticResource Link}" Content="All" Margin="14,0,10,0" VerticalAlignment="Center"/>
+            <Button x:Name="BtnProfNone" Style="{StaticResource Link}" Content="None" Margin="0,0,10,0" VerticalAlignment="Center"/>
+            <Button x:Name="BtnSettingsList" Style="{StaticResource Link}" Content="Show saved locations" VerticalAlignment="Center"/>
+            <Button x:Name="BtnRefreshSettings" Style="{StaticResource Link}" Content="Refresh" Margin="14,0,0,0" VerticalAlignment="Center"/>
+          </StackPanel>
+          <ItemsControl x:Name="ProfileList">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource CardBorder}" Width="270" Margin="0,0,10,10" Padding="12">
+                  <StackPanel>
+                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Foreground="{StaticResource Text}" ToolTip="{Binding Tooltip}" Margin="0,0,0,7">
+                      <TextBlock Text="{Binding Name}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                    </CheckBox>
+                    <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource Accent}" FontSize="12"/>
+                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Muted}" FontSize="11.5" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE74E;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Back up"/>
+                <TextBlock Style="{StaticResource CardText}" Text="The ZIP isn't encrypted and may contain private settings or URLs. Save it to a drive you won't wipe, such as the USB stick Freshkit is on."/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnBackup" Style="{StaticResource Primary}" Content="Back up settings..." Margin="0,0,10,0"/>
+                  <Button x:Name="BtnBackupPlan" Style="{StaticResource Secondary}" Content="Preview"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE777;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Restore"/>
+                <TextBlock Style="{StaticResource CardText}" Text="Existing settings are saved to a safety ZIP before they're overwritten."/>
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <TextBox x:Name="ArchiveBox" Style="{StaticResource Input}" Tag="Backup ZIP file"/>
+                  <Button x:Name="BtnBrowse" Grid.Column="1" Style="{StaticResource Secondary}" Content="Browse" Margin="8,0,0,0" Padding="12,7"/>
+                </Grid>
+                <CheckBox x:Name="MismatchSwitch" Style="{StaticResource Switch}" Content="Allow a different major app version" Margin="0,0,0,16"/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnRestore" Style="{StaticResource Primary}" Content="Restore" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnRestorePlan" Style="{StaticResource Secondary}" Content="Preview" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnInspect" Style="{StaticResource Ghost}" Content="Inspect ZIP"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Activity drawer -->
+      <Border Grid.Row="1" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" Margin="20,8,14,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#4B5563" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Margin="10,0,16,0" VerticalAlignment="Center">
+              <TextBlock x:Name="StatusText" Text="Ready" TextTrimming="CharacterEllipsis"/>
+              <ProgressBar x:Name="Busy" IsIndeterminate="True" Height="3" Margin="0,5,0,0" Foreground="{StaticResource Accent}" Background="#1F242C" BorderThickness="0" Visibility="Collapsed" Width="420" HorizontalAlignment="Left"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+              <Button x:Name="BtnCopyLog" Style="{StaticResource Ghost}" Content="Copy"/>
+              <Button x:Name="BtnClearLog" Style="{StaticResource Ghost}" Content="Clear"/>
+              <Button x:Name="BtnToggleLog" Style="{StaticResource Ghost}">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock x:Name="ToggleLogGlyph" Text="&#xE70E;" FontFamily="{StaticResource Icons}" FontSize="11" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                  <TextBlock Text="Activity"/>
+                </StackPanel>
+              </Button>
+            </StackPanel>
+          </Grid>
+          <TextBox x:Name="LogBox" Height="190" Visibility="Collapsed" IsReadOnly="True" Background="#0B0D10" Foreground="#C9D1D9" BorderThickness="0,1,0,0" BorderBrush="{StaticResource Line}"
+                   FontFamily="Cascadia Mono, Consolas" FontSize="12" Padding="16,10" TextWrapping="NoWrap"
+                   VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" SelectionBrush="{StaticResource Accent}"/>
+        </DockPanel>
+      </Border>
+    </Grid>
+
+    <!-- ===== Search sheet ===== -->
+    <Grid x:Name="SearchSheet" Grid.ColumnSpan="2" Background="#B3070809" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle">
+      <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="24,22" Width="760" Margin="0,50" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+        <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.5" Color="Black"/></Border.Effect>
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Add apps" FontSize="18" FontWeight="SemiBold"/>
+              <TextBlock Text="One search across Chocolatey, winget, the Microsoft Store and GitHub. Each app is shown once, from the source with its newest release. Added apps last for this session." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button x:Name="BtnSearchClose" Grid.Column="1" Style="{StaticResource Ghost}" VerticalAlignment="Top"><TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}"/></Button>
+          </Grid>
+          <Grid Grid.Row="1" Margin="0,16,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Grid>
+              <TextBox x:Name="SheetQuery" Style="{StaticResource Input}" Tag="Search for any app by name, package ID or GitHub owner/repo" Padding="32,7,10,7" Margin="0,0,10,0"
+                       ToolTip="Searches Chocolatey, winget, the Microsoft Store and GitHub releases together."/>
+              <TextBlock Text="&#xE721;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Subtle}" VerticalAlignment="Center" Margin="11,0,0,0" IsHitTestVisible="False" FontSize="12"/>
+            </Grid>
+            <Button x:Name="BtnSheetSearch" Grid.Column="1" Style="{StaticResource Primary}" Content="Search"/>
+          </Grid>
+          <Grid Grid.Row="2">
+          <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl x:Name="SearchResults">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="4,10">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                      <ContentControl Content="{Binding Artwork}" ContentTemplate="{StaticResource AppIconTemplate}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                      <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                        <DockPanel>
+                          <Border DockPanel.Dock="Right" Background="#232D3E" CornerRadius="4" Padding="6,3" Margin="10,0,0,0" ToolTip="{Binding SourceTip}"><TextBlock Text="{Binding SourceLabel}" FontSize="10.5" Foreground="#BED5F5"/></Border>
+                          <Border DockPanel.Dock="Right" Background="#12352B" CornerRadius="4" Padding="6,3" Margin="10,0,0,0" Visibility="{Binding BestVisibility}"><TextBlock Text="Best match" FontSize="10.5" Foreground="#6EE7B7"/></Border>
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Meta}" Foreground="{StaticResource Subtle}" FontSize="12" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Meta}"/>
+                        <TextBlock Text="{Binding Summary}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" ToolTip="{Binding Summary}"/>
+                      </StackPanel>
+                      <Button Grid.Column="2" Style="{StaticResource Secondary}" Padding="14,6" Content="{Binding ButtonText}" IsEnabled="{Binding CanAdd}" Tag="add-result" VerticalAlignment="Center"/>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <StackPanel x:Name="SearchState" VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="440" Margin="24">
+            <Border Width="58" Height="58" CornerRadius="16" Background="{StaticResource AccentTint}" HorizontalAlignment="Center" Margin="0,0,0,18">
+              <TextBlock x:Name="SearchStateGlyph" Text="&#xE721;" FontFamily="{StaticResource Icons}" FontSize="23" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock x:Name="SearchStateTitle" Text="Search for an app" FontSize="19" FontWeight="SemiBold" TextAlignment="Center" TextWrapping="Wrap"/>
+            <TextBlock x:Name="SearchStateDetail" Text="Enter a name or package ID above." Foreground="{StaticResource Muted}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,0" LineHeight="21" MaxHeight="126" TextTrimming="CharacterEllipsis"/>
+            <ProgressBar x:Name="SearchBusy" IsIndeterminate="True" Height="3" Width="180" Foreground="{StaticResource Accent}" Background="{StaticResource Line}" BorderThickness="0" Margin="0,20,0,0" Visibility="Collapsed"/>
+            <Button x:Name="BtnSearchRetry" Style="{StaticResource Secondary}" Content="Try again" HorizontalAlignment="Center" Margin="0,18,0,0" Visibility="Collapsed"/>
+          </StackPanel>
+          </Grid>
+          <TextBlock x:Name="SheetStatus" Grid.Row="3" Foreground="{StaticResource Subtle}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ===== Setup review ===== -->
+    <Grid x:Name="ReviewSheet" Grid.ColumnSpan="2" Background="#B3070809" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle" KeyboardNavigation.ControlTabNavigation="Cycle">
+      <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Width="800" Margin="0,28" Padding="24" HorizontalAlignment="Center">
+        <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.5" Color="Black"/></Border.Effect>
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <Grid Margin="0,0,0,18">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock Text="Review setup" FontSize="22" FontWeight="SemiBold"/>
+              <TextBlock Text="Check your selections and choose what runs on this PC." Foreground="{StaticResource Muted}" Margin="0,5,0,12"/>
+              <TextBlock x:Name="ReviewSummary" Foreground="{StaticResource Accent}" FontWeight="SemiBold"/>
+            </StackPanel>
+            <Button x:Name="BtnReviewClose" Grid.Column="1" Style="{StaticResource Ghost}" VerticalAlignment="Top" ToolTip="Close review"><TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}"/></Button>
+          </Grid>
+          <ScrollViewer x:Name="ReviewScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0">
+            <StackPanel>
+              <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                  <DockPanel><Button x:Name="BtnReviewApps" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Edit apps"/><TextBlock x:Name="ReviewAppsTitle" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+                  <TextBlock x:Name="ReviewInstalled" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,12"/>
+                  <CheckBox x:Name="ReviewUpgrade" Style="{StaticResource Switch}" Margin="0,0,0,14"><TextBlock Text="Update selected apps that are already installed" TextWrapping="Wrap"/></CheckBox>
+                  <Expander x:Name="ReviewAppList" Style="{StaticResource ReviewExpander}" Header="Selected apps" Foreground="{StaticResource Muted}"><TextBlock x:Name="ReviewAppsDetail" Foreground="{StaticResource Text}" TextWrapping="Wrap" Margin="4,12,0,4" FontSize="12.5"/></Expander>
+                </StackPanel>
+              </Border>
+              <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,12"><Button x:Name="BtnReviewTweaks" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Edit tweaks"/><TextBlock Text="Windows tweaks &amp; removals" FontWeight="SemiBold"/></DockPanel>
+                  <CheckBox x:Name="ReviewTweaks" Style="{StaticResource Switch}" Margin="0,0,0,12"><TextBlock Text="Include selected tweaks and app removals" TextWrapping="Wrap"/></CheckBox>
+                  <CheckBox x:Name="ReviewRestorePoint" Style="{StaticResource Switch}" IsEnabled="{Binding IsChecked, ElementName=ReviewTweaks}" Margin="0,0,0,12"><TextBlock Text="Create a System Restore point first" TextWrapping="Wrap"/></CheckBox>
+                  <Expander Style="{StaticResource ReviewExpander}" Header="Selected changes" Foreground="{StaticResource Muted}"><TextBlock x:Name="ReviewTweaksDetail" TextWrapping="Wrap" Foreground="{StaticResource Text}" Margin="4,12,0,4" FontSize="12.5" LineHeight="21"/></Expander>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ReviewDriverCard" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                  <TextBlock Text="Hardware drivers" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                  <CheckBox x:Name="ReviewDrivers" Style="{StaticResource Switch}"><TextBlock Text="Install matching chipset and graphics drivers" TextWrapping="Wrap"/></CheckBox>
+                  <TextBlock Text="Uses Freshkit's hardware detection. Review detected hardware on Drivers &amp; offline kit if needed." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"/>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ReviewKitCard" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,12"><Button x:Name="BtnReviewKit" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Edit kit"/><TextBlock Text="Offline kit" FontWeight="SemiBold"/></DockPanel>
+                  <CheckBox x:Name="ReviewKit" Style="{StaticResource Switch}"><TextBlock Text="Apply kit drivers and saved Wi-Fi before setup" TextWrapping="Wrap"/></CheckBox>
+                  <TextBlock x:Name="ReviewKitDetail" Foreground="{StaticResource Muted}" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Border>
+              <Border x:Name="ReviewRestoreCard" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,12"><Button x:Name="BtnReviewBackup" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Choose ZIP…"/><TextBlock Text="Settings restore" FontWeight="SemiBold"/></DockPanel>
+                  <CheckBox x:Name="ReviewRestore" Style="{StaticResource Switch}"><TextBlock Text="Restore app settings after setup" TextWrapping="Wrap"/></CheckBox>
+                  <TextBlock x:Name="ReviewBackupPath" TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,10,0,12" FontSize="12"/>
+                  <CheckBox x:Name="ReviewAllowMismatch" Style="{StaticResource Switch}" IsEnabled="{Binding IsChecked, ElementName=ReviewRestore}"><TextBlock Text="Allow a different major app version" TextWrapping="Wrap"/></CheckBox>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+          <StackPanel Grid.Row="2" Margin="0,16,0,0">
+            <TextBlock Text="Windows will ask for administrator permission. Your PC may restart; sign back in to the same account and Freshkit will continue." Foreground="{StaticResource Muted}" TextWrapping="Wrap" FontSize="12" LineHeight="18"/>
+            <TextBlock x:Name="ReviewValidation" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            <Grid Margin="0,12,0,0">
+              <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <TextBlock Text="Nothing runs until you start setup." Foreground="{StaticResource Subtle}" VerticalAlignment="Center" FontSize="12"/>
+              <Button x:Name="BtnReviewCancel" Grid.Column="1" Style="{StaticResource Secondary}" Content="Back" Margin="0,0,10,0"/>
+              <Button x:Name="BtnReviewStart" Grid.Column="2" Style="{StaticResource Primary}" Content="Start setup"/>
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ===== Pick sheet (checklist) ===== -->
+    <Grid x:Name="PickSheet" Grid.ColumnSpan="2" Background="#B3070809" Visibility="Collapsed">
+      <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="24,22" Width="640" Margin="0,60" HorizontalAlignment="Center" VerticalAlignment="Stretch">
+        <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.5" Color="Black"/></Border.Effect>
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+          <StackPanel>
+            <TextBlock x:Name="PickTitle" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            <TextBlock x:Name="PickText" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+          </StackPanel>
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,6">
+            <Button x:Name="BtnPickAll" Style="{StaticResource Link}" Content="Select all" Margin="2,0,12,0"/>
+            <Button x:Name="BtnPickNone" Style="{StaticResource Link}" Content="None"/>
+          </StackPanel>
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="PickList">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <CheckBox Style="{StaticResource RowCheck}" IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                    <DockPanel>
+                      <ContentControl DockPanel.Dock="Left" Content="{Binding Artwork}" ContentTemplate="{StaticResource AppIconTemplate}" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <ContentControl.Style>
+                          <Style TargetType="ContentControl"><Style.Triggers><DataTrigger Binding="{Binding Artwork}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style>
+                        </ContentControl.Style>
+                      </ContentControl>
+                      <StackPanel>
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                      <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Subtle}" FontSize="12"/>
+                      </StackPanel>
+                    </DockPanel>
+                  </CheckBox>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+          <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="PickCancel" Style="{StaticResource Secondary}" Content="Cancel" Margin="0,0,10,0"/>
+            <Button x:Name="PickOk" Style="{StaticResource Primary}" Content="OK"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- ===== Dialog ===== -->
+    <Grid x:Name="Overlay" Grid.ColumnSpan="2" Background="#B3070809" Visibility="Collapsed">
+      <Border Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="26,24" Width="520" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Border.Effect><DropShadowEffect BlurRadius="40" ShadowDepth="8" Opacity="0.5" Color="Black"/></Border.Effect>
+        <StackPanel>
+          <TextBlock x:Name="DlgTitle" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          <TextBlock x:Name="DlgText" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" LineHeight="21"/>
+          <StackPanel x:Name="DlgExtra" Margin="0,14,0,0"/>
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+            <Button x:Name="DlgCancel" Style="{StaticResource Secondary}" Content="Cancel" Margin="0,0,10,0"/>
+            <Button x:Name="DlgOk" Style="{StaticResource Primary}" Content="OK"/>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>
