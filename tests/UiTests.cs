@@ -99,6 +99,11 @@ namespace Freshkit
                 Check(lookalike.Count == 2 && lookalike[0].Source == "choco", "An unofficial Store lookalike is not merged with, or preferred over, the real app");
                 var variants = Sources.Rank("vlc", new List<SearchResult> { new SearchResult { Source = "choco", Id = "vlc", Name = "VLC media player", Version = "3.0.24", Meta = "vlc" }, new SearchResult { Source = "choco", Id = "vlc.install", Name = "VLC media player (Install)", Version = "3.0.24", Meta = "vlc.install" }, new SearchResult { Source = "choco", Id = "vlc.portable", Name = "VLC media player (Portable)", Version = "3.0.21", Meta = "vlc.portable" } });
                 Check(variants.Count == 1, "Chocolatey install/portable variants of one package show as one app");
+                var firefox = all.Find(a => a.Name == "Mozilla Firefox");
+                Check(firefox != null && firefox.IsWinget && firefox.Id == "Mozilla.Firefox.en-GB" && firefox.IsSelected && firefox.Artwork.Image != null, "Firefox installs from Mozilla's en-GB winget package and stays ticked");
+                Check(all.Find(a => a.Id == "spotify") != null && all.Find(a => a.Id == "pawnio") != null && all.Find(a => a.Id == "openrgb.install") != null && all.Find(a => a.Id == "python3") != null, "Spotify, install-order pairs and Python 3 stay on Chocolatey");
+                var browsers = Field<ObservableCollection<AppGroup>>(ui, "groups").First(g => g.Name == "Browsers").Items.Select(a => a.Name).ToList();
+                Check(browsers.SequenceEqual(browsers.OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)), "Apps are alphabetical within each category across sources");
                 Check(Data.CompareVersions("2026.1109.1228.0", "11.42.3") == null && Data.CompareVersions("15.10.39.0", "15.8.118.0") > 0 && Data.CompareVersions("v1.5.0", "1.5") == 0, "Versions compare numerically and date-style versions are not compared with semantic ones");
                 Check(Data.IsStoreId("9NKSQGP7F2NH") && Data.IsStoreId("XPFFTQ037JWMHS") && !Data.IsStoreId("Microsoft.PowerToys"), "Both Microsoft Store ID formats are recognised");
                 var whatsapp = all.Find(a => a.Name == "WhatsApp");
@@ -134,7 +139,7 @@ namespace Freshkit
                 var tweaksBefore = Field<object>(ui, "debloat") == null ? 0 : ((System.Collections.ICollection)Field<object>(ui, "debloat").GetType().GetMethod("SelectedFeatures").Invoke(Field<object>(ui, "debloat"), null)).Count;
                 box.SelectedIndex = starter;
                 var tweaksAfter = Field<object>(ui, "debloat") == null ? 0 : ((System.Collections.ICollection)Field<object>(ui, "debloat").GetType().GetMethod("SelectedFeatures").Invoke(Field<object>(ui, "debloat"), null)).Count;
-                Check(all.Find(a => a.Id == "sumatrapdf.install").IsSelected && !all.Find(a => a.Id == "steam").IsSelected && tweaksBefore == tweaksAfter, "Starter profile selects its apps and leaves Windows tweaks unchanged");
+                Check(all.Find(a => a.Id == "SumatraPDF.SumatraPDF").IsSelected && !all.Find(a => a.Id == "Valve.Steam").IsSelected && tweaksBefore == tweaksAfter, "Starter profile selects its apps and leaves Windows tweaks unchanged");
                 box.SelectedIndex = 1;
                 Check(all.FindAll(a => a.IsSelected).Count == 41, "List defaults restore the curated selection");
                 ListFile.AddPackage("github", "octo-org/Tool.App", "Tool App");
