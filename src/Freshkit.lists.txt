@@ -116,7 +116,6 @@
 ::DISABLED teracopy|TeraCopy|
 ::DISABLED revo-uninstaller|Revo Uninstaller|
 ::DISABLED open-shell|Open-Shell|
-::DISABLED launchy|Launchy|
 ::DISABLED imgburn|ImgBurn|
 ::DISABLED cdburnerxp|CDBurnerXP|
 ::DISABLED infrarecorder|InfraRecorder|
@@ -218,6 +217,8 @@
 ::GROUP Cloud & downloads
 ::DISABLED 9PKTQ5699M62|iCloud|
 ::DISABLED 9N7JSXC1SJK6|Blip|
+::GROUP Utilities
+::DISABLED CodeJelly.Launchy|Launchy|
 ::END_WINGET
 ::BEGIN_GITHUB
 :: GitHub releases: ::GITHUB owner/repo|Display name|Optional silent installer arguments (::DISABLED = unticked).

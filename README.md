@@ -22,11 +22,11 @@ An active install keeps a temporary snapshot of its exact selection so it can co
 
 | Page | Features |
 |---|---|
-| Apps | 169 built-in apps (Freshkit's curated list, Sleekmeeter and Afterclip from GitHub, plus every app Ninite offers) in a category rail with live counts, a Selected view, responsive cards with logos and installed badges, **Add apps**: one search box across Chocolatey, winget, the Microsoft Store and GitHub releases. Each app appears once, from the source with its newest release (other sources and their versions are noted, and a source badge shows on each result); owner/repo or a github.com link finds a project directly, installed-app scan, starter and session profiles, and a setup review before starting. |
+| Apps | 168 built-in apps (Freshkit's curated list, Sleekmeeter and Afterclip from GitHub, and every app Ninite offers) in a category rail with live counts, a Selected view, responsive cards with logos and installed badges, an installed-app scan, starter and session profiles, and a setup review before starting. **Add apps** is one search box across Chocolatey, winget, the Microsoft Store and GitHub releases: each app appears once, from the source with its newest release, with a source badge, publisher, an Installed badge (with version) when it's already on the PC, and a Website link (https only). Other sources and their versions are noted; owner/repo or a github.com link finds a project directly. |
 | Windows tweaks | Embedded Win11Debloat settings, removable preinstalled apps, recommended presets and optional restore point. |
 | Drivers & offline kit | Hardware scan and driver installation. Optional driver/Wi-Fi exports go to a folder you explicitly choose; choose a saved kit to use it in the current session. |
 | Progress | Seven-stage checklist: offline drivers, Wi-Fi, tweaks, Chocolatey setup, hardware drivers, apps/runtimes and settings restore. Per-app results, restart recovery, failed-step details and targeted retries. |
-| Updates | Chocolatey/winget update checks, selected updates and optional weekly automatic updates. |
+| Updates | Update checks for Chocolatey, winget, Microsoft Store apps (installed MSIX version vs the Store catalog) and GitHub-release apps (Installed apps version vs the latest release), selected updates and optional weekly automatic updates. Store and GitHub updates only touch apps that are already installed; the weekly task carries its own copy of the GitHub updater so it still works without the EXE. |
 | Settings backup | Settings found, app running, nothing to back up or scan error, with included file counts and estimated uncompressed size. Refresh after closing apps. Back up, inspect, preview and restore ZIPs. |
 
 Native driver, Wi-Fi, tweak and update failures are checked. A failed prerequisite blocks later stages until retried. Driver/app failures remain visible while independent package work can finish. Retry preserves completed stages and narrows package work using the report belonging to that setup. Interrupted settings restoration is marked failed when reopening and can be retried.
@@ -109,6 +109,22 @@ powershell -ExecutionPolicy Bypass -File tests\settings-roundtrip.ps1
 The tests cover session isolation, catalog merging, settings discovery/exclusions, stage failure/retry handling, report binding, interrupted restore and a synthetic backup/restore round trip. Real installer/reboot behaviour should additionally be exercised in a disposable Windows VM.
 
 UI checks use synthetic search completions and build job specifications without running installers. Add `-Render` to `tests\run-ui.ps1` to save WPF screen previews in `obj\ui-previews`, including the minimum-size layout.
+
+### Catalog health check
+
+```
+powershell -ExecutionPolicy Bypass -File toolscheck-catalog.ps1
+```
+
+Run it before a release (needs internet; changes nothing). It reports an **error** when a Chocolatey package has no current version, a Store product or winget ID no longer exists, a GitHub entry's latest release has no usable installer, or a logo is unreadable, and a **warning** for Chocolatey packages not updated in two years (`-StaleDays`), missing logos or unrecorded logo sources. Exit code 1 means at least one error. Some stale warnings are expected (old Visual C++ runtimes are frozen; Steam updates itself).
+
+### GitHub requests
+
+Release lookups use github.com's own pages (`/releases/latest` and `expanded_assets`, which include each file's SHA-256), so searches and installs don't use the API's 60-requests-an-hour allowance; the API is a fallback, and repository search uses the separate search allowance.
+
+## Version control
+
+The project is a git repository (`main`). `obj/` and `dist/` are build output and ignored; `.gitattributes` stores files byte-for-byte because scripts and the catalog depend on their existing line endings and encodings.
 
 ## Updating Win11Debloat
 

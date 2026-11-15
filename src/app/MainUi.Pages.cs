@@ -529,7 +529,7 @@ namespace Freshkit
             Act("BtnScheduleOn", delegate
             {
                 string d = (string)day.SelectedItem, t = (string)time.SelectedItem;
-                RunScript("Turning on weekly updates", "Schedule.ps1", "-Day " + d + " -Time " + t, delegate { RefreshSchedule(); });
+                RunScript("Turning on weekly updates", "Schedule.ps1", "-Day " + d + " -Time " + t + StoreGitHubArgs(), delegate { RefreshSchedule(); });
             });
             Act("BtnScheduleOff", delegate { RunScript("Turning off weekly updates", "Schedule.ps1", "-Disable", delegate { RefreshSchedule(); }); });
             Act("BtnBootstrap", delegate { RunJob(new JobSpec { Title = "Installing / updating Chocolatey", Action = "Bootstrap" }, null); });
@@ -539,13 +539,19 @@ namespace Freshkit
         void CheckUpdates(Action then)
         {
             Get<Button>("BtnCheckUpdates").IsEnabled = false;
-            Get<TextBlock>("UpdatesStatus").Text = "Checking Chocolatey and winget for updates (this can take a minute)...";
+            Get<TextBlock>("UpdatesStatus").Text = "Checking Chocolatey, winget, the Microsoft Store and GitHub for updates (this can take a minute)...";
+            // Store and GitHub apps in this session's list (catalog plus additions).
+            var storeApps = new List<AppItem>(); var gitHubApps = new List<AppItem>();
+            foreach (AppItem a in apps) { if (a.IsStore) storeApps.Add(a); else if (a.IsGitHub) gitHubApps.Add(a); }
             SetStatus("Checking for updates...", DotBusy);
             new Thread(delegate ()
             {
                 List<UpdateItem> choco = new List<UpdateItem>(), winget = new List<UpdateItem>(); string error = null;
                 try { choco = Sources.ChocoUpdates(); } catch (Exception ex) { error = "Chocolatey: " + ex.Message; }
                 try { winget = Sources.WingetUpdates(); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "winget: " + ex.Message; }
+                List<UpdateItem> store = new List<UpdateItem>(), github = new List<UpdateItem>();
+                try { store = Sources.StoreUpdates(storeApps); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "Microsoft Store: " + ex.Message; }
+                try { github = Sources.GitHubUpdates(gitHubApps); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "GitHub: " + ex.Message; }
                 // Apps Chocolatey manages also show up in winget; keep the Chocolatey entry only.
                 var chocoNames = new List<string>();
                 foreach (UpdateItem c in choco) chocoNames.Add(Data.Norm(System.Text.RegularExpressions.Regex.Replace(c.Id, @"\.(install|portable)$", "")));
@@ -556,6 +562,8 @@ namespace Freshkit
                     foreach (string c in chocoNames) if (c.Length >= 3 && (n == c || (c.Length >= 4 && n.StartsWith(c)))) dup = true;
                     if (!dup) merged.Add(w);
                 }
+                merged.AddRange(store);
+                merged.AddRange(github);
                 Ui(delegate
                 {
                     Get<Button>("BtnCheckUpdates").IsEnabled = !running;
@@ -572,15 +580,41 @@ namespace Freshkit
 
         void UpdateItems(List<UpdateItem> items)
         {
-            var choco = new List<string>(); var winget = new List<string>();
-            foreach (UpdateItem u in items) (u.Source == "winget" ? winget : choco).Add(u.Id);
-            var args = new StringBuilder();
-            if (choco.Count > 0) args.Append("-Choco ").Append(Engine.Q(string.Join(",", choco.ToArray()))).Append(' ');
-            if (winget.Count > 0) args.Append("-Winget ").Append(Engine.Q(string.Join(",", winget.ToArray())));
+            string args = UpdateArguments(items);
             Confirm("Update " + items.Count + " app" + (items.Count == 1 ? "?" : "s?"), "Windows asks for administrator permission. Close the apps being updated first.", "Update", delegate
             {
-                RunScript("Updating apps", "Updates.ps1", args.ToString(), delegate { CheckUpdates(null); });
+                RunScript("Updating apps", "Updates.ps1", args, delegate { CheckUpdates(null); });
             });
+        }
+
+        /// Updates.ps1 arguments: Chocolatey and winget IDs, Store product IDs and GitHub owner/repo|name pairs.
+        static string UpdateArguments(List<UpdateItem> items)
+        {
+            var choco = new List<string>(); var winget = new List<string>(); var store = new List<string>(); var github = new List<string>();
+            foreach (UpdateItem u in items)
+            {
+                if (u.Source == "github") github.Add(u.Id + "|" + System.Text.RegularExpressions.Regex.Replace(u.Name, "[|;\"']", " "));
+                else if (u.Source == "store") store.Add(u.Id);
+                else (u.Source == "winget" ? winget : choco).Add(u.Id);
+            }
+            var args = new StringBuilder();
+            if (choco.Count > 0) args.Append("-Choco ").Append(Engine.Q(string.Join(",", choco.ToArray()))).Append(' ');
+            if (winget.Count > 0) args.Append("-Winget ").Append(Engine.Q(string.Join(",", winget.ToArray()))).Append(' ');
+            if (store.Count > 0) args.Append("-Store ").Append(Engine.Q(string.Join(",", store.ToArray()))).Append(' ');
+            if (github.Count > 0) args.Append("-GitHub ").Append(Engine.Q(string.Join(";", github.ToArray())));
+            return args.ToString().Trim();
+        }
+
+        /// Store and GitHub apps from this session's list, for the weekly task (it updates only those already installed).
+        string StoreGitHubArgs()
+        {
+            var store = new List<string>(); var github = new List<string>();
+            foreach (AppItem a in apps)
+            {
+                if (a.IsStore) store.Add(a.Id);
+                else if (a.IsGitHub) github.Add(a.Id + "|" + System.Text.RegularExpressions.Regex.Replace(a.Name, "[|;\"']", " "));
+            }
+            return (store.Count > 0 ? " -Store " + Engine.Q(string.Join(",", store.ToArray())) : "") + (github.Count > 0 ? " -GitHub " + Engine.Q(string.Join(";", github.ToArray())) : "");
         }
 
         void RefreshSchedule()

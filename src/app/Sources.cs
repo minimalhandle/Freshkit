@@ -41,6 +41,17 @@ namespace Freshkit
         public string Version { get; set; }
         public string Meta { get; set; }
         public string Summary { get; set; }
+        /// Publisher or author, when the source provides one.
+        public string Publisher { get; set; }
+        /// https link to the app's website or listing.
+        public string Homepage { get; set; }
+        string installedVersion;
+        /// Version found on this PC ("" when installed but unversioned; null when not installed).
+        public string InstalledVersion { get { return installedVersion; } set { installedVersion = value; Raise("InstalledText"); Raise("InstalledVisibility"); } }
+        public string InstalledText { get { return string.IsNullOrEmpty(installedVersion) ? "Installed" : "Installed v" + installedVersion.TrimStart('v', 'V'); } }
+        public Visibility InstalledVisibility { get { return installedVersion != null ? Visibility.Visible : Visibility.Collapsed; } }
+        public Visibility HomepageVisibility { get { return (Homepage ?? "").StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? Visibility.Visible : Visibility.Collapsed; } }
+        public Visibility PublisherVisibility { get { return string.IsNullOrEmpty(Publisher) ? Visibility.Collapsed : Visibility.Visible; } }
         public string SourceLabel { get { return Source == "github" ? "GitHub" : Source == "store" ? "Microsoft Store" : Source == "winget" ? "winget" : "Chocolatey"; } }
         public bool Added { get { return added; } set { added = value; Raise("ButtonText"); Raise("CanAdd"); } }
         public string ButtonText { get { return added ? "Added" : "Add"; } }
@@ -56,6 +67,7 @@ namespace Freshkit
         public string Current { get; set; }
         public string Available { get; set; }
         public string VersionText { get { return Current + "  →  " + Available; } }
+        public string SourceLabel { get { return Source == "github" ? "GitHub" : Source == "store" ? "Microsoft Store" : Source == "winget" ? "winget" : "Chocolatey"; } }
         public bool IsSelected { get { return selected; } set { selected = value; Raise("IsSelected"); } }
     }
 
@@ -92,6 +104,8 @@ namespace Freshkit
                 list.Add(new SearchResult
                 {
                     Source = "choco", Id = id, Name = title.Length > 0 ? title : id, Version = version, Popularity = downloads,
+                    Publisher = Child(props, "Authors"),
+                    Homepage = Child(props, "ProjectUrl").StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? Child(props, "ProjectUrl") : "https://community.chocolatey.org/packages/" + Uri.EscapeDataString(id),
                     Meta = id + "  ·  v" + version + "  ·  " + Downloads(downloads) + " downloads",
                     Summary = summary.Replace('\n', ' ').Replace('\r', ' ')
                 });
@@ -149,23 +163,53 @@ namespace Freshkit
             return best;
         }
 
+        internal sealed class GitHubRelease { public string Tag; public List<string> Assets = new List<string>(); }
+        static readonly Dictionary<string, GitHubRelease> gitHubReleases = new Dictionary<string, GitHubRelease>(StringComparer.OrdinalIgnoreCase);
+
+        /// Latest release from github.com's own pages (the /releases/latest redirect and the expanded_assets list).
+        /// Unlike api.github.com, these don't count against the 60-requests-an-hour limit per network. Cached per session.
+        internal static GitHubRelease GitHubLatest(string repo)
+        {
+            if (!Data.IsGitHubRepo(repo)) return null;
+            lock (gitHubReleases) { GitHubRelease cached; if (gitHubReleases.TryGetValue(repo, out cached)) return cached; }
+            Data.EnsureModernTls();
+            var request = (HttpWebRequest)WebRequest.Create("https://github.com/" + repo + "/releases/latest");
+            request.AllowAutoRedirect = false; request.UserAgent = "Freshkit/3.0"; request.Timeout = 20000;
+            string location = null;
+            try { using (var response = (HttpWebResponse)request.GetResponse()) location = response.Headers["Location"]; }
+            catch (WebException) { }   // no releases, missing repository or offline
+            GitHubRelease release = null;
+            Match tag = Regex.Match(location ?? "", @"/releases/tag/(?<tag>[^/?#]+)\z");
+            if (tag.Success)
+            {
+                release = new GitHubRelease { Tag = Uri.UnescapeDataString(tag.Groups["tag"].Value) };
+                string html = HttpText("https://github.com/" + repo + "/releases/expanded_assets/" + Uri.EscapeDataString(release.Tag), null);
+                string prefix = "/" + repo + "/releases/download/";
+                foreach (Match link in Regex.Matches(html, "href=\"(?<href>/[^\"]+/releases/download/[^\"]+)\""))
+                {
+                    string href = WebUtility.HtmlDecode(link.Groups["href"].Value);
+                    if (href.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) release.Assets.Add(Uri.UnescapeDataString(href.Substring(href.LastIndexOf('/') + 1)));
+                }
+            }
+            lock (gitHubReleases) gitHubReleases[repo] = release;
+            return release;
+        }
+
         static SearchResult GitHubResult(object repo)
         {
             string full = J.S(repo, "full_name");
             if (!Data.IsGitHubRepo(full) || J.B(repo, "archived")) return null;
-            object release = GitHubJson("https://api.github.com/repos/" + full + "/releases/latest");
+            GitHubRelease release = GitHubLatest(full);
             if (release == null) return null;
-            var names = new List<string>();
-            var assets = J.Get(release, "assets") as object[];
-            if (assets != null) foreach (object a in assets) names.Add(J.S(a, "name"));
-            string asset = PickInstallerAsset(names);
+            string asset = PickInstallerAsset(release.Assets);
             if (asset == null) return null;
             long stars; long.TryParse(J.S(repo, "stargazers_count"), out stars);
-            string tag = J.S(release, "tag_name");
+            string tag = release.Tag;
             return new SearchResult
             {
                 Source = "github", Id = full, Name = J.S(repo, "name"), Version = tag.TrimStart('v', 'V'), Popularity = stars,
-                Meta = full + "  ·  " + tag + "  ·  " + Downloads(stars) + " stars  ·  " + asset,
+                Publisher = full.Substring(0, full.IndexOf('/')), Homepage = "https://github.com/" + full,
+                Meta = full + "  ·  " + tag + (stars > 0 ? "  ·  " + Downloads(stars) + " stars" : "") + "  ·  " + asset,
                 Summary = J.S(repo, "description").Replace('\n', ' ').Replace('\r', ' ')
             };
         }
@@ -178,7 +222,13 @@ namespace Freshkit
             var repos = new List<object>();
             if (direct.Success && direct.Groups["repo"].Value.Contains("/"))
             {
-                object repo = GitHubJson("https://api.github.com/repos/" + direct.Groups["repo"].Value);
+                // A pasted owner/repo needs no search. Stars and description are optional extras from the API;
+                // without them (rate limit) the release page alone is enough.
+                string full = direct.Groups["repo"].Value;
+                object repo = null;
+                try { repo = GitHubJson("https://api.github.com/repos/" + full); } catch (Exception) { }
+                if (repo == null && GitHubLatest(full) != null)
+                    repo = new Dictionary<string, object> { { "full_name", full }, { "name", full.Substring(full.IndexOf('/') + 1) } };
                 if (repo != null) repos.Add(repo);
             }
             if (repos.Count == 0)
@@ -203,6 +253,7 @@ namespace Freshkit
 
         // ---------------------------------------------------------------- Microsoft Store
         static readonly Dictionary<string, string> storeLogos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        static readonly Dictionary<string, string> storeFamilies = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         static string StoreMarket()
         {
@@ -259,10 +310,13 @@ namespace Freshkit
                         if (logo.Length == 0 || rank < logoWidth) { logo = "https:" + J.S(image, "Uri"); logoWidth = rank; }
                     }
                 if (logo.StartsWith("https://")) lock (storeLogos) storeLogos[id] = logo;
+                string family = J.S(J.Get(product, "Properties"), "PackageFamilyName");
+                if (family.Length > 0) lock (storeFamilies) storeFamilies[id] = family;
                 string publisher = J.S(l, "PublisherName"), title = J.S(l, "ProductTitle");
                 list.Add(new SearchResult
                 {
                     Source = "store", Id = id, Name = title.Length > 0 ? title : id, Version = version,
+                    Publisher = publisher, Homepage = "https://apps.microsoft.com/detail/" + id,
                     Meta = id + (version.Length > 0 ? "  ·  v" + version : "") + (publisher.Length > 0 ? "  ·  " + publisher : ""),
                     Summary = Regex.Replace(J.S(l, "ShortDescription"), @"\s+", " ").Trim()
                 });
@@ -325,7 +379,9 @@ namespace Freshkit
             }
             if (failed.Count == sources.Length) throw new InvalidOperationException(firstError);
             notes = failed.Count > 0 ? string.Join(" and ", failed.ToArray()) + " couldn't be searched (" + firstError + ")." : "";
-            return Rank(query, all);
+            List<SearchResult> ranked = Rank(query, all);
+            MarkInstalled(ranked);
+            return ranked;
         }
 
         /// Same app across sources: drops architecture/installer qualifiers but keeps words such as "(Unofficial)".
@@ -422,6 +478,105 @@ namespace Freshkit
             return score;
         }
 
+        // ---------------------------------------------------------------- installed versions and Store/GitHub updates
+        static string NameKey(string name) { return Regex.Replace(Regex.Replace((name ?? "").ToLowerInvariant(), @"\([^)]*\)", " "), "[^a-z0-9]", ""); }
+
+        /// Version of an app in Installed apps, matched by display name (trailing version numbers ignored), the same way
+        /// the engine checks GitHub apps. "" when installed without a version; null when not installed.
+        internal static string InstalledVersion(string name)
+        {
+            string wanted = NameKey(name);
+            if (wanted.Length < 3) return null;
+            foreach (RegistryHive hive in new[] { RegistryHive.LocalMachine, RegistryHive.CurrentUser })
+                foreach (RegistryView view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+                {
+                    try
+                    {
+                        using (RegistryKey root = RegistryKey.OpenBaseKey(hive, view))
+                        using (RegistryKey keys = root.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"))
+                        {
+                            if (keys == null) continue;
+                            foreach (string sub in keys.GetSubKeyNames())
+                                using (RegistryKey key = keys.OpenSubKey(sub))
+                                {
+                                    string display = key == null ? null : key.GetValue("DisplayName") as string;
+                                    if (string.IsNullOrEmpty(display)) continue;
+                                    if (NameKey(Regex.Replace(display, @"\s+v?\d+(\.\d+)+.*$", "")) == wanted) return (key.GetValue("DisplayVersion") as string) ?? "";
+                                }
+                        }
+                    }
+                    catch (Exception) { }
+                }
+            return null;
+        }
+
+        /// Installed version of a Store (MSIX) app, from the per-user package repository; null when not installed.
+        internal static string StoreInstalledVersion(string family)
+        {
+            if (string.IsNullOrEmpty(family) || family.IndexOf('_') < 0) return null;
+            string name = family.Substring(0, family.IndexOf('_')), publisherId = family.Substring(family.LastIndexOf('_') + 1), best = null;
+            try
+            {
+                using (RegistryKey keys = Registry.CurrentUser.OpenSubKey(@"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages"))
+                    if (keys != null)
+                        foreach (string full in keys.GetSubKeyNames())
+                        {
+                            // Name_Version_Architecture_ResourceId_PublisherId
+                            string[] parts = full.Split('_');
+                            if (parts.Length != 5 || !parts[0].Equals(name, StringComparison.OrdinalIgnoreCase) || !parts[4].Equals(publisherId, StringComparison.OrdinalIgnoreCase)) continue;
+                            int? c = Data.CompareVersions(parts[1], best ?? "0");
+                            if (best == null || (c.HasValue && c.Value > 0)) best = parts[1];
+                        }
+            }
+            catch (Exception) { }
+            return best;
+        }
+
+        internal static void MarkInstalled(List<SearchResult> results)
+        {
+            foreach (SearchResult r in results)
+            {
+                string family = null;
+                if (r.Source == "store") lock (storeFamilies) storeFamilies.TryGetValue(r.Id, out family);
+                r.InstalledVersion = r.Source == "store" ? StoreInstalledVersion(family) : InstalledVersion(r.Name);
+            }
+        }
+
+        /// Store apps from the list that are installed and have a newer Store release.
+        public static List<UpdateItem> StoreUpdates(List<AppItem> storeApps)
+        {
+            var list = new List<UpdateItem>();
+            var ids = new List<string>(); foreach (AppItem a in storeApps) ids.Add(a.Id);
+            if (ids.Count == 0) return list;
+            foreach (SearchResult s in StoreDetails(ids))
+            {
+                string family; lock (storeFamilies) storeFamilies.TryGetValue(s.Id, out family);
+                string installed = StoreInstalledVersion(family);
+                int? newer = Data.CompareVersions(s.Version, installed);
+                if (installed == null || !newer.HasValue || newer.Value <= 0) continue;
+                AppItem app = storeApps.Find(a => a.Id == s.Id);
+                list.Add(new UpdateItem { Source = "store", Id = s.Id, Name = app != null ? app.Name : s.Name, Current = installed, Available = s.Version });
+            }
+            return list;
+        }
+
+        /// GitHub-release apps from the list that are installed and have a newer release.
+        public static List<UpdateItem> GitHubUpdates(List<AppItem> gitHubApps)
+        {
+            var list = new List<UpdateItem>();
+            foreach (AppItem a in gitHubApps)
+            {
+                string installed = InstalledVersion(a.Name);
+                if (string.IsNullOrEmpty(installed)) continue;
+                GitHubRelease release = GitHubLatest(a.Id);
+                if (release == null || PickInstallerAsset(release.Assets) == null) continue;
+                int? newer = Data.CompareVersions(release.Tag, installed);
+                if (newer.HasValue && newer.Value > 0)
+                    list.Add(new UpdateItem { Source = "github", Id = a.Id, Name = a.Name, Current = installed, Available = release.Tag.TrimStart('v', 'V') });
+            }
+            return list;
+        }
+
         // ---------------------------------------------------------------- winget
         static string Winget(string args, int timeoutMs)
         {
@@ -493,6 +648,9 @@ namespace Freshkit
                 list.Add(new SearchResult
                 {
                     Source = "winget", Id = id, Name = Cell(row, "Name"), Version = Cell(row, "Version"),
+                    Publisher = id.Contains(".") ? id.Substring(0, id.IndexOf('.')) : "",
+                    // Microsoft's own winget-pkgs manifest folder, e.g. manifests/s/Spotify/Spotify.
+                    Homepage = Regex.IsMatch(id, @"\A[A-Za-z0-9][A-Za-z0-9.+_-]*\z") ?"https://github.com/microsoft/winget-pkgs/tree/master/manifests/" + char.ToLowerInvariant(id[0]) + "/" + id.Replace('.', '/') : "",
                     Meta = id + (Cell(row, "Version").Length > 0 ? "  ·  v" + Cell(row, "Version") : "") + "  ·  winget", Summary = ""
                 });
                 if (list.Count >= 40) break;
