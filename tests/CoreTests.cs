@@ -14,8 +14,8 @@ namespace Freshkit
                 bool custom;
                 string defaults = Engine.CurrentListText(out custom);
                 Check(!custom, "Startup uses embedded defaults, ignoring companion files");
-                Engine.SessionList = defaults.Replace("::PACKAGE steam|", "::DISABLED steam|");
-                Check(Engine.CurrentListText(out custom).Contains("::DISABLED steam|") && custom, "Session changes are used without saving a file");
+                Engine.SessionList = defaults.Replace("::PACKAGE lghub|", "::DISABLED lghub|");
+                Check(Engine.CurrentListText(out custom).Contains("::DISABLED lghub|") && custom, "Session changes are used without saving a file");
                 Engine.SessionList = null;
                 Check(Engine.CurrentListText(out custom) == defaults, "Reset restores built-in defaults");
                 var catalog = BackupCatalog.Load("::BEGIN_PACKAGES\n::PACKAGE steam|Steam|\n::END_PACKAGES\n::BEGIN_CONFIG\n::CONFIG mpv|mpv|APPDATA|custom-mpv\n::END_CONFIG\n");

@@ -126,6 +126,13 @@ namespace Freshkit
                 apps.Add(item);
             }
             var order = new List<string>(Categories.Order); order.InsertRange(order.Count - 1, extraGroups);
+            // Alphabetical within each category, whichever source (Chocolatey, winget, Store, GitHub) an app comes from.
+            foreach (AppGroup g in byCat.Values)
+            {
+                var sorted = new List<AppItem>(g.Items);
+                sorted.Sort(delegate (AppItem a, AppItem b) { return string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase); });
+                g.Items.Clear(); foreach (AppItem a in sorted) g.Items.Add(a);
+            }
             foreach (string c in order) if (byCat[c].Items.Count > 0) groups.Add(byCat[c]);
             BuildRail();
 

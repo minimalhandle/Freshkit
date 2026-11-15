@@ -1,0 +1,28 @@
+{
+  "_comment": "Chocolatey catalog entries moved to winget (2026-11-15). Rule: official publisher package with the same or newer version, or a Chocolatey package stale for years. Kept on Chocolatey: newer there, incomparable versions, runtimes, install-order pairs (OpenRGB/PawnIO, Streamlink/Twitch GUI), Spotify (installer refuses to run elevated) and Python 3 (winget pins a minor version).",
+  "map": {
+    "Firefox": "Mozilla.Firefox.en-GB", "vivaldi": "Vivaldi.Vivaldi", "opera": "Opera.Opera",
+    "discord": "Discord.Discord", "chatterino": "ChatterinoTeam.Chatterino", "tutanota": "Tutanota.Tutanota", "zoom": "Zoom.Zoom",
+    "microsoft-teams-new-bootstrapper": "Microsoft.Teams", "slack": "SlackTechnologies.Slack", "telegram": "Telegram.TelegramDesktop",
+    "thunderbird": "Mozilla.Thunderbird", "pidgin": "Pidgin.Pidgin", "trillian": "CeruleanStudios.Trillian",
+    "vlc": "VideoLAN.VLC", "audacity": "Audacity.Audacity", "stremio": "Stremio.Stremio", "handbrake": "HandBrake.HandBrake",
+    "foobar2000": "PeterPawlowski.foobar2000", "winamp": "Winamp.Winamp", "itunes": "Apple.iTunes",
+    "greenshot": "Greenshot.Greenshot", "sharex": "ShareX.ShareX", "paint.net": "dotPDN.PaintDotNet", "gimp": "GIMP.GIMP.3",
+    "krita": "KDE.Krita", "inkscape": "Inkscape.Inkscape", "irfanview": "IrfanSkiljan.IrfanView", "fsviewer": "FastStone.Viewer",
+    "blender": "BlenderFoundation.Blender", "bambustudio": "Bambulab.Bambustudio", "cura-new": "Ultimaker.Cura",
+    "adobereader": "Adobe.Acrobat.Reader.64-bit", "sumatrapdf.install": "SumatraPDF.SumatraPDF", "foxitreader": "Foxit.FoxitReader",
+    "libreoffice-fresh": "TheDocumentFoundation.LibreOffice", "pdf24": "geeksoftwareGmbH.PDF24Creator", "evernote": "Evernote.Evernote",
+    "steam": "Valve.Steam", "epicgameslauncher": "EpicGames.EpicGamesLauncher", "rockstar-launcher": "RockstarGames.Launcher",
+    "1password": "AgileBits.1Password", "bitwarden": "Bitwarden.Bitwarden", "keepassxc": "KeePassXCTeam.KeePassXC",
+    "ab-download-manager": "amir1376.ABDownloadManager", "qbittorrent": "qBittorrent.qBittorrent", "googledrive": "Google.GoogleDrive",
+    "sugarsync": "IPVanish.SugarSync", "windscribe": "Windscribe.Windscribe", "tailscale": "Tailscale.Tailscale", "wireguard": "WireGuard.WireGuard",
+    "anydesk.install": "AnyDesk.AnyDesk", "teamviewer": "TeamViewer.TeamViewer", "advanced-ip-scanner": "Famatech.AdvancedIPScanner",
+    "wireshark": "WiresharkFoundation.Wireshark", "7zip.install": "7zip.7zip", "windirstat": "WinDirStat.WinDirStat",
+    "everything": "voidtools.Everything", "powertoys": "Microsoft.PowerToys", "winrar": "RARLab.WinRAR", "wiztree": "AntibodySoftware.WizTree",
+    "teracopy": "CodeSector.TeraCopy", "revo-uninstaller": "RevoUninstaller.RevoUninstaller", "open-shell": "Open-Shell.Open-Shell-Menu",
+    "imgburn": "LIGHTNINGUK.ImgBurn", "infrarecorder": "ChristianKindahl.InfraRecorder", "ccleaner": "Piriform.CCleaner.Slim",
+    "glaryutilities-free": "Glarysoft.GlaryUtilities", "gh": "GitHub.cli", "notepadplusplus": "Notepad++.Notepad++", "putty.install": "PuTTY.PuTTY",
+    "winscp": "WinSCP.WinSCP", "vscode": "Microsoft.VisualStudioCode", "sublimetext4": "SublimeHQ.SublimeText.4", "github-desktop": "GitHub.GitHubDesktop",
+    "python2": "Python.Python.2", "docker-desktop": "Docker.DockerDesktop", "winmerge": "WinMerge.WinMerge"
+  }
+}

@@ -4,80 +4,36 @@
 :: Listed but unticked: ::DISABLED package-id|Display name|Optional package parameters
 :: ::GROUP lines name the Apps page section for the packages below them.
 ::GROUP Browsers
-::PACKAGE Firefox|Mozilla Firefox|/l:en-GB
 ::DISABLED googlechrome|Google Chrome|
 ::DISABLED microsoft-edge|Microsoft Edge|
 ::DISABLED brave|Brave|
-::DISABLED vivaldi|Vivaldi|
-::DISABLED opera|Opera|
-::GROUP Messaging
-::PACKAGE discord|Discord|
-::PACKAGE chatterino|Chatterino|
-::PACKAGE tutanota|Tuta Mail|
-::DISABLED zoom|Zoom|
-::DISABLED microsoft-teams-new-bootstrapper|Microsoft Teams|
-::DISABLED slack|Slack|
-::DISABLED telegram|Telegram|
-::DISABLED thunderbird|Thunderbird|
-::DISABLED pidgin|Pidgin|
-::DISABLED trillian|Trillian|
 ::GROUP Media
 ::PACKAGE spotify|Spotify|
-::PACKAGE vlc|VLC media player|
 ::PACKAGE mpvio.install|mpv|
-::PACKAGE audacity|Audacity|
 ::PACKAGE obs-studio|OBS Studio|
 ::PACKAGE streamlink|Streamlink|
 ::PACKAGE streamlink-twitch-gui|Streamlink Twitch GUI|
-::PACKAGE stremio|Stremio|
-::DISABLED handbrake|HandBrake|
-::DISABLED foobar2000|foobar2000|
 ::DISABLED musicbee|MusicBee|
 ::DISABLED aimp|AIMP|
-::DISABLED winamp|Winamp|
 ::DISABLED mediamonkey|MediaMonkey|
-::DISABLED itunes|iTunes|
 ::DISABLED k-litecodecpack-standard|K-Lite Codec Pack|
 ::DISABLED cccp|CCCP codec pack|
 ::GROUP Imaging & 3D
-::PACKAGE greenshot|Greenshot|
-::DISABLED sharex|ShareX|
-::DISABLED paint.net|Paint.NET|
-::DISABLED gimp|GIMP|
-::DISABLED krita|Krita|
-::DISABLED inkscape|Inkscape|
-::DISABLED irfanview|IrfanView|
 ::DISABLED xnview|XnView|
-::DISABLED fsviewer|FastStone Image Viewer|
-::DISABLED blender|Blender|
-::DISABLED bambustudio|Bambu Studio|
-::DISABLED cura-new|UltiMaker Cura|
 ::GROUP Documents & AI
 ::PACKAGE claude|Claude|
-::PACKAGE adobereader|Adobe Acrobat Reader|
-::DISABLED sumatrapdf.install|SumatraPDF|
-::DISABLED foxitreader|Foxit PDF Reader|
-::DISABLED libreoffice-fresh|LibreOffice|
 ::DISABLED openoffice|Apache OpenOffice|
-::DISABLED pdf24|PDF24 Creator|
 ::DISABLED cutepdf|CutePDF Writer|
 ::DISABLED ghostscript|Ghostscript|
-::DISABLED evernote|Evernote|
 ::DISABLED grammarly-for-windows|Grammarly|
 ::DISABLED googleearthpro|Google Earth Pro|
 ::DISABLED nvda|NVDA screen reader|
 ::GROUP Gaming & devices
-::PACKAGE steam|Steam|
-::PACKAGE epicgameslauncher|Epic Games Launcher|
-::PACKAGE rockstar-launcher|Rockstar Games Launcher|
 ::PACKAGE playnite|Playnite|
 ::PACKAGE lghub|Logitech G HUB|
 ::PACKAGE openrgb.install|OpenRGB|
 ::PACKAGE pawnio|PawnIO|
 ::GROUP Security
-::PACKAGE 1password|1Password|
-::DISABLED bitwarden|Bitwarden|
-::DISABLED keepassxc|KeePassXC|
 ::DISABLED keepass|KeePass 2|
 ::DISABLED malwarebytes|Malwarebytes|
 ::DISABLED avastfreeantivirus|Avast Free Antivirus|
@@ -86,58 +42,24 @@
 ::DISABLED spybot|Spybot Search & Destroy|
 ::DISABLED superantispyware|SUPERAntiSpyware|
 ::GROUP Cloud & downloads
-::PACKAGE ab-download-manager|AB Download Manager|
 ::PACKAGE transmission|Transmission|
-::DISABLED qbittorrent|qBittorrent|
 ::DISABLED dropbox|Dropbox|
-::DISABLED googledrive|Google Drive|
 ::DISABLED onedrive|Microsoft OneDrive|
-::DISABLED sugarsync|SugarSync|
 ::GROUP Remote & network
-::PACKAGE windscribe|Windscribe|
-::DISABLED tailscale|Tailscale|
-::DISABLED wireguard|WireGuard|
 ::DISABLED rustdesk|RustDesk|
-::DISABLED anydesk.install|AnyDesk|
-::DISABLED teamviewer|TeamViewer|
 ::DISABLED tightvnc|TightVNC|
 ::DISABLED ultravnc|UltraVNC|
-::DISABLED advanced-ip-scanner|Advanced IP Scanner|
-::DISABLED wireshark|Wireshark|
 ::GROUP Utilities
-::PACKAGE 7zip.install|7-Zip|
-::PACKAGE windirstat|WinDirStat|
 ::PACKAGE rpi-imager|Raspberry Pi Imager|
-::DISABLED everything|Everything search|
-::DISABLED powertoys|Microsoft PowerToys|
 ::DISABLED peazip|PeaZip|
-::DISABLED winrar|WinRAR|
-::DISABLED wiztree|WizTree|
-::DISABLED teracopy|TeraCopy|
-::DISABLED revo-uninstaller|Revo Uninstaller|
-::DISABLED open-shell|Open-Shell|
-::DISABLED imgburn|ImgBurn|
 ::DISABLED cdburnerxp|CDBurnerXP|
-::DISABLED infrarecorder|InfraRecorder|
-::DISABLED ccleaner|CCleaner|
-::DISABLED glaryutilities-free|Glary Utilities|
 ::GROUP Developer
 ::PACKAGE git.install|Git for Windows|
-::PACKAGE gh|GitHub CLI|
 ::PACKAGE nodejs.install|Node.js Current|
-::PACKAGE notepadplusplus|Notepad++|
 ::PACKAGE innosetup|Inno Setup|
-::PACKAGE putty.install|PuTTY|
-::PACKAGE winscp|WinSCP|
-::DISABLED vscode|Visual Studio Code|
 ::DISABLED cursoride|Cursor|
-::DISABLED sublimetext4|Sublime Text 4|
-::DISABLED github-desktop|GitHub Desktop|
 ::DISABLED nodejs-lts|Node.js LTS|
 ::DISABLED python3|Python 3|
-::DISABLED python2|Python 2.7 (legacy)|
-::DISABLED docker-desktop|Docker Desktop|
-::DISABLED winmerge|WinMerge|
 ::DISABLED filezilla|FileZilla|
 ::DISABLED eclipse|Eclipse IDE|
 ::GROUP Runtimes
@@ -219,6 +141,94 @@
 ::DISABLED 9N7JSXC1SJK6|Blip|
 ::GROUP Utilities
 ::DISABLED CodeJelly.Launchy|Launchy|
+::GROUP Browsers
+::WINGET Mozilla.Firefox.en-GB|Mozilla Firefox|
+::DISABLED Vivaldi.Vivaldi|Vivaldi|
+::DISABLED Opera.Opera|Opera|
+::GROUP Messaging
+::WINGET Discord.Discord|Discord|
+::WINGET ChatterinoTeam.Chatterino|Chatterino|
+::WINGET Tutanota.Tutanota|Tuta Mail|
+::DISABLED Zoom.Zoom|Zoom|
+::DISABLED Microsoft.Teams|Microsoft Teams|
+::DISABLED SlackTechnologies.Slack|Slack|
+::DISABLED Telegram.TelegramDesktop|Telegram|
+::DISABLED Mozilla.Thunderbird|Thunderbird|
+::DISABLED Pidgin.Pidgin|Pidgin|
+::DISABLED CeruleanStudios.Trillian|Trillian|
+::GROUP Media
+::WINGET VideoLAN.VLC|VLC media player|
+::WINGET Audacity.Audacity|Audacity|
+::WINGET Stremio.Stremio|Stremio|
+::DISABLED HandBrake.HandBrake|HandBrake|
+::DISABLED PeterPawlowski.foobar2000|foobar2000|
+::DISABLED Winamp.Winamp|Winamp|
+::DISABLED Apple.iTunes|iTunes|
+::GROUP Imaging & 3D
+::WINGET Greenshot.Greenshot|Greenshot|
+::DISABLED ShareX.ShareX|ShareX|
+::DISABLED dotPDN.PaintDotNet|Paint.NET|
+::DISABLED GIMP.GIMP.3|GIMP|
+::DISABLED KDE.Krita|Krita|
+::DISABLED Inkscape.Inkscape|Inkscape|
+::DISABLED IrfanSkiljan.IrfanView|IrfanView|
+::DISABLED FastStone.Viewer|FastStone Image Viewer|
+::DISABLED BlenderFoundation.Blender|Blender|
+::DISABLED Bambulab.Bambustudio|Bambu Studio|
+::DISABLED Ultimaker.Cura|UltiMaker Cura|
+::GROUP Documents & AI
+::WINGET Adobe.Acrobat.Reader.64-bit|Adobe Acrobat Reader|
+::DISABLED SumatraPDF.SumatraPDF|SumatraPDF|
+::DISABLED Foxit.FoxitReader|Foxit PDF Reader|
+::DISABLED TheDocumentFoundation.LibreOffice|LibreOffice|
+::DISABLED geeksoftwareGmbH.PDF24Creator|PDF24 Creator|
+::DISABLED Evernote.Evernote|Evernote|
+::GROUP Gaming & devices
+::WINGET Valve.Steam|Steam|
+::WINGET EpicGames.EpicGamesLauncher|Epic Games Launcher|
+::WINGET RockstarGames.Launcher|Rockstar Games Launcher|
+::GROUP Security
+::WINGET AgileBits.1Password|1Password|
+::DISABLED Bitwarden.Bitwarden|Bitwarden|
+::DISABLED KeePassXCTeam.KeePassXC|KeePassXC|
+::GROUP Cloud & downloads
+::WINGET amir1376.ABDownloadManager|AB Download Manager|
+::DISABLED qBittorrent.qBittorrent|qBittorrent|
+::DISABLED Google.GoogleDrive|Google Drive|
+::DISABLED IPVanish.SugarSync|SugarSync|
+::GROUP Remote & network
+::WINGET Windscribe.Windscribe|Windscribe|
+::DISABLED Tailscale.Tailscale|Tailscale|
+::DISABLED WireGuard.WireGuard|WireGuard|
+::DISABLED AnyDesk.AnyDesk|AnyDesk|
+::DISABLED TeamViewer.TeamViewer|TeamViewer|
+::DISABLED Famatech.AdvancedIPScanner|Advanced IP Scanner|
+::DISABLED WiresharkFoundation.Wireshark|Wireshark|
+::GROUP Utilities
+::WINGET 7zip.7zip|7-Zip|
+::WINGET WinDirStat.WinDirStat|WinDirStat|
+::DISABLED voidtools.Everything|Everything search|
+::DISABLED Microsoft.PowerToys|Microsoft PowerToys|
+::DISABLED RARLab.WinRAR|WinRAR|
+::DISABLED AntibodySoftware.WizTree|WizTree|
+::DISABLED CodeSector.TeraCopy|TeraCopy|
+::DISABLED RevoUninstaller.RevoUninstaller|Revo Uninstaller|
+::DISABLED Open-Shell.Open-Shell-Menu|Open-Shell|
+::DISABLED LIGHTNINGUK.ImgBurn|ImgBurn|
+::DISABLED ChristianKindahl.InfraRecorder|InfraRecorder|
+::DISABLED Piriform.CCleaner.Slim|CCleaner|
+::DISABLED Glarysoft.GlaryUtilities|Glary Utilities|
+::GROUP Developer
+::WINGET GitHub.cli|GitHub CLI|
+::WINGET Notepad++.Notepad++|Notepad++|
+::WINGET PuTTY.PuTTY|PuTTY|
+::WINGET WinSCP.WinSCP|WinSCP|
+::DISABLED Microsoft.VisualStudioCode|Visual Studio Code|
+::DISABLED SublimeHQ.SublimeText.4|Sublime Text 4|
+::DISABLED GitHub.GitHubDesktop|GitHub Desktop|
+::DISABLED Python.Python.2|Python 2.7 (legacy)|
+::DISABLED Docker.DockerDesktop|Docker Desktop|
+::DISABLED WinMerge.WinMerge|WinMerge|
 ::END_WINGET
 ::BEGIN_GITHUB
 :: GitHub releases: ::GITHUB owner/repo|Display name|Optional silent installer arguments (::DISABLED = unticked).
@@ -231,8 +241,8 @@
 ::END_GITHUB
 ::BEGIN_PROFILES
 :: Starter selections. ::PROFILE Name|apps=id,winget:Id,... (omit tweaks=/remove= to leave Windows tweaks unchanged).
-::PROFILE Starter: essentials|apps=Firefox,7zip.install,vlc,notepadplusplus,sumatrapdf.install,everything,powertoys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: gaming|apps=Firefox,discord,steam,epicgameslauncher,playnite,obs-studio,spotify,7zip.install,vlc,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: developer|apps=Firefox,git.install,gh,github-desktop,vscode,nodejs-lts,python3,notepadplusplus,winmerge,putty.install,winscp,7zip.install,everything,powertoys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: office & family|apps=Firefox,libreoffice-fresh,sumatrapdf.install,zoom,vlc,7zip.install,bitwarden,malwarebytes,vcredist-all,dotnet-desktopruntime
+::PROFILE Starter: essentials|apps=winget:Mozilla.Firefox.en-GB,winget:7zip.7zip,winget:VideoLAN.VLC,winget:Notepad++.Notepad++,winget:SumatraPDF.SumatraPDF,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: gaming|apps=winget:Mozilla.Firefox.en-GB,winget:Discord.Discord,winget:Valve.Steam,winget:EpicGames.EpicGamesLauncher,playnite,obs-studio,spotify,winget:7zip.7zip,winget:VideoLAN.VLC,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: developer|apps=winget:Mozilla.Firefox.en-GB,git.install,winget:GitHub.cli,winget:GitHub.GitHubDesktop,winget:Microsoft.VisualStudioCode,nodejs-lts,python3,winget:Notepad++.Notepad++,winget:WinMerge.WinMerge,winget:PuTTY.PuTTY,winget:WinSCP.WinSCP,winget:7zip.7zip,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: office & family|apps=winget:Mozilla.Firefox.en-GB,winget:TheDocumentFoundation.LibreOffice,winget:SumatraPDF.SumatraPDF,winget:Zoom.Zoom,winget:VideoLAN.VLC,winget:7zip.7zip,winget:Bitwarden.Bitwarden,malwarebytes,vcredist-all,dotnet-desktopruntime
 ::END_PROFILES
