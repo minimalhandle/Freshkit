@@ -55,7 +55,7 @@ namespace Freshkit
             try { using (Stream s = Engine.Resource("app.ico")) Window.Icon = BitmapFrame.Create(s, BitmapCreateOptions.None, BitmapCacheOption.OnLoad); } catch { }
             Window.SourceInitialized += delegate { DarkTitleBar(); };
             Window.Closing += OnClosing;
-            Window.Closed += delegate { if (searchCancellation != null) searchCancellation.Cancel(); };
+            Window.Closed += delegate { if (searchCancellation != null) searchCancellation.Cancel(); HideFinishNotice(); };
 
             for (int i = 0; i < navs.Length; i++)
             {
@@ -349,8 +349,12 @@ namespace Freshkit
                     }
                     else if (rc != 0 && rc != 3010) Log("Log kept for troubleshooting: " + logFile + " (delete it on the Progress page).");
                     Finished(spec.Title, rc);
-                    if (rc == 0 && !spec.TrackAsInstall && !string.IsNullOrEmpty(spec.RestoreZip)) RestoreSetupSettings(spec, delegate { PollProgress(); StartPostSetupVerification(sessionSetup); });
-                    else if (verifyAfterExit) StartPostSetupVerification(sessionSetup);
+                    // Tracked installs that produced (or are still producing) an engine report notify from CompleteJob.
+                    bool reportFollows = spec.TrackAsInstall && rc != 3010 && (engineActive || engineReportAvailable);
+                    string noticeTitle, noticeText; bool noticeWarning;
+                    Action notify = delegate { if (spec.Action != "CancelResume" && !reportFollows && SetupSignals.JobNotice(spec.Title, rc, out noticeTitle, out noticeText, out noticeWarning)) NotifyFinished(noticeTitle, noticeText, noticeWarning || SetupProgress.HasFailures(sessionSetup)); };
+                    if (rc == 0 && !spec.TrackAsInstall && !string.IsNullOrEmpty(spec.RestoreZip)) RestoreSetupSettings(spec, delegate { PollProgress(); notify(); StartPostSetupVerification(sessionSetup); });
+                    else { notify(); if (verifyAfterExit) StartPostSetupVerification(sessionSetup); }
                     if (done != null) done(rc);
                     PollProgress();
                 });

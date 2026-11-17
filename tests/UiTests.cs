@@ -423,6 +423,13 @@ namespace Freshkit
                 Call(ui, "InvalidateAuditResults");
                 Call(ui, "CompletePostAudit", auditGeneration, auditEpoch, auditReport);
                 Check(Field<AuditReport>(ui, "postAuditReport") == null, "A new system-changing job invalidates older verification results");
+                var liveRun = new RunSnapshot { RunId = "ui-eta", Status = "Running", Current = "Fixture", Ok = 2, Queue = 2 };
+                Call(ui, "UpdateTaskbar", true, liveRun);
+                Check(ui.Window.TaskbarItemInfo != null && ui.Window.TaskbarItemInfo.ProgressState == System.Windows.Shell.TaskbarItemProgressState.Normal && Math.Abs(ui.Window.TaskbarItemInfo.ProgressValue - 0.5) < 0.001, "A live install drives the taskbar progress bar");
+                Call(ui, "ShowSnapshot", liveRun, true, true);
+                Check(Get<TextBlock>(ui, "RunDetail").Text == "2 of 4 done", "A live install shows no time estimate before there is evidence for one");
+                Call(ui, "UpdateTaskbar", false, null);
+                Check(ui.Window.TaskbarItemInfo.ProgressState == System.Windows.Shell.TaskbarItemProgressState.None && Field<object>(ui, "finishNotice") == null, "Idle Freshkit clears taskbar progress and shows no notification icon");
                 if (args.Length > 0 && args[0] == "--render")
                 {
                     var compareWindow = (Window)Call(ui, "BuildAuditWindow", auditTarget, auditReport, "Setup comparison", false);

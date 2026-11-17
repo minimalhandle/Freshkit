@@ -331,6 +331,7 @@ namespace Freshkit
             banner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
             Get<TextBlock>("ResumeBannerTitle").Text = active != null && active.Status == "AwaitingReboot" ? "Waiting for restart" : restoreRunning ? "Restoring settings" : "Install in progress";
             Get<RadioButton>("NavProgress").Content = busy ? "Progress  •" : "Progress";
+            UpdateTaskbar(busy, active);
 
             if (Get<FrameworkElement>("PageProgress").Visibility != Visibility.Visible && !busy) return;
             RunSnapshot shown = active ?? (sessionSetup == null ? Runs.ReadLatestReport(DateTime.MinValue) : string.IsNullOrEmpty(sessionSetup.EngineRunId) ? null : Runs.ReadLatestReport(DateTime.MinValue, sessionSetup.EngineRunId)) ?? (sessionSetup == null ? sessionSummary : null);
@@ -391,7 +392,7 @@ namespace Freshkit
                     case "AwaitingReboot": title.Text = "Waiting for a restart"; detail.Text = "Your PC restarts to continue. Sign back in to the same account and it carries on automatically."; glyph.Text = ""; break;
                     case "NeedsReview": title.Text = "Install stopped"; detail.Text = s.Failure; glyph.Text = ""; break;
                     case "Ready": title.Text = "Starting"; detail.Text = s.Done + " of " + s.Total + " done"; glyph.Text = ""; break;
-                    default: title.Text = s.Current.Length > 0 ? "Installing " + s.Current : "Installing"; detail.Text = s.Done + " of " + s.Total + " done"; glyph.Text = ""; break;
+                    default: title.Text = s.Current.Length > 0 ? "Installing " + s.Current : "Installing"; detail.Text = s.Done + " of " + s.Total + " done" + EstimateText(s); glyph.Text = ""; break;
                 }
             }
             else if (!busy)
@@ -447,6 +448,9 @@ namespace Freshkit
                 SetStatus("Setup finished: " + report.Ok + " installed, " + report.Bad + " failed, " + report.Skip + " skipped.", report.Bad > 0 || !restoreOk || SetupProgress.HasFailures(sessionSetup) ? DotWarn : DotOk);
                 Navigate("NavProgress");
                 PollProgress();
+                string noticeTitle, noticeText; bool noticeWarning;
+                SetupSignals.InstallNotice(report.Ok, report.Bad, report.Skip, !restoreOk || SetupProgress.HasFailures(sessionSetup), out noticeTitle, out noticeText, out noticeWarning);
+                NotifyFinished(noticeTitle, noticeText, noticeWarning);
                 StartPostSetupVerification(sessionSetup);
             };
             if (job.RestoreZip.Length > 0 && File.Exists(job.RestoreZip))
