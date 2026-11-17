@@ -67,6 +67,7 @@ namespace Freshkit
         // ================================================================ Tweaks
         void InitTweaks()
         {
+            try { using (var logo = Engine.Resource("freshkit-logo.png")) { var bitmap = System.Windows.Media.Imaging.BitmapFrame.Create(logo, System.Windows.Media.Imaging.BitmapCreateOptions.None, System.Windows.Media.Imaging.BitmapCacheOption.OnLoad); bitmap.Freeze(); Window.Resources["BrandMark"] = bitmap; } } catch { }
             try { debloat = Debloat.Load(); }
             catch (Exception ex)
             {
@@ -86,6 +87,10 @@ namespace Freshkit
             }
             foreach (RemovalApp a in debloat.Apps) { a.Changed = delegate { RefreshTweakCounts(); }; removal.Add(a); }
             Get<ItemsControl>("TweakGroups").ItemsSource = cats;
+            Get<ItemsControl>("TweakGroups").AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(OnTweakSectionClick));
+            Click("BtnTweakQuickSelect", delegate { OpenTweakQuickSelect(); });
+            Click("BtnTweakRefresh", delegate { RefreshTweakState(); });
+            Get<CheckBox>("OnlyInstalledRemovals").Click += delegate { FilterTweaks(); RefreshTweakCounts(); };
             Get<ItemsControl>("RemovalList").ItemsSource = removal;
             Get<ItemsControl>("RemovalPresets").ItemsSource = debloat.Presets;
             Get<ItemsControl>("RemovalPresets").AddHandler(ButtonBase.ClickEvent, new RoutedEventHandler(delegate (object s, RoutedEventArgs e)
@@ -94,7 +99,7 @@ namespace Freshkit
                 var p = b == null ? null : b.DataContext as RemovalPreset;
                 if (p == null) return;
                 var set = new HashSet<string>(p.AppIds, StringComparer.OrdinalIgnoreCase);
-                foreach (RemovalApp a in debloat.Apps) if (set.Contains(a.AppId)) a.IsSelected = true;
+                foreach (RemovalApp a in debloat.Apps) if (set.Contains(a.AppId) || a.AppIds.Exists(set.Contains)) a.IsSelected = true;
             }));
             Get<TextBox>("TweakSearch").TextChanged += delegate { FilterTweaks(); };
             Click("BtnTweakRecommended", delegate
@@ -116,8 +121,8 @@ namespace Freshkit
             Act("BtnApplyTweaks", delegate
             {
                 List<string> args = debloat.BuildArguments(Get<CheckBox>("RestorePointSwitch").IsChecked == true, Get<CheckBox>("ForceEdgeSwitch").IsChecked == true);
-                if (args == null) { Info("Nothing selected", "Turn on some tweaks or pick apps to remove first."); return; }
-                int f = debloat.SelectedFeatures().Count, a = debloat.SelectedApps().Count;
+                if (args == null) { Info("No changes to apply", debloat.SelectedFeatures().Count > 0 ? "The selected settings are already applied on this PC. Select a different setting or an app removal to make a change." : "Choose changes for the next setup or pick apps to remove first."); return; }
+                int f = debloat.PendingFeatures().Count, a = debloat.SelectedApps().Count;
                 Confirm("Apply Windows tweaks now?", f + " tweak" + (f == 1 ? "" : "s") + " and " + a + " app removal" + (a == 1 ? "" : "s") + " via Win11Debloat. Windows asks for administrator permission; File Explorer restarts at the end. Some changes need a sign-out or restart to show." +
                     (Get<CheckBox>("RestorePointSwitch").IsChecked == true ? " A restore point is created first." : ""), "Apply", delegate
                     {
@@ -131,12 +136,14 @@ namespace Freshkit
         void RefreshTweakCounts()
         {
             if (debloat == null) return;
-            int f = debloat.SelectedFeatures().Count, a = debloat.SelectedApps().Count;
+            int selected = debloat.SelectedFeatures().Count, f = debloat.PendingFeatures().Count, a = debloat.SelectedApps().Count;
             bool edge = Get<CheckBox>("ForceEdgeSwitch").IsChecked == true;
             foreach (TweakCategory c in debloat.Categories) c.Refresh();
-            Get<TextBlock>("RemovalCount").Text = a + " of " + debloat.Apps.Count + " selected";
-            Get<TextBlock>("TweakCount").Text = f + " tweak" + (f == 1 ? "" : "s") + " · " + (a + (edge ? 1 : 0)) + " app" + (a + (edge ? 1 : 0) == 1 ? "" : "s") + " to remove" +
-                (debloat.Version.Length > 0 ? "   ·   Win11Debloat " + debloat.Version : "");
+            int hidden = 0; foreach (var item in debloat.Apps) if (item.IsSelected && item.Visibility != Visibility.Visible) hidden++;
+            Get<TextBlock>("RemovalCount").Text = a + " of " + debloat.Apps.Count + " selected" + (hidden > 0 ? " (" + hidden + " hidden)" : "");
+            Get<TextBlock>("TweakCount").Text = f + " tweak" + (f == 1 ? "" : "s") + " to apply · " + (selected - f) + " already current · " + (a + (edge ? 1 : 0)) + " app" + (a + (edge ? 1 : 0) == 1 ? "" : "s") + " to remove";
+            Get<TextBlock>("TweakCount").ToolTip = selected + " settings selected for this session. Only pending changes run. Win11Debloat " + debloat.Version;
+            Get<Button>("BtnApplyTweaks").IsEnabled = !running && f + a + (edge ? 1 : 0) > 0;
             UpdateCount();
         }
 
@@ -151,7 +158,7 @@ namespace Freshkit
                 foreach (TweakChoice t in c.Choices) { bool v = catMatch || m(t.Label) || m(t.Tooltip); t.Visibility = v ? Visibility.Visible : Visibility.Collapsed; any |= v; }
                 c.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
             }
-            foreach (RemovalApp a in debloat.Apps) a.Visibility = m(a.Name) || m(a.AppId) || m("remove apps") ? Visibility.Visible : Visibility.Collapsed;
+            debloat.FilterRemoval(q, Get<CheckBox>("OnlyInstalledRemovals").IsChecked == true);
         }
 
         void OpenDebloatGui()
@@ -181,11 +188,15 @@ namespace Freshkit
         // ================================================================ Drivers & offline kit
         void InitDrivers()
         {
-            Act("BtnDriverPlan", delegate { RunRunner("Scanning hardware", "DriverPlan", null, null, null); });
+            InitDriverPreview();
+            Act("BtnDriverPlan", delegate { OpenDriverPreview(); });
             Act("BtnDrivers", delegate
             {
-                Confirm("Install drivers now?", "Freshkit asks for administrator permission, then installs matching chipset and display drivers. Your PC may restart on its own. Sign back in to continue.", "Install drivers",
-                    delegate { Navigate("NavProgress"); RunJob(new JobSpec { Title = "Installing drivers", Action = "Drivers", TrackAsInstall = true }, null); });
+                OpenDriverPreview(delegate
+                {
+                    Confirm("Install the previewed driver packages?", "Freshkit asks for administrator permission and rechecks hardware before installing matching chipset and display packages. Your PC may restart on its own. Sign back in to continue.", "Install drivers",
+                        delegate { Navigate("NavProgress"); RunJob(new JobSpec { Title = "Installing drivers", Action = "Drivers", TrackAsInstall = true }, null); });
+                });
             });
             Act("BtnKitCreate", delegate
             {
@@ -436,6 +447,7 @@ namespace Freshkit
                 SetStatus("Setup finished: " + report.Ok + " installed, " + report.Bad + " failed, " + report.Skip + " skipped.", report.Bad > 0 || !restoreOk || SetupProgress.HasFailures(sessionSetup) ? DotWarn : DotOk);
                 Navigate("NavProgress");
                 PollProgress();
+                StartPostSetupVerification(sessionSetup);
             };
             if (job.RestoreZip.Length > 0 && File.Exists(job.RestoreZip))
             {
@@ -510,7 +522,7 @@ namespace Freshkit
             Act("BtnUpdateAll", delegate
             {
                 if (!updatesChecked) { CheckUpdates(delegate { if (updates.Count > 0) UpdateItems(new List<UpdateItem>(updates)); }); return; }
-                if (updates.Count == 0) { Info("Everything is up to date", "No updates were found."); return; }
+                if (updates.Count == 0) { Info(updateCheckComplete ? "Everything is up to date" : "Update check incomplete", Get<TextBlock>("UpdatesStatus").Text); return; }
                 UpdateItems(new List<UpdateItem>(updates));
             });
             Act("BtnUpdateSelected", delegate
@@ -536,6 +548,8 @@ namespace Freshkit
             Act("BtnList", delegate { RunRunner("Install order for all apps", "List", Vals("Apps", AllKeys()), null, null); });
         }
 
+        bool updateCheckComplete;
+
         void CheckUpdates(Action then)
         {
             Get<Button>("BtnCheckUpdates").IsEnabled = false;
@@ -546,12 +560,14 @@ namespace Freshkit
             SetStatus("Checking for updates...", DotBusy);
             new Thread(delegate ()
             {
-                List<UpdateItem> choco = new List<UpdateItem>(), winget = new List<UpdateItem>(); string error = null;
-                try { choco = Sources.ChocoUpdates(); } catch (Exception ex) { error = "Chocolatey: " + ex.Message; }
-                try { winget = Sources.WingetUpdates(); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "winget: " + ex.Message; }
-                List<UpdateItem> store = new List<UpdateItem>(), github = new List<UpdateItem>();
-                try { store = Sources.StoreUpdates(storeApps); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "Microsoft Store: " + ex.Message; }
-                try { github = Sources.GitHubUpdates(gitHubApps); } catch (Exception ex) { error = (error == null ? "" : error + "; ") + "GitHub: " + ex.Message; }
+                var check = UpdateCheck.Run(new Dictionary<string, Func<List<UpdateItem>>> {
+                    { "Chocolatey", Sources.ChocoUpdates }, { "winget", Sources.WingetUpdates },
+                    { "Microsoft Store", delegate { return Sources.StoreUpdates(storeApps); } },
+                    { "GitHub", delegate { return Sources.GitHubUpdates(gitHubApps); } } });
+                var choco = check.Items.FindAll(u => u.Source == "choco");
+                var winget = check.Items.FindAll(u => u.Source == "winget");
+                var store = check.Items.FindAll(u => u.Source == "store");
+                var github = check.Items.FindAll(u => u.Source == "github");
                 // Apps Chocolatey manages also show up in winget; keep the Chocolatey entry only.
                 var chocoNames = new List<string>();
                 foreach (UpdateItem c in choco) chocoNames.Add(Data.Norm(System.Text.RegularExpressions.Regex.Replace(c.Id, @"\.(install|portable)$", "")));
@@ -570,9 +586,11 @@ namespace Freshkit
                     updates.Clear();
                     foreach (UpdateItem u in merged) updates.Add(u);
                     updatesChecked = true;
-                    Get<TextBlock>("UpdatesStatus").Text = merged.Count == 0 ? "Everything is up to date." : merged.Count + " update" + (merged.Count == 1 ? "" : "s") + " available." + (error != null ? "  (" + error + ")" : "");
+                    updateCheckComplete = check.Complete;
+                    check.Items.Clear(); check.Items.AddRange(merged);
+                    Get<TextBlock>("UpdatesStatus").Text = check.Status;
                     Get<Button>("BtnUpdateSelected").Visibility = merged.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                    SetStatus("Update check: " + merged.Count + " available.", merged.Count > 0 ? DotWarn : DotOk);
+                    SetStatus(check.Complete ? "Update check: " + merged.Count + " available." : "Update check incomplete.", !check.Complete || merged.Count > 0 ? DotWarn : DotOk);
                     if (then != null) then();
                 });
             }) { IsBackground = true }.Start();

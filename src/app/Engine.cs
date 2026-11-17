@@ -20,7 +20,7 @@ namespace Freshkit
         static readonly string[] PayloadNames = {
             "Start-Setup.ps1", "Install-ChocolateyApps.ps1", "Install-Chocolatey.Core.psm1", "Install-Chocolatey.apps.json",
             "Settings.ps1", "Settings.Core.psm1", "Settings.Profiles.json", "Drivers.Core.psm1", "Install-Run.Core.psm1", "Resume-Run.ps1", "Freshkit.Status.ps1" };
-        static readonly string[] ScriptNames = { "Job.ps1", "Updates.ps1", "Schedule.ps1", "KitExport.ps1" };
+        static readonly string[] ScriptNames = { "Job.ps1", "Updates.ps1", "Schedule.ps1", "KitExport.ps1", "TweakState.ps1", "DriverPreview.ps1", "AuditScan.ps1" };
 
         public static string ExePath { get { return Assembly.GetExecutingAssembly().Location; } }
         public static string ExeDir { get { return Path.GetDirectoryName(ExePath); } }
@@ -444,7 +444,7 @@ namespace Freshkit
         public const int UacDeclined = -2;
 
         /// Runs a console program and returns its output (UTF-8).
-        public static int Capture(string exe, string args, out string output, int timeoutMs)
+        public static int Capture(string exe, string args, out string output, int timeoutMs, CancellationToken cancellation = default(CancellationToken))
         {
             var psi = new ProcessStartInfo(exe, args);
             psi.UseShellExecute = false;
@@ -458,13 +458,18 @@ namespace Freshkit
             {
                 p.OutputDataReceived += delegate (object s, DataReceivedEventArgs e) { if (e.Data != null) lock (sb) sb.Append(e.Data).Append('\n'); };
                 p.ErrorDataReceived += delegate (object s, DataReceivedEventArgs e) { if (e.Data != null) lock (sb) sb.Append(e.Data).Append('\n'); };
+                cancellation.ThrowIfCancellationRequested();
                 p.Start();
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
-                if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } output = sb.ToString(); return -1; }
+                using (cancellation.Register(delegate { try { if (!p.HasExited) p.Kill(); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } }))
+                {
+                if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } lock (sb) output = sb.ToString(); return -1; }
                 p.WaitForExit();
+                cancellation.ThrowIfCancellationRequested();
                 lock (sb) output = sb.ToString();
                 return p.ExitCode;
+                }
             }
         }
 

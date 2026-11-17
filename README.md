@@ -19,6 +19,42 @@ Freshkit never automatically reads or creates `Freshkit.lists.txt` or `FreshkitK
 
 An active install keeps a temporary snapshot of its exact selection so it can continue after a restart and retry failures. That snapshot is job recovery data, not persistent preferences for the next setup.
 
+**Explicit setup recipes:** use **⋯ → Export setup recipe…** to save the current catalog and selected apps, Windows tweaks/removals, restore-point/Edge options and backup-profile selections as a `.freshkit.json` file. **Import setup recipe…** validates the file and previews the selected apps, source IDs and installer arguments before **Apply to session**. Import only changes selections; use **Review setup** to start installation. Recipes contain definitions and selections, not settings-backup contents or driver/Wi-Fi kits. They can include custom paths and installer arguments, so review them before sharing. Freshkit never automatically reads a recipe on startup.
+
+The same import action accepts winget export JSON from the built-in `winget` and `msstore` sources. It replaces the app selection and adds missing IDs to the session catalog, preserving current Windows and backup selections. Version pins are ignored; setup uses current releases. Custom package sources and malformed files are rejected before changing the session.
+
+**Per-app installation options:** right-click an app card and choose **Installation options…**. The editor distinguishes Chocolatey package parameters, winget installer overrides and GitHub installer arguments. Documented Chocolatey Firefox language and Git component presets are included; other apps accept their installer's documented options. Winget/GitHub EXE overrides must include the installer's silent switches. GitHub MSI properties are appended to the fixed silent invocation. Store overrides are unavailable. Arguments are saved to this session's catalog, appear in setup review, and travel with recipes and job/restart snapshots. Package IDs, sources and download URLs cannot be changed through this editor.
+
+**Integrated tweak controls:** opening **Windows tweaks** starts a read-only background check of the embedded Win11Debloat registry definitions. Each control separates its **Current** state from the selected **Next setup** action. Detection never selects changes for you. Confirmed current settings stay selected in profiles and recipes but are skipped when building a job; unknown or different settings remain pending. The setup review lists what will apply and what will be skipped. Registry state cannot prove every action's side effects: telemetry, Bing, Copilot, optional Windows features, Widgets and Store search suggestions remain Unknown when the complete action cannot be verified. **Refresh detection** also refreshes removable-app installation state without elevation.
+
+**Guided app options:** right-click an app in Apps to edit its installation options. Firefox offers verified language choices, including separate winget locale packages. Chocolatey Firefox offers shortcut and maintenance-service options; Chocolatey Git offers shell-integration and Git LFS options. The editor previews the package and arguments that will be saved, preserves custom advanced arguments, and provides **Reset defaults**. Locale changes also update selected session profiles; duplicate package identities are rejected before changing the catalog. These options configure the next installation request; an existing installation may retain its language or components.
+
+**Driver preview:** **Drivers → Scan hardware** opens a read-only preview of detected hardware, installed Windows driver versions, proposed packages, available package versions and manufacturer support links. Driver installation opens the same preview before explicit continuation. Setup review also scans before starting with drivers enabled. Windows driver and Chocolatey package versions use different numbering and are never treated as an update comparison. Missing inventory or metadata is shown explicitly; execution still validates supported hardware.
+
+The preview shows one card per proposed installer, so AMD chipset devices sharing a package appear together. Expand **Devices covered by this proposal** to see every device, hardware ID and installed driver version. Different installers and hardware without a reviewed automatic package remain separate. Setup review summarizes installers and device counts.
+
+**Preflight checks:** setup review runs read-only checks for system/temporary drive free space, standard Windows pending-restart signals, required source HTTPS endpoints, winget availability and running apps named in the chosen settings backup. Results show warnings and suggested actions, with **Recheck** and a Windows Storage settings link when space needs attention. Passed checks collapse into a short list. Checks never reboot, close apps or repair sources. Starting waits for checks to finish; results older than two minutes require rechecking. Warnings can be reviewed and continued. Source connectivity does not guarantee individual package availability; disk guidance (5 GB system / 2 GB temporary space) is a heuristic, not a download or installed-size estimate. The install/restore engine retains its own validation.
+
+**Setup comparison:** **Apps → Compare** checks the current selected apps, Windows settings/removals and backup profiles against this PC. **Profile ⋯ → Compare recipe with this PC…** reads a saved Freshkit recipe or supported winget export without importing it. Results distinguish verified presence, missing apps, different settings, unavailable/running backup settings and unknown evidence. Comparison uses the loaded recipe's own backup definitions and never changes the active catalog, selections or Windows settings. **Only show items needing attention or confirmation** filters results; clear it to see verified checks. **Recheck** captures fresh evidence.
+
+**Post-setup verification:** after setup and any settings restoration finish, Progress automatically checks the original requested apps, actual Windows changes, present-device problem codes and pending restart signals. Terminal failures before an engine report also receive verification. Original targets survive targeted retries and restart recovery. **View verification** opens the results; **Verify again** repeats the scan. Verification is separate from installer results and never adds apps to the retry queue or repairs anything. Reports remain available for the current session and do not create a persistent setup history.
+
+App verification checks local package/uninstall registration, not whether an app launches, is the latest release, or accepted its installer arguments. GitHub needs a confirmed repository identity. Name-only desktop matches require a complete registry inventory. Store products lacking an exact local identity remain Unknown. Unsupported tweak effects remain Unknown; app-removal checks cover the current user's inventory. Device checks label disabled hardware separately from missing drivers and do not compare INF and installer package versions. Partial, inaccessible, translated or truncated inventories are explained rather than treated as successful checks.
+
+Each tweak section offers **Select all** and **Clear** for its displayed controls. Mutually exclusive settings use the first supported option when selected, matching Win11Debloat's bulk-selection behavior. **Quick select** offers the vendor's **Privacy and suggested content** and **AI features** categories without changing other categories. Under Remove preinstalled apps, **Only show installed apps** matches exact Appx package names or winget IDs, including aliases. Filtering preserves selections; the count warns about hidden selections. Unknown inventory results remain visible and are explained in the detection status.
+
+**Graphics drivers:** AMD Adrenalin support is retained and tested; reviewed Intel Arc A/B and Core Ultra Series 1/2 device IDs now use the current Intel graphics package. Hybrid systems can select multiple matching vendors. Older or unreviewed Intel adapters receive OEM/Intel driver-selection guidance. AMD's existing vendor-based detection does not establish compatibility for every legacy/workstation/OEM GPU. See [driver support and verification limits](docs/driver-support.md).
+
+The selected **Modular F** logo is used by the sidebar and multi-size Windows icon. Artwork, alternatives and generation prompts are retained under `src/freshkit-logo.png` and `docs/logo-concepts/`; `tools/make-icon.ps1` packages the selected PNG into `src/app.ico`.
+
+The sidebar slogan is **Fresh start. Your setup.** Its **This PC** panel shows Windows edition/release, a separate build/revision line, architecture, system-drive free space, Chocolatey, winget availability and connection state. Details wrap, and navigation can scroll in shorter windows. Builds notify Explorer about the changed executable; use `powershell -ExecutionPolicy Bypass -File build.ps1 -RefreshIconCache` when Windows has retained an older cached icon. This sends Shell notifications without deleting cache files or restarting Explorer.
+
+**Installed app identity:** GitHub projects require their repository URL in Windows' uninstall metadata or an explicit association with a particular uninstall entry. A name or release-version coincidence is insufficient. Search displays **Possible match · Link installed app** for an unambiguous name-only match; confirm the publisher/version and exact repository before linking. Links are stored on this PC in `%LOCALAPPDATA%\Freshkit\installed-identities.json`, separately from session selections, and are invalidated if the registration's stable metadata changes. Successful GitHub installs record this association for later updates. Unconfirmed projects are excluded from automatic updates and reported as needing confirmation.
+
+Search displays results as each source completes, cancels outstanding requests when replaced or closed, and uses a shared 30-second deadline. Unavailable or timed-out sources produce an incomplete-search notice. Update sources run concurrently; failed checks remain visible even when no updates were found. Successful results from a partially failed source are retained. GitHub release metadata expires after five minutes and update checks fetch it afresh. The versioned icon cache ignores older images that may have been attributed by display name.
+
+Large weekly-update payloads are compressed inside the scheduled command, retaining GitHub updates without companion scripts. Re-enable weekly updates to replace an existing task with the current updater; building the EXE does not modify scheduled tasks.
+
 ## Pages
 
 | Page | Features |
@@ -104,6 +140,17 @@ powershell -ExecutionPolicy Bypass -File tests\run-ui.ps1
 powershell -ExecutionPolicy Bypass -File tests\job-status.ps1
 powershell -ExecutionPolicy Bypass -File tests\engine-progress.ps1
 powershell -ExecutionPolicy Bypass -File tests\settings-roundtrip.ps1
+powershell -ExecutionPolicy Bypass -File tests\identity.ps1
+powershell -ExecutionPolicy Bypass -File tests\schedule-payload.ps1
+powershell -ExecutionPolicy Bypass -File tests\run-app-options.ps1
+powershell -ExecutionPolicy Bypass -File tests\app-options-payload.ps1
+powershell -ExecutionPolicy Bypass -File tests\drivers.ps1
+powershell -ExecutionPolicy Bypass -File tests\run-driver-preview.ps1
+powershell -ExecutionPolicy Bypass -File tests\run-preflight.ps1
+powershell -ExecutionPolicy Bypass -File tests\run-audit.ps1
+powershell -ExecutionPolicy Bypass -File tests\audit-scan.ps1
+powershell -ExecutionPolicy Bypass -File tests\driver-preview.ps1
+powershell -ExecutionPolicy Bypass -File tests\tweak-state.ps1
 ```
 
 The tests cover session isolation, catalog merging, settings discovery/exclusions, stage failure/retry handling, report binding, interrupted restore and a synthetic backup/restore round trip. Real installer/reboot behaviour should additionally be exercised in a disposable Windows VM.

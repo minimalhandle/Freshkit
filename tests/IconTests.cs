@@ -45,6 +45,7 @@ namespace Freshkit
                 string choco = AppIcons.CachePath("Example.App", false, folder), winget = AppIcons.CachePath("Example.App", true, folder);
                 AppIcons.Save(image, choco);
                 check(AppIcons.ReadFile(choco) != null && choco != winget, "Icons survive a disk-cache roundtrip and keep package sources separate");
+                check(Path.GetFileName(choco).StartsWith("v2-", StringComparison.Ordinal), "The identity-safe icon cache invalidates legacy misattributed images");
                 check(AppIcons.CachePath("../../escape", true, folder).StartsWith(folder + Path.DirectorySeparatorChar), "Package IDs cannot escape the icon cache");
                 File.WriteAllText(choco, "invalid image");
                 check(AppIcons.ReadFile(choco) == null, "Corrupt cached icons fall back without breaking the app list");

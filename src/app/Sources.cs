@@ -8,6 +8,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Xml;
 using Microsoft.Win32;
@@ -18,7 +19,8 @@ namespace Freshkit
     {
         AppIcon artwork;
         // Store apps share the winget icon cache because they are added as winget entries.
-        public AppIcon Artwork { get { return artwork ?? (artwork = AppIcons.Get(Id, Name, Source == "store" ? "winget" : Source)); } }
+        // Only the result attributed as installed (see AttributeInstalled) may borrow the installed app's icon.
+        public AppIcon Artwork { get { return artwork ?? (artwork = AppIcons.Get(Id, Name, Source == "store" ? "winget" : Source, Source != "github" && InstalledVersion != null)); } }
         bool added;
         public string Source { get; set; }   // choco | winget | store | github
         public string Key { get { return Data.KeyFor(Source, Id); } }
@@ -45,6 +47,9 @@ namespace Freshkit
         public string Publisher { get; set; }
         /// https link to the app's website or listing.
         public string Homepage { get; set; }
+        internal InstalledMatch InstalledMatch;
+        public string IdentityNote { get { return InstalledMatch == null ? "" : InstalledMatch.Reason; } }
+        public Visibility LinkVisibility { get { return Source == "github" && InstalledMatch != null && InstalledMatch.Record != null && !InstalledMatch.Confirmed ? Visibility.Visible : Visibility.Collapsed; } }
         string installedVersion;
         /// Version found on this PC ("" when installed but unversioned; null when not installed).
         public string InstalledVersion { get { return installedVersion; } set { installedVersion = value; Raise("InstalledText"); Raise("InstalledVisibility"); } }
@@ -88,6 +93,7 @@ namespace Freshkit
             request.UserAgent = "Freshkit/2.0";
             request.Timeout = 30000;
             var doc = new XmlDocument { XmlResolver = null };
+            using (SearchIO.AbortOnCancel(request))
             using (var response = request.GetResponse())
             using (var stream = response.GetResponseStream())
             using (var reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null }))
@@ -134,7 +140,8 @@ namespace Freshkit
             request.UserAgent = "Freshkit/3.0"; request.Accept = "application/vnd.github+json"; request.Timeout = 20000;
             try
             {
-                using (var response = request.GetResponse())
+                using (SearchIO.AbortOnCancel(request))
+            using (var response = request.GetResponse())
                 using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
                     return Engine.Json.DeserializeObject(reader.ReadToEnd());
             }
@@ -163,21 +170,21 @@ namespace Freshkit
             return best;
         }
 
-        internal sealed class GitHubRelease { public string Tag; public List<string> Assets = new List<string>(); }
+        internal sealed class GitHubRelease { public DateTime FetchedUtc = DateTime.UtcNow; public string Tag; public List<string> Assets = new List<string>(); }
         static readonly Dictionary<string, GitHubRelease> gitHubReleases = new Dictionary<string, GitHubRelease>(StringComparer.OrdinalIgnoreCase);
 
         /// Latest release from github.com's own pages (the /releases/latest redirect and the expanded_assets list).
         /// Unlike api.github.com, these don't count against the 60-requests-an-hour limit per network. Cached per session.
-        internal static GitHubRelease GitHubLatest(string repo)
+        internal static GitHubRelease GitHubLatest(string repo, bool refresh = false)
         {
             if (!Data.IsGitHubRepo(repo)) return null;
-            lock (gitHubReleases) { GitHubRelease cached; if (gitHubReleases.TryGetValue(repo, out cached)) return cached; }
+            lock (gitHubReleases) { GitHubRelease cached; if (!refresh && gitHubReleases.TryGetValue(repo, out cached) && DateTime.UtcNow - cached.FetchedUtc < TimeSpan.FromMinutes(5)) return cached; }
             Data.EnsureModernTls();
             var request = (HttpWebRequest)WebRequest.Create("https://github.com/" + repo + "/releases/latest");
             request.AllowAutoRedirect = false; request.UserAgent = "Freshkit/3.0"; request.Timeout = 20000;
             string location = null;
-            try { using (var response = (HttpWebResponse)request.GetResponse()) location = response.Headers["Location"]; }
-            catch (WebException) { }   // no releases, missing repository or offline
+            try { using (SearchIO.AbortOnCancel(request)) using (var response = (HttpWebResponse)request.GetResponse()) location = response.Headers["Location"]; }
+            catch (WebException ex) { SearchIO.Token.ThrowIfCancellationRequested(); var http = ex.Response as HttpWebResponse; if (http == null || http.StatusCode != HttpStatusCode.NotFound) throw; }
             GitHubRelease release = null;
             Match tag = Regex.Match(location ?? "", @"/releases/tag/(?<tag>[^/?#]+)\z");
             if (tag.Success)
@@ -191,7 +198,7 @@ namespace Freshkit
                     if (href.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) release.Assets.Add(Uri.UnescapeDataString(href.Substring(href.LastIndexOf('/') + 1)));
                 }
             }
-            lock (gitHubReleases) gitHubReleases[repo] = release;
+            if (release != null) lock (gitHubReleases) gitHubReleases[repo] = release;
             return release;
         }
 
@@ -237,17 +244,16 @@ namespace Freshkit
                 var items = J.Get(found, "items") as object[];
                 if (items != null) foreach (object r in items) { if (repos.Count >= 6) break; if (!J.B(r, "fork")) repos.Add(r); }
             }
-            // Release lookups run in parallel; keep repository order.
-            var results = new SearchResult[repos.Count];
-            var threads = new List<Thread>();
-            for (int i = 0; i < repos.Count; i++)
-            {
-                int index = i;
-                var t = new Thread(delegate () { try { results[index] = GitHubResult(repos[index]); } catch (Exception) { } }) { IsBackground = true };
-                t.Start(); threads.Add(t);
-            }
-            foreach (Thread t in threads) t.Join(30000);
+            // Bounded child lookups inherit the search cancellation token.
+            var results = new SearchResult[repos.Count]; var token = SearchIO.Token;
+            var errors = new List<Exception>();
+            Parallel.For(0, repos.Count, new ParallelOptions { MaxDegreeOfParallelism = 3, CancellationToken = token }, delegate(int index) {
+                try { results[index] = SearchIO.Run(token, delegate { return GitHubResult(repos[index]); }); }
+                catch (Exception ex) { lock (errors) errors.Add(ex); }
+            });
+            token.ThrowIfCancellationRequested();
             foreach (SearchResult r in results) if (r != null) list.Add(r);
+            if (errors.Count > 0) throw new PartialSearchException(list, errors.Count + " release lookup(s) failed: " + errors[0].Message);
             return list;
         }
 
@@ -266,6 +272,8 @@ namespace Freshkit
             Data.EnsureModernTls();
             var request = (HttpWebRequest)WebRequest.Create(url);
             request.UserAgent = "Freshkit/3.0"; request.Timeout = 20000;
+            using (SearchIO.AbortOnCancel(request))
+            {
             if (postJson != null)
             {
                 request.Method = "POST"; request.ContentType = "application/json";
@@ -274,6 +282,7 @@ namespace Freshkit
             }
             using (var response = request.GetResponse())
             using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8)) return reader.ReadToEnd();
+            }
         }
 
         /// Store details from the display catalog: title, publisher, description, newest package version and logo.
@@ -351,40 +360,29 @@ namespace Freshkit
         /// source with its newest release.
         public static List<SearchResult> SearchAll(string query, out string notes)
         {
-            var sources = new[] { "choco", "winget", "store", "github" };
-            var found = new List<SearchResult>[sources.Length];
-            var errors = new string[sources.Length];
-            var threads = new List<Thread>();
-            for (int i = 0; i < sources.Length; i++)
-            {
-                int index = i;
-                var t = new Thread(delegate ()
-                {
-                    try
-                    {
-                        string s = sources[index];
-                        found[index] = s == "choco" ? SearchChocolatey(query) : s == "winget" ? SearchWinget(query) : s == "store" ? SearchStore(query) : SearchGitHub(query);
-                    }
-                    catch (Exception ex) { errors[index] = ex.Message; }
-                }) { IsBackground = true };
-                t.Start(); threads.Add(t);
-            }
-            foreach (Thread t in threads) t.Join(100000);
-            var failed = new List<string>(); string firstError = null;
-            var all = new List<SearchResult>();
-            for (int i = 0; i < sources.Length; i++)
-            {
-                if (found[i] != null) all.AddRange(found[i]);
-                else { failed.Add(new SearchResult { Source = sources[i] }.SourceLabel); if (firstError == null) firstError = errors[i] ?? "timed out"; }
-            }
-            if (failed.Count == sources.Length) throw new InvalidOperationException(firstError);
-            notes = failed.Count > 0 ? string.Join(" and ", failed.ToArray()) + " couldn't be searched (" + firstError + ")." : "";
-            List<SearchResult> ranked = Rank(query, all);
-            MarkInstalled(ranked);
-            PickBest(ranked);
-            return ranked;
+            List<SearchResult> result = null; string detail = "";
+            SearchAll(query, CancellationToken.None, delegate(List<SearchResult> items, string state, bool final) { result = items; detail = state; });
+            notes = detail; return result ?? new List<SearchResult>();
         }
 
+        internal static void SearchAll(string query, CancellationToken token, Action<List<SearchResult>, string, bool> publish)
+        {
+            var snapshot = InstalledSnapshot.Capture();
+            SearchCoordinator.Run(new Dictionary<string, Func<CancellationToken, List<SearchResult>>> {
+                { "Chocolatey", delegate { return SearchChocolatey(query); } },
+                { "winget", delegate { return SearchWinget(query); } },
+                { "Microsoft Store", delegate { return SearchStore(query); } },
+                { "GitHub", delegate { return SearchGitHub(query); } }
+            }, 30000, token, delegate(SearchBatch batch) {
+                var copy = new List<SearchResult>();
+                foreach (var r in batch.Results) copy.Add(new SearchResult { Source = r.Source, Id = r.Id, Name = r.Name, Version = r.Version, Meta = r.Meta, Summary = r.Summary, Publisher = r.Publisher, Homepage = r.Homepage, Popularity = r.Popularity });
+                var ranked = Rank(query, copy); MarkInstalled(ranked, snapshot); PickBest(ranked);
+                if (!batch.IsFinal) foreach (var r in ranked) r.IsBest = false;
+                var errors = new List<string>(); foreach (var pair in batch.Errors) errors.Add(pair.Key + ": " + pair.Value);
+                string notes = errors.Count > 0 ? "Search incomplete. " + string.Join("; ", errors.ToArray()) : "";
+                publish(ranked, notes, batch.IsFinal);
+            });
+        }
         /// Same app across sources: drops architecture/installer qualifiers but keeps words such as "(Unofficial)".
         internal static string AppKey(string name)
         {
@@ -554,14 +552,17 @@ namespace Freshkit
         }
 
         internal static void MarkInstalled(List<SearchResult> results)
+        { MarkInstalled(results, InstalledSnapshot.Capture()); }
+
+        internal static void MarkInstalled(List<SearchResult> results, InstalledSnapshot snapshot)
         {
             foreach (SearchResult r in results)
             {
                 string family = null;
                 if (r.Source == "store") lock (storeFamilies) storeFamilies.TryGetValue(r.Id, out family);
-                r.InstalledVersion = r.Source == "store" ? StoreInstalledVersion(family) : InstalledVersion(r.Name);
+                r.InstalledMatch = snapshot.Resolve(r.Source, r.Id, r.Name);
+                r.InstalledVersion = r.Source == "store" ? StoreInstalledVersion(family) : r.InstalledMatch.Confirmed ? r.InstalledMatch.Record.Version : null;
             }
-            AttributeInstalled(results);
         }
 
         /// Installed apps are matched by display name, so same-named results all look installed. When one of them
@@ -569,22 +570,7 @@ namespace Freshkit
         /// minimalhandle/Afterclip v1.5.0, not panzergen/AfterClip v0.3.0).
         internal static void AttributeInstalled(List<SearchResult> results)
         {
-            var groups = new Dictionary<string, List<SearchResult>>();
-            foreach (SearchResult r in results)
-            {
-                if (r.InstalledVersion == null || r.Source == "store") continue;
-                string key = NameKey(r.Name);
-                List<SearchResult> g;
-                if (!groups.TryGetValue(key, out g)) groups[key] = g = new List<SearchResult>();
-                g.Add(r);
-            }
-            foreach (List<SearchResult> g in groups.Values)
-            {
-                if (g.Count < 2) continue;
-                List<SearchResult> exact = g.FindAll(r => { int? c = Data.CompareVersions(r.Version, r.InstalledVersion); return c.HasValue && c.Value == 0; });
-                if (exact.Count == 0) continue;
-                foreach (SearchResult r in g) if (!exact.Contains(r)) r.InstalledVersion = null;
-            }
+            foreach (SearchResult r in results) if (r.Source == "github" && (r.InstalledMatch == null || !r.InstalledMatch.Confirmed)) r.InstalledVersion = null;
         }
 
         /// Store apps from the list that are installed and have a newer Store release.
@@ -609,16 +595,27 @@ namespace Freshkit
         public static List<UpdateItem> GitHubUpdates(List<AppItem> gitHubApps)
         {
             var list = new List<UpdateItem>();
+            var errors = new List<string>();
+            var snapshot = InstalledSnapshot.Capture();
             foreach (AppItem a in gitHubApps)
             {
-                string installed = InstalledVersion(a.Name);
+                var match = snapshot.Resolve("github", a.Id, a.Name);
+                if (!match.Confirmed)
+                {
+                    if (match.Record != null || match.Reason.StartsWith("Multiple", StringComparison.Ordinal)) errors.Add(a.Name + ": confirm the repository match in Add apps before updating");
+                    continue;
+                }
+                string installed = match.Record.Version;
                 if (string.IsNullOrEmpty(installed)) continue;
-                GitHubRelease release = GitHubLatest(a.Id);
-                if (release == null || PickInstallerAsset(release.Assets) == null) continue;
+                GitHubRelease release;
+                try { release = GitHubLatest(a.Id, true); }
+                catch (Exception ex) { errors.Add(a.Name + ": " + ex.Message); continue; }
+                if (release == null || PickInstallerAsset(release.Assets) == null) { errors.Add(a.Name + ": no usable release found"); continue; }
                 int? newer = Data.CompareVersions(release.Tag, installed);
                 if (newer.HasValue && newer.Value > 0)
                     list.Add(new UpdateItem { Source = "github", Id = a.Id, Name = a.Name, Current = installed, Available = release.Tag.TrimStart('v', 'V') });
             }
+            if (errors.Count > 0) throw new PartialUpdatesException(list, string.Join("; ", errors.ToArray()));
             return list;
         }
 
@@ -628,7 +625,9 @@ namespace Freshkit
             string exe = Engine.WingetExe();
             if (exe == null) throw new InvalidOperationException("winget (App Installer) isn't available on this PC.");
             string output;
-            Proc.Capture(exe, args, out output, timeoutMs);
+            int code = Proc.Capture(exe, args, out output, timeoutMs, SearchIO.Token);
+            if (code == -1) throw new TimeoutException("winget timed out.");
+            if (code != 0 && code != -1978335212 && code != -1978335189) throw new InvalidOperationException("winget failed: " + output.Trim());
             return output;
         }
 
@@ -742,15 +741,22 @@ namespace Freshkit
 
         public static List<UpdateItem> ChocoUpdates()
         {
-            var list = new List<UpdateItem>();
-            if (!File.Exists(Engine.ChocoExe)) return list;
+            if (!File.Exists(Engine.ChocoExe)) return new List<UpdateItem>();
             string output;
-            Proc.Capture(Engine.ChocoExe, "outdated -r --ignore-unfound --ignore-pinned", out output, 180000);
+            int code = Proc.Capture(Engine.ChocoExe, "outdated -r --ignore-unfound --ignore-pinned", out output, 180000);
+            return ParseChocolateyUpdates(code, output);
+        }
+
+        internal static List<UpdateItem> ParseChocolateyUpdates(int code, string output)
+        {
+            if (code == -1) throw new TimeoutException("Chocolatey timed out.");
+            if (code != 0 && code != 2) throw new InvalidOperationException("Chocolatey failed: " + output.Trim());
+            var list = new List<UpdateItem>();
             foreach (string line in output.Split('\n'))
             {
                 string[] p = line.Trim().Split('|');
                 if (p.Length >= 3 && Regex.IsMatch(p[0], @"^[A-Za-z0-9][A-Za-z0-9.-]*$") && p[2].Length > 0)
-                    list.Add(new UpdateItem { Source = "Chocolatey", Id = p[0], Name = p[0], Current = p[1], Available = p[2] });
+                    list.Add(new UpdateItem { Source = "choco", Id = p[0], Name = p[0], Current = p[1], Available = p[2] });
             }
             return list;
         }

@@ -26,7 +26,7 @@ namespace Freshkit
     // Two background workers share source-qualified, persistent thumbnails.
     internal static class AppIcons
     {
-        sealed class Work { public string Id, Name, Source; public AppIcon Icon; }
+        sealed class Work { public string Id, Name, Source; public bool UseInstalled; public AppIcon Icon; }
         static readonly Dictionary<string, AppIcon> cache = new Dictionary<string, AppIcon>(StringComparer.OrdinalIgnoreCase);
         static readonly Queue<Work> queue = new Queue<Work>();
         static readonly Dictionary<string, Assembly> libraries = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -54,8 +54,11 @@ namespace Freshkit
 
         public static AppIcon Get(string id, string name, bool winget) { return Get(id, name, winget ? "winget" : "choco"); }
 
-        /// source: choco, winget or github (owner/repo ids).
-        public static AppIcon Get(string id, string name, string source)
+        /// source: choco, winget or github (owner/repo ids). useInstalled allows the icon of the installed app with the
+        /// same display name; callers turn it off when the name may belong to a different app (GitHub namesakes).
+        public static AppIcon Get(string id, string name, string source) { return Get(id, name, source, true); }
+
+        public static AppIcon Get(string id, string name, string source, bool useInstalled)
         {
             string key = source + ":" + id;
             lock (queue)
@@ -67,7 +70,7 @@ namespace Freshkit
                 icon = new AppIcon { Monogram = initial, Image = For(id, source) }; cache[key] = icon;
                 if (icon.Image == null && !string.IsNullOrEmpty(id))
                 {
-                    queue.Enqueue(new Work { Id = id, Name = name, Source = source, Icon = icon });
+                    queue.Enqueue(new Work { Id = id, Name = name, Source = source, UseInstalled = useInstalled, Icon = icon });
                     if (workers < 2) { workers++; ThreadPool.QueueUserWorkItem(delegate { RunQueue(); }); }
                 }
                 return icon;
@@ -83,7 +86,11 @@ namespace Freshkit
                 try
                 {
                     string path = CachePath(work.Id, work.Source, Path.Combine(Engine.DataDir, "icons"));
-                    BitmapSource image = ReadFile(path) ?? InstalledIcon(work.Name);
+                    BitmapSource image = ReadFile(path);
+                    // An installed app's icon is matched by display name only, so it is shown but never cached under
+                    // this package ID, where it would stick to a same-named app from another publisher.
+                    bool local = false;
+                    if (image == null && work.UseInstalled) { image = InstalledIcon(work.Name); local = image != null; }
                     // Scan rows can have ARP/GUID identifiers. They can still use a
                     // local DisplayIcon, even though they are not package lookup IDs.
                     if (image == null && Data.IsStoreId(work.Id))
@@ -97,7 +104,7 @@ namespace Freshkit
                     else if (image == null && Regex.IsMatch(work.Id, @"\A[A-Za-z0-9][A-Za-z0-9.+_-]*\z"))
                         image = ResolveRemote(work.Id, work.Source == "winget", Download, Sources.WingetIconDetails);
                     if (image == null) continue;
-                    try { Save(image, path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                    if (!local) try { Save(image, path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
                     if (!work.Icon.Dispatcher.HasShutdownStarted) work.Icon.Dispatcher.BeginInvoke(new Action(delegate { work.Icon.Image = image; }));
                 }
                 catch (Exception) { /* A missing icon must not break searching or adding apps. */ }
@@ -127,7 +134,7 @@ namespace Freshkit
         public static string CachePath(string id, string source, string folder)
         {
             using (var hash = SHA256.Create())
-                return Path.Combine(folder, BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(source + ":" + id.ToLowerInvariant()))).Replace("-", "") + ".png");
+                return Path.Combine(folder, "v2-" + BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(source + ":" + id.ToLowerInvariant()))).Replace("-", "") + ".png");
         }
 
         public static BitmapSource ReadFile(string path)

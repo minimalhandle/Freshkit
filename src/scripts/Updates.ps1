@@ -56,7 +56,7 @@ if($githubApps.Count){
         Write-Host ('-- '+$app.name+' (github.com/'+$app.githubRepo+')')
         try{
             if(-not (Test-SetupGitHubRepo $app.githubRepo)){throw 'Invalid GitHub repository.'}
-            if(-not (Test-SetupGitHubInstalled $app.name).Installed){Write-Host 'Not installed; skipped.';continue}
+            if(-not (Test-SetupGitHubInstalled -Name $app.name -Repo $app.githubRepo).Installed){Write-Host 'Not installed; skipped.';continue}
             $r=Invoke-SetupGitHubApp $app;Write-Host ($r.Status+': '+$r.Detail)
         }catch{$code=1;Write-Host ('ERROR: '+$_.Exception.Message)}
     }

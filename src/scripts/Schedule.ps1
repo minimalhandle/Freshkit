@@ -42,21 +42,26 @@ if($ok){
         $githubBlock=''
         if($pairs.Count){
             $module=Join-Path $PSScriptRoot 'Install-Chocolatey.Core.psm1'
-            $names=@('Test-SetupGitHubRepo','ConvertTo-SetupNameKey','Test-SetupGitHubInstalled','Select-SetupGitHubAsset','Get-SetupGitHubWebRelease','Get-SetupGitHubRelease','Get-SetupInstallerKind','Invoke-SetupGitHubApp')
+            $names=@('Test-SetupGitHubRepo','ConvertTo-SetupNameKey','Test-SetupGitHubInstalled','Save-SetupGitHubIdentity','Select-SetupGitHubAsset','Get-SetupGitHubWebRelease','Get-SetupGitHubRelease','Get-SetupInstallerKind','Invoke-SetupGitHubApp')
             $ast=[Management.Automation.Language.Parser]::ParseFile($module,[ref]$null,[ref]$null)
             $functions=@($ast.FindAll({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $names -contains $n.Name},$true)|ForEach-Object {(($_.Extent.Text -split "`n")|Where-Object {$_ -notmatch '^\s*#'}) -join "`n"})
             if($functions.Count -ne $names.Count){throw 'The GitHub updater functions could not be read from the engine.'}
             $list=($pairs|ForEach-Object {"'"+$_.Replace("'","''")+"'"}) -join ','
-            $githubBlock=($functions -join "`n")+"`nWrite-Host '==> GitHub apps'`nforeach(`$pair in @($list)){`$p=`$pair -split '\|',2;try{if((Test-SetupGitHubInstalled `$p[1]).Installed){`$r=Invoke-SetupGitHubApp ([pscustomobject]@{githubRepo=`$p[0];name=`$p[1];packageParameters='';upgrade=`$true});Write-Host (`$p[1]+': '+`$r.Status)}}catch{Write-Host (`$p[1]+': '+`$_.Exception.Message);`$ok=`$false}}`n"
+            $githubBlock=($functions -join "`n")+"`nWrite-Host '==> GitHub apps'`nforeach(`$pair in @($list)){`$p=`$pair -split '\|',2;try{if((Test-SetupGitHubInstalled -Name `$p[1] -Repo `$p[0]).Installed){`$r=Invoke-SetupGitHubApp ([pscustomobject]@{githubRepo=`$p[0];name=`$p[1];packageParameters='';upgrade=`$true});Write-Host (`$p[1]+': '+`$r.Status)}}catch{Write-Host (`$p[1]+': '+`$_.Exception.Message);`$ok=`$false}}`n"
         }
         $full=$body.Replace('#FRESHKIT-STORE-GITHUB#',$extra+$githubBlock)
-        # Windows command lines are limited to 32,767 characters; keep a margin for the PowerShell path and switches.
-        if(([Text.Encoding]::Unicode.GetByteCount($full)*4/3) -gt 31000){
-            Write-Host 'WARNING: too many GitHub apps to include in the weekly task; GitHub apps are left out (use Updates in Freshkit for them).'
-            $full=$body.Replace('#FRESHKIT-STORE-GITHUB#',$extra)
-        }
+        # Compress a large self-contained payload instead of silently omitting GitHub apps.
         $body=$full
         $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($body))
+        if($encoded.Length -gt 31000){
+            $buffer=[IO.MemoryStream]::new()
+            $gzip=[IO.Compression.GZipStream]::new($buffer,[IO.Compression.CompressionMode]::Compress,$true)
+            try{$bytes=[Text.Encoding]::UTF8.GetBytes($body);$gzip.Write($bytes,0,$bytes.Length)}finally{$gzip.Dispose()}
+            $payload=[Convert]::ToBase64String($buffer.ToArray());$buffer.Dispose()
+            $body="`$b=[IO.MemoryStream]::new([Convert]::FromBase64String('$payload'));`$g=[IO.Compression.GZipStream]::new(`$b,[IO.Compression.CompressionMode]::Decompress);`$r=[IO.StreamReader]::new(`$g,[Text.Encoding]::UTF8);try{& ([scriptblock]::Create(`$r.ReadToEnd()))}finally{`$r.Dispose();`$b.Dispose()}"
+            $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($body))
+        }
+        if($encoded.Length -gt 31000){throw 'The weekly updater is too large to schedule. Reduce its app list.'}
         $action=New-ScheduledTaskAction -Execute (Join-Path $PSHOME 'powershell.exe') -Argument ('-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand '+$encoded)
         $at=[datetime]::ParseExact($Time,'HH:mm',[Globalization.CultureInfo]::InvariantCulture)
         $trigger=New-ScheduledTaskTrigger -Weekly -DaysOfWeek $Day -At $at

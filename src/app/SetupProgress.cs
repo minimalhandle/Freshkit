@@ -17,10 +17,31 @@ namespace Freshkit
         public string StartedUtc;
         public string EngineRunId = "";
         public JobSpec Recipe;
+        public JobSpec VerificationJob;
         public List<SetupStage> Steps;
     }
     internal static class SetupProgress
     {
+        public static bool VerifyAfterExit(JobSpec spec, int exitCode, bool engineActive, bool engineReportAvailable)
+        {
+            return spec.Action != "CancelResume" && exitCode != 3010 && exitCode != Proc.UacDeclined &&
+                !engineActive && (!spec.TrackAsInstall || !engineReportAvailable);
+        }
+
+        public static SetupRecord Begin(JobSpec spec, SetupRecord previous)
+        {
+            bool retry = spec.Title == "Retrying setup" && previous != null;
+            var original = retry ? previous.VerificationJob ?? previous.Recipe : spec;
+            var record = new SetupRecord { StartedUtc = DateTime.UtcNow.ToString("o"), Recipe = spec, Steps = Create(spec),
+                VerificationJob = Engine.Json.Deserialize<JobSpec>(Engine.Json.Serialize(original)) };
+            if (retry && previous.Steps != null) foreach (var step in record.Steps)
+            {
+                var old = previous.Steps.Find(s => s.Id == step.Id);
+                if (old != null && old.Status == "Done") { step.Status = old.Status; step.Detail = old.Detail; }
+            }
+            return record;
+        }
+
         public static string PathName { get { return Path.Combine(Engine.LogsDir, "setup-steps.json"); } }
         static bool Selected(JobSpec s, string id)
         {

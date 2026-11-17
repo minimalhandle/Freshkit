@@ -11,6 +11,11 @@ namespace Freshkit
         {
             try
             {
+                WorkflowTests.Identity(Check);
+                SystemFactsTests.Run(Check);
+                WorkflowTests.Updates(Check);
+                WorkflowTests.Search(Check);
+                WorkflowTests.Recipes(Check);
                 bool custom;
                 string defaults = Engine.CurrentListText(out custom);
                 Check(!custom, "Startup uses embedded defaults, ignoring companion files");

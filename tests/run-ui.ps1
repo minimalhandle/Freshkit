@@ -8,7 +8,9 @@ $out = Join-Path $root 'obj\UiTests.exe'
 $refs += @(& "$root\tools\icon-build.ps1")
 $sources = @(Get-ChildItem "$root\src\app\*.cs" | ForEach-Object FullName) + (Join-Path $PSScriptRoot 'UiTests.cs')
 $sources += Join-Path $PSScriptRoot 'IconTests.cs'
+$sources += Join-Path $PSScriptRoot 'TweakTests.cs'
 $refs += @(Get-ChildItem "$root\src\icons\*.png" | ForEach-Object { "/resource:$($_.FullName),icons/$($_.Name)" })
+$refs += "/resource:$root\src\freshkit-logo.png,freshkit-logo.png"
 & "$fw\csc.exe" /nologo /target:exe /main:Freshkit.UiTests /out:$out $refs "/resource:$root\src\MainWindow.xaml,MainWindow.xaml" "/resource:$root\src\Freshkit.lists.txt,Freshkit.lists.txt" "/resource:$root\src\payload\Settings.Profiles.json,payload/Settings.Profiles.json" "/resource:$root\obj\win11debloat.zip,win11debloat.zip" $sources
 if ($LASTEXITCODE) { throw 'UI test compilation failed' }
 if ($Render) { & $out --render } else { & $out }

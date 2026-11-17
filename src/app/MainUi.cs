@@ -55,6 +55,7 @@ namespace Freshkit
             try { using (Stream s = Engine.Resource("app.ico")) Window.Icon = BitmapFrame.Create(s, BitmapCreateOptions.None, BitmapCacheOption.OnLoad); } catch { }
             Window.SourceInitialized += delegate { DarkTitleBar(); };
             Window.Closing += OnClosing;
+            Window.Closed += delegate { if (searchCancellation != null) searchCancellation.Cancel(); };
 
             for (int i = 0; i < navs.Length; i++)
             {
@@ -126,6 +127,7 @@ namespace Freshkit
             foreach (string p in pages) Get<FrameworkElement>(p).Visibility = p == page ? Visibility.Visible : Visibility.Collapsed;
             if (page == "PageProgress") PollProgress();
             if (page == "PageDrivers") RefreshKit();
+            if (page == "PageTweaks" && !tweaksScanned) RefreshTweakState();
             if (page == "PageUpdates") RefreshSchedule();
             if (page == "PageSettings") RefreshSettingsAvailability();
         }
@@ -199,9 +201,10 @@ namespace Freshkit
 
         void SetRunning(bool value, string label)
         {
+            if (value) { tweakStateEpoch++; if (debloat != null) debloat.InvalidateDetection(); InvalidateAuditResults(); }
             running = value;
             foreach (UIElement c in actionControls) c.IsEnabled = !value;
-            if (!value) UpdateCount();
+            if (!value) { if (debloat != null) RefreshTweakCounts(); else UpdateCount(); }
             Get<ProgressBar>("Busy").Visibility = value ? Visibility.Visible : Visibility.Collapsed;
             if (value) SetStatus(label + "...", DotBusy);
         }
@@ -218,6 +221,7 @@ namespace Freshkit
             SetRunning(false, null);
             SetStatus(label + ": " + meaning + (rc == Proc.UacDeclined ? "" : " (exit code " + rc + ")"), dot);
             RefreshSystem();
+            if (Get<Grid>("PageTweaks").Visibility == Visibility.Visible) RefreshTweakState();
         }
 
         // ---------------------------------------------------------------- run the engine runner (no elevation, output captured)
@@ -267,13 +271,7 @@ namespace Freshkit
             if (spec.Action != "Resume" && spec.Action != "CancelResume")
             {
                 var previous = SetupProgress.Load() ?? sessionSetup;
-                sessionSetup = new SetupRecord { StartedUtc = DateTime.UtcNow.ToString("o"), Recipe = spec, Steps = SetupProgress.Create(spec) };
-                if (spec.Title == "Retrying setup" && previous != null)
-                    foreach (SetupStage step in sessionSetup.Steps)
-                    {
-                        SetupStage old = previous.Steps.Find(s => s.Id == step.Id);
-                        if (old != null && old.Status == "Done") { step.Status = old.Status; step.Detail = old.Detail; }
-                    }
+                sessionSetup = SetupProgress.Begin(spec, previous);
                 SetupProgress.Save(sessionSetup);
             }
             Navigate("NavProgress");
@@ -335,7 +333,10 @@ namespace Freshkit
                         if (sessionSetup != null) { foreach (SetupStage s in sessionSetup.Steps) if (s.Status == "Pending") { s.Status = "Blocked"; s.Detail = "Waiting for retry"; } SetupProgress.Save(sessionSetup); }
                     }
                     if (spec.TrackAsInstall && rc == Proc.UacDeclined) { JobState.Clear(); Engine.ClearReopenAfterRestart(); }
-                    if (spec.TrackAsInstall && rc != 3010 && Runs.ReadActive() == null && (sessionSetup == null || string.IsNullOrEmpty(sessionSetup.EngineRunId) || Runs.ReadLatestReport(DateTime.MinValue, sessionSetup.EngineRunId) == null))
+                    bool engineActive = spec.TrackAsInstall && rc != 3010 && Runs.ReadActive() != null;
+                    bool engineReportAvailable = spec.TrackAsInstall && sessionSetup != null && !string.IsNullOrEmpty(sessionSetup.EngineRunId) && Runs.ReadLatestReport(DateTime.MinValue, sessionSetup.EngineRunId) != null;
+                    bool verifyAfterExit = SetupProgress.VerifyAfterExit(spec, rc, engineActive, engineReportAvailable);
+                    if (spec.TrackAsInstall && rc != 3010 && !engineActive && !engineReportAvailable)
                     { JobState.Clear(); Engine.ClearReopenAfterRestart(); }
                     // Leave nothing on the PC after a successful (or cancelled) job; installs clean up when they complete.
                     if (rc == Proc.UacDeclined || (rc == 0 && !spec.TrackAsInstall && string.IsNullOrEmpty(spec.RestoreZip)))
@@ -348,7 +349,8 @@ namespace Freshkit
                     }
                     else if (rc != 0 && rc != 3010) Log("Log kept for troubleshooting: " + logFile + " (delete it on the Progress page).");
                     Finished(spec.Title, rc);
-                    if (rc == 0 && !spec.TrackAsInstall && !string.IsNullOrEmpty(spec.RestoreZip)) RestoreSetupSettings(spec, delegate { PollProgress(); });
+                    if (rc == 0 && !spec.TrackAsInstall && !string.IsNullOrEmpty(spec.RestoreZip)) RestoreSetupSettings(spec, delegate { PollProgress(); StartPostSetupVerification(sessionSetup); });
+                    else if (verifyAfterExit) StartPostSetupVerification(sessionSetup);
                     if (done != null) done(rc);
                     PollProgress();
                 });
@@ -357,7 +359,12 @@ namespace Freshkit
 
         void RefreshSystem()
         {
-            Get<TextBlock>("SysWindows").Text = Engine.WindowsSummary();
+            var windows = SystemFacts.ReadWindows();
+            Get<TextBlock>("SysWindows").Text = windows.Edition;
+            Get<TextBlock>("SysBuild").Text = windows.Build;
+            Get<TextBlock>("SysArchitecture").Text = Environment.Is64BitOperatingSystem ? "64-bit Windows" : "32-bit Windows";
+            Get<TextBlock>("SysDisk").Text = SystemFacts.SystemDrive();
+            Get<TextBlock>("SysWinget").Text = Engine.WingetExe() == null ? "winget not available yet" : "winget available";
             string choco = Engine.ChocolateyVersion();
             Get<TextBlock>("SysChoco").Text = choco == null ? "Chocolatey not installed yet" : "Chocolatey " + choco;
             Get<TextBlock>("ChocoStatus").Text = choco == null ? "Chocolatey: not installed yet" : "Chocolatey " + choco;

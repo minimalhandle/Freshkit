@@ -219,22 +219,73 @@ function Invoke-SetupWingetApp {
 }
 # ---- GitHub releases (Freshkit): latest release's Windows installer, run silently ----
 function Test-SetupGitHubRepo {param([string]$Repo) return ($Repo -match '\A[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}\z' -and $Repo -notmatch '/\.\.?\z')}
-function ConvertTo-SetupNameKey {param([string]$Name) return (($Name.ToLowerInvariant() -replace '\([^)]*\)',' ') -replace '[^a-z0-9]','')}
-function Test-SetupGitHubInstalled {
-    # Apps from GitHub have no package manager record; match Installed Apps by display name.
+function ConvertTo-SetupNameKey {
     param([string]$Name)
-    $wanted=ConvertTo-SetupNameKey $Name
-    if($wanted.Length -lt 3){return [pscustomobject]@{Installed=$false;Version=''}}
-    $roots=@('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall')
-    foreach($root in $roots){
-        foreach($key in @(Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)){
-            $p=Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
-            if(-not $p -or -not $p.PSObject.Properties['DisplayName'] -or -not $p.DisplayName){continue}
-            $display=ConvertTo-SetupNameKey ([string]$p.DisplayName -replace '\s+v?\d+(\.\d+)+.*$','')
-            if($display -eq $wanted){$v='';if($p.PSObject.Properties['DisplayVersion']){$v=[string]$p.DisplayVersion};return [pscustomobject]@{Installed=$true;Version=$v}}
-        }
+    $value=($Name -replace '\s+v?\d+(\.\d+)+.*$','').ToLowerInvariant() -replace '\([^)]*\)',' '
+    return (($value -replace '\b(x64|x86|64-bit|32-bit|install|portable)\b',' ') -replace '[^a-z0-9]','')
+}
+function Test-SetupGitHubInstalled {
+    param([string]$Name,[string]$Repo,[object[]]$Records=$null,$Links=$null,[switch]$AllowUnlinked)
+    if(-not (Test-SetupGitHubRepo $Repo)){return [pscustomobject]@{Installed=$false;Version='';Possible=$false}}
+    if($null -eq $Records){
+        $Records=@(foreach($hive in @([Microsoft.Win32.RegistryHive]::LocalMachine,[Microsoft.Win32.RegistryHive]::CurrentUser)){
+            foreach($view in @([Microsoft.Win32.RegistryView]::Registry64,[Microsoft.Win32.RegistryView]::Registry32)){
+                $base=$null;$keys=$null
+                try{
+                    $base=[Microsoft.Win32.RegistryKey]::OpenBaseKey($hive,$view)
+                    $keys=$base.OpenSubKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall')
+                    if(-not $keys){continue}
+                    foreach($sub in $keys.GetSubKeyNames()){
+                        $key=$keys.OpenSubKey($sub)
+                        if(-not $key){continue}
+                        try{
+                            $display=[string]$key.GetValue('DisplayName');if(-not $display){continue}
+                            $repository=''
+                            foreach($field in @('URLInfoAbout','HelpLink','URLUpdateInfo')){
+                                $uri=$null
+                                if([Uri]::TryCreate([string]$key.GetValue($field),[UriKind]::Absolute,[ref]$uri) -and $uri.Scheme -eq 'https' -and $uri.Host -eq 'github.com' -and -not $uri.UserInfo){
+                                    $parts=$uri.AbsolutePath.Trim('/').Split('/')
+                                    if($parts.Count -ge 2){$candidate=($parts[0]+'/'+$parts[1]) -replace '\.git$','';if(Test-SetupGitHubRepo $candidate){$repository=$candidate;break}}
+                                }
+                            }
+                            $fields=@(([string]$hive+'|'+[string]$view+'|'+$sub),$display,[string]$key.GetValue('Publisher'),[string]$key.GetValue('InstallLocation'),[string]$key.GetValue('UninstallString'))
+                            $hash=[Security.Cryptography.SHA256]::Create()
+                            try{$fingerprint=[BitConverter]::ToString($hash.ComputeHash([Text.Encoding]::UTF8.GetBytes(($fields -join "`n")))).Replace('-','')}finally{$hash.Dispose()}
+                            [pscustomobject]@{RegistryPath=$fields[0];Name=$display;Version=[string]$key.GetValue('DisplayVersion');Repository=$repository;Fingerprint=$fingerprint}
+                        }finally{$key.Dispose()}
+                    }
+                }catch{}finally{if($keys){$keys.Dispose()};if($base){$base.Dispose()}}
+            }
+        })
     }
-    return [pscustomobject]@{Installed=$false;Version=''}
+    if($null -eq $Links){
+        $Links=@{};$path=Join-Path $env:LOCALAPPDATA 'Freshkit\installed-identities.json'
+        if(Test-Path -LiteralPath $path){try{$json=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json;foreach($p in $json.PSObject.Properties){$Links[$p.Name]=[string]$p.Value}}catch{}}
+    }
+    $wanted=ConvertTo-SetupNameKey $Name
+    $confirmed=@();$possible=@();$seen=@{}
+    foreach($r in $Records){
+        $identity=$r.RegistryPath;if($identity -like 'CurrentUser|*'){$identity=$identity.Replace('|Registry32|','|Registry64|')}
+        if($seen.ContainsKey($identity)){continue};$seen[$identity]=$true
+        $repository=$r.Repository;if(-not $repository -and $Links.ContainsKey($r.Fingerprint)){$repository=$Links[$r.Fingerprint]}
+        if($repository -eq $Repo){$confirmed+=,$r}
+        elseif(-not $repository -and $wanted.Length -ge 3 -and (ConvertTo-SetupNameKey ($r.Name -replace '\s+v?\d+(\.\d+)+.*$','')) -eq $wanted){$possible+=,$r}
+    }
+    $pick=$null
+    if($confirmed.Count -eq 1){$pick=$confirmed[0]}
+    elseif($AllowUnlinked -and $confirmed.Count -eq 0 -and $possible.Count -eq 1){$pick=$possible[0]}
+    if($pick){return [pscustomobject]@{Installed=$true;Version=$pick.Version;Fingerprint=$pick.Fingerprint;Possible=$false}}
+    return [pscustomobject]@{Installed=$false;Version='';Possible=($possible.Count -gt 0 -or $confirmed.Count -gt 1)}
+}
+function Save-SetupGitHubIdentity {
+    param([string]$Fingerprint,[string]$Repo)
+    if(-not $Fingerprint -or -not (Test-SetupGitHubRepo $Repo)){return}
+    $path=Join-Path $env:LOCALAPPDATA 'Freshkit\installed-identities.json';$links=@{}
+    if(Test-Path -LiteralPath $path){$old=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json;foreach($p in $old.PSObject.Properties){$links[$p.Name]=[string]$p.Value}}
+    $links[$Fingerprint]=$Repo
+    [IO.Directory]::CreateDirectory((Split-Path -Parent $path))|Out-Null
+    $temporary=$path+'.'+[guid]::NewGuid().ToString('N')+'.tmp'
+    try{[IO.File]::WriteAllText($temporary,($links|ConvertTo-Json),[Text.UTF8Encoding]::new($false));if(Test-Path -LiteralPath $path){[IO.File]::Replace($temporary,$path,[System.Management.Automation.Language.NullString]::Value)}else{[IO.File]::Move($temporary,$path)}}finally{if(Test-Path -LiteralPath $temporary){Remove-Item -LiteralPath $temporary -Force}}
 }
 function Select-SetupGitHubAsset {
     # Prefer an x64/neutral MSI, then an installer-looking EXE. Portable, ARM and 32-bit builds are skipped.
@@ -295,7 +346,8 @@ function Get-SetupInstallerKind {
 function Invoke-SetupGitHubApp {
     param($App)
     $repo=[string]$App.githubRepo;$upgrade=($App.PSObject.Properties['upgrade'] -and $App.upgrade)
-    $before=Test-SetupGitHubInstalled $App.name
+    $before=Test-SetupGitHubInstalled -Name $App.name -Repo $repo
+    if($upgrade -and -not $before.Installed){throw ('Repository identity is not confirmed for '+$App.name+'; link the installed app in Freshkit before updating.')}
     if($before.Installed -and -not $upgrade){return [pscustomobject]@{Status='PackageInstalled';ExitCode=0;Version=$before.Version;Detail='Already installed; not reinstalled.'}}
     $release=Get-SetupGitHubRelease $repo
     $tag=([string]$release.tag_name) -replace '^[vV]',''
@@ -317,7 +369,7 @@ function Invoke-SetupGitHubApp {
         }
         $signature=(Get-AuthenticodeSignature -LiteralPath $file).Status
         $kind=Get-SetupInstallerKind $file
-        if($kind -eq 'msi'){$exe=Join-Path ([Environment]::SystemDirectory) 'msiexec.exe';$arguments='/i "'+$file+'" /qn /norestart'}
+        if($kind -eq 'msi'){$exe=Join-Path ([Environment]::SystemDirectory) 'msiexec.exe';$arguments='/i "'+$file+'" /qn /norestart';if($App.packageParameters){$arguments+=' '+[string]$App.packageParameters}}
         else{
             $exe=$file
             if($App.packageParameters){$arguments=[string]$App.packageParameters}
@@ -329,8 +381,9 @@ function Invoke-SetupGitHubApp {
         $process=Start-Process -FilePath $exe -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
         $code=$process.ExitCode
         if($code -notin @(0,3010,1641)){throw ('The '+$asset.name+' installer returned '+$code+'.')}
-        $after=Test-SetupGitHubInstalled $App.name
+        $after=Test-SetupGitHubInstalled -Name $App.name -Repo $repo -AllowUnlinked
         if(-not $after.Installed){throw ('The installer finished but "'+$App.name+'" is not listed in Installed apps.')}
+        Save-SetupGitHubIdentity $after.Fingerprint $repo
         $status=if($code -in @(3010,1641)){'RebootRequired'}else{'PackageInstalled'}
         return [pscustomobject]@{Status=$status;ExitCode=$code;Version=$after.Version;Detail=('Installed '+$asset.name+' from github.com/'+$repo+' ('+$check+'); application function has not been tested.')}
     } finally {Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue}

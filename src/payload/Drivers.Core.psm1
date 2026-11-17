@@ -20,16 +20,34 @@ function Get-DriverCandidates {
     $definitions=@(
         @{Id='amd-ryzen-chipset';Name='AMD Ryzen Chipset Drivers';Class='System';Vendor='1022'},
         @{Id='nvidia-display-driver';Name='NVIDIA Display Driver + NVIDIA App (without PhysX)';Class='Display';Vendor='10DE'},
-        @{Id='amd-software-adrenalin-edition';Name='AMD Software: Adrenalin Edition';Class='Display';Vendor='1002'}
+        @{Id='amd-software-adrenalin-edition';Name='AMD Software: Adrenalin Edition';Class='Display';Vendor='1002'},
+        # Reviewed consumer Arc A/B and Core Ultra IDs. Keep this explicit: the
+        # current Arc download no longer supports every Iris Xe/UHD generation.
+        # Evidence and update guidance: docs/driver-support.md.
+        @{Id='intel-arc-graphics-driver';Name='Intel Arc / Core Ultra Graphics Driver';Class='Display';Vendor='8086';DeviceIds=@(
+            '5690','5691','5692','5693','5694','5696','5697',
+            '56A0','56A1','56A2','56A5','56A6',
+            'E20B','E20C',
+            '7D40','7D55','7DD5','7D45','64A0','6420','64B0','7D67','7D51','7DD1','7D41'
+        )}
     )
     foreach($definition in $definitions){
         $parameters='';foreach($app in $AppPlan){if($app.packageId -eq $definition.Id){$parameters=$app.packageParameters}}
         if($definition.Id -eq 'nvidia-display-driver' -and $parameters -notmatch '(?i)(?:^|\s)/NVApp(?:\s|$)'){$parameters=($parameters+' /NVApp').Trim()}
         $candidate=[pscustomobject]@{Id=$definition.Id;Name=$definition.Name;Status='HardwareUnknown';Hardware=@();Detail='Hardware inventory is unavailable; no hardware driver will be installed.';CanOffer=$false;PackageParameters=$parameters}
         if($Inventory.Complete){
+            $unsupported=[Collections.Generic.List[string]]::new()
             $matchesFound=@(@(foreach($device in $Inventory.Devices){
                 if($device.Class -ne $definition.Class){continue}
-                if(@($device.HardwareIds|Where-Object {$_ -match ('\APCI\\VEN_'+$definition.Vendor+'&DEV_[0-9A-F]{4}(?:&|\z)')}).Count){$device.Name}
+                $vendorIds=@($device.HardwareIds|Where-Object {$_ -match ('\APCI\\VEN_'+$definition.Vendor+'&DEV_[0-9A-F]{4}(?:&|\z)')})
+                if(-not $vendorIds.Count){continue}
+                if($definition.ContainsKey('DeviceIds')){
+                    $supported=@($vendorIds|Where-Object {
+                        $_ -match '\APCI\\VEN_8086&DEV_([0-9A-F]{4})(?:&|\z)' -and $Matches[1] -in $definition.DeviceIds
+                    })
+                    if(-not $supported.Count){$unsupported.Add([string]$device.Name);continue}
+                }
+                $device.Name
             })|Select-Object -Unique)
             if($matchesFound.Count){
                 $candidate.Status='Candidate';$candidate.CanOffer=$true;$candidate.Hardware=$matchesFound
@@ -44,7 +62,21 @@ function Get-DriverCandidates {
                     $candidate.Status='NotApplicable';$candidate.CanOffer=$false
                     $candidate.Detail='The reviewed Adrenalin package targets Windows 11. Select a suitable Windows 10/OEM package separately.'
                 }
-            }else{$candidate.Status='NotApplicable';$candidate.Detail='No matching present PCI device was found in the required device class.'}
+                if($definition.Id -eq 'intel-arc-graphics-driver'){
+                    $candidate.Detail='Reviewed Intel Arc/Core Ultra PCI device detected. The generic Intel driver can replace OEM customizations; model/INF operation is not verified.'
+                    if($Inventory.OsBuild -lt 19045){
+                        $candidate.Status='NotApplicable';$candidate.CanOffer=$false
+                        $candidate.Detail='The reviewed Intel driver requires Windows 10 22H2 (build 19045) or Windows 11. Use a suitable OEM driver on older Windows releases.'
+                    }
+                    if($unsupported.Count){$candidate.Detail+=' Other Intel adapters are outside the reviewed current branch: '+(($unsupported.ToArray()|Select-Object -Unique) -join '; ')+'. Use the computer manufacturer/OEM or Intel driver selector for those adapters.'}
+                }
+            }else{
+                $candidate.Status='NotApplicable';$candidate.Detail='No matching present PCI device was found in the required device class.'
+                if($unsupported.Count){
+                    $candidate.Hardware=@($unsupported.ToArray()|Select-Object -Unique)
+                    $candidate.Detail='Intel display hardware detected, but its PCI device is outside the reviewed current Arc/Core Ultra driver branch. Use the computer manufacturer/OEM driver or https://www.intel.com/content/www/us/en/support/articles/000090440/graphics.html to select the correct older, Pro or unreviewed device driver.'
+                }
+            }
         }
         $candidate
     }
@@ -66,7 +98,7 @@ function Invoke-DriverPackageInstall {
 }
 function Get-DriverRegistryEvidence {
     param([string]$PackageId)
-    $patterns=@{'nvidia-display-driver'='^NVIDIA Graphics Driver';'nvidia-app'='^NVIDIA App(?:\s|$)';'amd-ryzen-chipset'='^AMD Chipset (Software|Drivers)';'amd-software-adrenalin-edition'='^AMD Software'}
+    $patterns=@{'nvidia-display-driver'='^NVIDIA Graphics Driver';'nvidia-app'='^NVIDIA App(?:\s|$)';'amd-ryzen-chipset'='^AMD Chipset (Software|Drivers)';'amd-software-adrenalin-edition'='^AMD Software';'intel-arc-graphics-driver'='^Intel(?:\(R\)|\u00ae)? (?:Arc(?:\(TM\)|\u2122)? (?:& Iris Xe )?)?Graphics Driver(?:\s|$)'}
     if(-not $patterns.ContainsKey($PackageId)){throw 'Unknown driver/component evidence identity.'}
     foreach($root in @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')){
         foreach($item in @(Get-ItemProperty -Path $root -ErrorAction SilentlyContinue)){
@@ -79,13 +111,13 @@ function Get-DriverRegistryEvidence {
 }
 function Get-NonDriverAppPlan {
     param([object[]]$Plan)
-    $driverIds=@('nvidia-display-driver','amd-ryzen-chipset','amd-software-adrenalin-edition')
+    $driverIds=@('nvidia-display-driver','amd-ryzen-chipset','amd-software-adrenalin-edition','intel-arc-graphics-driver','intel-graphics-driver')
     foreach($app in $Plan){if($app.packageId -notin $driverIds){$app}}
 }
 function Invoke-DriverStage {
     [CmdletBinding(SupportsShouldProcess=$true)]
     param([object[]]$Candidates,[string]$Executable,[string[]]$ApprovedIds=@())
-    $known=@('nvidia-display-driver','amd-ryzen-chipset','amd-software-adrenalin-edition')
+    $known=@('nvidia-display-driver','amd-ryzen-chipset','amd-software-adrenalin-edition','intel-arc-graphics-driver')
     foreach($id in $ApprovedIds){if($id -notin @($Candidates.Id)){throw "Approval does not identify a driver candidate: $id"}}
     $results=[Collections.Generic.List[object]]::new();$blocked=$false;$reboot=$false;$failed=$false
     foreach($candidate in $Candidates){

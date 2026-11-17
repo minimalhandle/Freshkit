@@ -27,6 +27,7 @@ namespace Freshkit
         List<SavedProfile> savedProfiles = new List<SavedProfile>();
         bool applyingProfile, online = true;
         int searchRequest;
+        CancellationTokenSource searchCancellation;
         Action<List<PickItem>> pickOk;
 
         void InitApps()
@@ -251,6 +252,12 @@ namespace Freshkit
             };
             add("Save selection as session profile...", "BtnSaveProfile");
             add("Delete selected profile", "BtnDeleteProfile");
+            var export = new MenuItem { Header = "Export setup recipe…", IsEnabled = !running };
+            export.Click += delegate { ExportRecipe(); }; menu.Items.Add(export);
+            var import = new MenuItem { Header = "Import setup recipe…", IsEnabled = !running };
+            import.Click += delegate { ImportRecipe(); }; menu.Items.Add(import);
+            var compare = new MenuItem { Header = "Compare recipe with this PC…", IsEnabled = !running };
+            compare.Click += delegate { CompareRecipeFile(); }; menu.Items.Add(compare);
             menu.Items.Add(new Separator { Background = (Brush)Window.FindResource("Line"), Margin = new Thickness(6, 4, 6, 4) });
             add("Select every app shown", "BtnAll");
             add("Edit list...", "BtnEditList");
@@ -272,9 +279,11 @@ namespace Freshkit
         void OnMenuItem(object sender, RoutedEventArgs e)
         {
             var mi = sender as MenuItem;
-            if (mi == null || !"remove-app".Equals(mi.Tag)) return;
+            if (mi == null) return;
             var item = mi.DataContext as AppItem;
             if (item == null) return;
+            if ("app-options".Equals(mi.Tag)) { e.Handled = true; OpenAppOptions(item); return; }
+            if (!"remove-app".Equals(mi.Tag)) return;
             Confirm("Remove " + item.Name + " from this session?", "The app stays installed. Reopening Freshkit restores the built-in list.", "Remove", delegate
             {
                 try { ListFile.RemovePackage(item.Source, item.Id); picks.Remove(item.Key); LoadList(false); Log("Removed " + item.Name + " from the list."); }
@@ -288,9 +297,10 @@ namespace Freshkit
             foreach (AppItem a in apps) if (a.IsSelected) { n++; if (a.Installed) detected++; }
             Get<TextBlock>("SelCount").Text = n + " of " + apps.Count + " apps selected" + (detected > 0 ? " · " + detected + " already installed" : "");
             UpdateRailCounts();
-            int tweaks = debloat == null ? 0 : debloat.SelectedFeatures().Count, removals = debloat == null ? 0 : debloat.SelectedApps().Count;
+            int tweaks = debloat == null ? 0 : debloat.PendingFeatures().Count, removals = debloat == null ? 0 : debloat.SelectedApps().Count;
             var extra = new List<string>();
             if (tweaks > 0) extra.Add(tweaks + " Windows tweak" + (tweaks == 1 ? "" : "s"));
+            if (debloat != null && debloat.SelectedFeatures().Count > tweaks) extra.Add((debloat.SelectedFeatures().Count - tweaks) + " selected settings already current");
             if (removals > 0) extra.Add(removals + " preinstalled app" + (removals == 1 ? "" : "s") + " to remove");
             if (Engine.KitDriverCount() > 0 && !online) extra.Add("offline kit drivers");
             Get<TextBlock>("SelExtra").Text = extra.Count > 0 ? "Plus " + string.Join(" · ", extra.ToArray()) : "No Windows tweaks selected (see Windows tweaks)";
@@ -400,12 +410,13 @@ namespace Freshkit
             Get<Grid>("SearchSheet").Visibility = Visibility.Visible;
             UpdateModalSurfaces();
             if (searchResults.Count == 0) SetSearchState("Search for an app", "Enter a name or package ID above. Add results to your selection for this session.", false, false);
-            Get<TextBlock>("SheetStatus").Text = "Choose a source, then search. Adding an app selects it for setup; it does not install it.";
+            Get<TextBlock>("SheetStatus").Text = "Search all sources. Adding an app selects it for setup; it does not install it.";
             Get<TextBox>("SheetQuery").Focus();
         }
 
         void CloseSearch()
         {
+            if (searchCancellation != null) searchCancellation.Cancel();
             searchRequest++;
             searchResults.Clear();
             Get<Button>("BtnSheetSearch").IsEnabled = true;
@@ -432,9 +443,11 @@ namespace Freshkit
 
         int BeginSearch(string query, string source)
         {
+            if (searchCancellation != null) searchCancellation.Cancel();
+            searchCancellation = new CancellationTokenSource();
             int request = ++searchRequest;
             searchResults.Clear();
-            Get<Button>("BtnSheetSearch").IsEnabled = false;
+            Get<Button>("BtnSheetSearch").IsEnabled = true;
             SetSearchState("Searching " + SourceName(source), "Looking for \"" + query + "\"…", true, false);
             Get<TextBlock>("SheetStatus").Text = "Searching for \"" + query + "\". Press Enter to search again.";
             return request;
@@ -452,9 +465,10 @@ namespace Freshkit
                 return;
             }
             var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            searchResults.Clear();
             foreach (AppItem a in apps) known.Add(a.Key);
             foreach (SearchResult r in results) { r.Added = known.Contains(r.Key); searchResults.Add(r); }
-            if (results.Count == 0) SetSearchState("No apps found", "No results for \"" + query + "\". Try a shorter name, a package ID or a GitHub owner/repo.", false, false);
+            if (results.Count == 0) SetSearchState(string.IsNullOrEmpty(notes) ? "No apps found" : "Search incomplete", string.IsNullOrEmpty(notes) ? "No results for \"" + query + "\". Try a shorter name, a package ID or a GitHub owner/repo." : notes, false, !string.IsNullOrEmpty(notes));
             else Get<StackPanel>("SearchState").Visibility = Visibility.Collapsed;
             Get<TextBlock>("SheetStatus").Text = results.Count + " app" + (results.Count == 1 ? "" : "s") + " for \"" + query + "\", each from the source with its newest release. " +
                 (string.IsNullOrEmpty(notes) ? "Added apps are selected on the Apps page." : notes);
@@ -465,6 +479,7 @@ namespace Freshkit
             string q = Get<TextBox>("SheetQuery").Text.Trim();
             if (q.Length < 2)
             {
+                if (searchCancellation != null) searchCancellation.Cancel();
                 searchRequest++; searchResults.Clear();
                 Get<Button>("BtnSheetSearch").IsEnabled = true;
                 SetSearchState("Keep typing", "Enter at least two characters to search for an app.", false, false);
@@ -473,24 +488,47 @@ namespace Freshkit
             }
             const string source = "all";
             int request = BeginSearch(q, source);
+            var cancellation = searchCancellation;
             new Thread(delegate ()
             {
-                List<SearchResult> results = null; string error = null, notes = "";
                 try
                 {
-                    results = Sources.SearchAll(q, out notes);
+                    Sources.SearchAll(q, cancellation.Token, delegate(List<SearchResult> results, string notes, bool final)
+                    {
+                        Ui(delegate { PublishSearch(request, q, results, notes, final); });
+                    });
                 }
-                catch (Exception ex) { error = ex.Message; }
-                Ui(delegate
-                {
-                    CompleteSearch(request, q, source, results, error, notes);
-                });
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { Ui(delegate { CompleteSearch(request, q, source, null, ex.Message, ""); }); }
             }) { IsBackground = true }.Start();
+        }
+
+        void PublishSearch(int request, string query, List<SearchResult> results, string notes, bool final)
+        {
+            if (request != searchRequest || Get<Grid>("SearchSheet").Visibility != Visibility.Visible) return;
+            CompleteSearch(request, query, "all", results, null, notes);
+            if (!final)
+            {
+                if (results.Count == 0) SetSearchState("Searching all sources", "Waiting for the remaining sources…", true, false);
+                Get<TextBlock>("SheetStatus").Text = results.Count + " results so far. Searching remaining sources… " + notes;
+            }
         }
 
         void OnAddResult(object sender, RoutedEventArgs e)
         {
             var b = e.OriginalSource as Button;
+            if (b != null && "link-installed".Equals(b.Tag))
+            {
+                var candidate = b.DataContext as SearchResult;
+                if (candidate == null || candidate.InstalledMatch == null || candidate.InstalledMatch.Record == null) return;
+                var record = candidate.InstalledMatch.Record;
+                Confirm("Link this installed app?", "Confirm that " + record.Name + " v" + record.Version + " (publisher: " + (record.Publisher ?? "unknown") + ") is the app from github.com/" + candidate.Id + ". Freshkit will remember this association on this PC and use it for update checks.", "Link app", delegate
+                {
+                    try { InstalledSnapshot.Link(record, candidate.Id); DoSearch(); }
+                    catch (Exception ex) { Info("Couldn't link the app", ex.Message); }
+                });
+                return;
+            }
             if (b != null && "open-homepage".Equals(b.Tag))
             {
                 var site = b.DataContext as SearchResult;
@@ -538,11 +576,12 @@ namespace Freshkit
                 try { choco = Sources.ChocoInstalled(); } catch (Exception ex) { error = "Chocolatey: " + ex.Message; choco = new Dictionary<string, string>(); }
                 try { winget = Sources.WingetInstalled(); } catch (Exception ex) { error = "winget: " + ex.Message; winget = new List<InstalledApp>(); }
                 try { programs = Sources.RegistryProgramNames(); } catch { programs = new List<string>(); }
-                Ui(delegate { ScanDone(choco, winget, programs, error); });
+                var snapshot = InstalledSnapshot.Capture();
+                Ui(delegate { ScanDone(choco, winget, programs, error, snapshot); });
             }) { IsBackground = true }.Start();
         }
 
-        void ScanDone(Dictionary<string, string> choco, List<InstalledApp> winget, List<string> programs, string error)
+        void ScanDone(Dictionary<string, string> choco, List<InstalledApp> winget, List<string> programs, string error, InstalledSnapshot snapshot)
         {
             Get<Button>("BtnScan").IsEnabled = true;
             var normalized = new HashSet<string>();
@@ -555,8 +594,8 @@ namespace Freshkit
             int hit = 0;
             foreach (AppItem a in apps)
             {
-                bool inst = a.IsWinget ? wingetIds.Contains(a.Id) : choco.ContainsKey(a.Id);
-                if (!inst && !"Runtimes".Equals(a.Category)) inst = Sources.NameMatches(a.Name, a.Id, normalized);
+                bool inst = a.IsGitHub ? snapshot.Resolve("github", a.Id, a.Name).Confirmed : a.IsWinget ? wingetIds.Contains(a.Id) : choco.ContainsKey(a.Id);
+                if (!inst && !a.IsGitHub && !"Runtimes".Equals(a.Category)) inst = Sources.NameMatches(a.Name, a.Id, normalized);
                 a.Installed = inst;
                 if (inst) { installedKeys.Add(a.Key); hit++; }
             }

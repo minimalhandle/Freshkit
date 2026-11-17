@@ -25,13 +25,28 @@ namespace Freshkit
         static T Field<T>(MainUi ui, string name) { return (T)typeof(MainUi).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ui); }
         static T Get<T>(MainUi ui, string name) where T : class { return ui.Window.FindName(name) as T; }
         static void SetField(MainUi ui, string name, object value) { typeof(MainUi).GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).SetValue(ui, value); }
+        static Button FindButton(DependencyObject root, string tag)
+        {
+            var button = root as Button; if (button != null && tag.Equals(button.Tag)) return button;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) { var found = FindButton(VisualTreeHelper.GetChild(root, i), tag); if (found != null) return found; }
+            return null;
+        }
+        static T FindNamed<T>(DependencyObject root, string name) where T : FrameworkElement
+        {
+            var element = root as T; if (element != null && element.Name == name) return element;
+            foreach (object child in LogicalTreeHelper.GetChildren(root)) { var next = child as DependencyObject; if (next != null) { var result = FindNamed<T>(next, name); if (result != null) return result; } }
+            return null;
+        }
         // Assemble only the selection UI. The application constructor performs job recovery
         // against real user state, so it must not be used by synthetic UI checks.
         static MainUi Fixture()
         {
             var ui = (MainUi)FormatterServices.GetUninitializedObject(typeof(MainUi));
             SetField(ui, "Window", System.Windows.Markup.XamlReader.Parse(Engine.ReadResourceText("MainWindow.xaml")));
-            foreach (string name in new[] { "actionControls", "groups", "apps", "picks", "installedKeys", "searchResults", "pickItems", "savedProfiles", "removal", "runItems", "setupItems", "updates", "settingsProfiles", "rail" })
+            var preflight = new PreflightSnapshot { SystemFreeBytes = 100L * 1073741824, TempFreeBytes = 100L * 1073741824, RestartPending = false, WingetAvailable = true, RunningProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase) };
+            foreach (string source in new[] { "Chocolatey", "winget", "Store", "GitHub" }) preflight.Sources[source] = true;
+            SetField(ui, "reviewPreflight", preflight);
+            foreach (string name in new[] { "actionControls", "groups", "apps", "picks", "installedKeys", "searchResults", "pickItems", "savedProfiles", "removal", "runItems", "setupItems", "updates", "settingsProfiles", "rail", "driverPreviewCallbacks" })
             {
                 var field = typeof(MainUi).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
                 field.SetValue(ui, Activator.CreateInstance(field.FieldType));
@@ -44,8 +59,14 @@ namespace Freshkit
                 string page = pages[i]; Get<RadioButton>(ui, navs[i]).Checked += delegate { Call(ui, "ShowPage", page); };
             }
             Call(ui, "InitApps"); Call(ui, "InitTweaks"); Call(ui, "LoadList", false);
-            Get<TextBlock>(ui, "SysWindows").Text = "Windows 11 · UI preview";
-            Get<TextBlock>(ui, "SysChoco").Text = "Chocolatey";
+            SetField(ui, "tweaksScanned", true); // UI checks use synthetic detection, never scan the host.
+            Get<TextBlock>(ui, "SysWindows").Text = "Windows 11 Enterprise 25H2";
+            Get<TextBlock>(ui, "SysBuild").Text = "Build 26200.7171";
+            Get<TextBlock>(ui, "SysArchitecture").Text = "64-bit Windows";
+            Get<TextBlock>(ui, "SysDisk").Text = "C: · 142 GB free of 953 GB";
+            Get<TextBlock>(ui, "SysChoco").Text = "Chocolatey 2.6.0";
+            Get<TextBlock>(ui, "SysWinget").Text = "winget available";
+            Get<TextBlock>(ui, "SysNet").Text = "Online";
             return ui;
         }
         static void Render(MainUi ui, string name, int width, int height)
@@ -57,6 +78,20 @@ namespace Freshkit
             string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui-previews"); Directory.CreateDirectory(folder);
             using (var stream = File.Create(Path.Combine(folder, name + ".png"))) png.Save(stream);
         }
+        static void RenderOptions(Window window, string name = "app-options", int width = 680, int height = 530)
+        {
+            var root = (FrameworkElement)window.Content;
+            root.Measure(new Size(width, height)); root.Arrange(new Rect(0, 0, width, height)); root.UpdateLayout();
+            var image = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32); var background = new DrawingVisual();
+            using (var dc = background.RenderOpen()) dc.DrawRectangle(window.Background, null, new Rect(0, 0, width, height)); image.Render(background); image.Render(root);
+            var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(image));
+            string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ui-previews"); Directory.CreateDirectory(folder);
+            using (var stream = File.Create(Path.Combine(folder, name + ".png"))) png.Save(stream);
+        }
+        static DriverPreviewReport PreviewFixture()
+        {
+            return DriverPreviewReport.Parse(@"{""SchemaVersion"":1,""InventoryComplete"":true,""Error"":"""",""Rows"":[{""Hardware"":""Intel Arc A770"",""DeviceId"":""PCI fixture 1"",""Kind"":""Graphics"",""PackageId"":""intel-arc-graphics-driver"",""PackageName"":""Intel Arc / Core Ultra Graphics Driver"",""Compatibility"":""Candidate"",""Reason"":""Reviewed PCI device. Execution revalidates hardware compatibility."",""InstalledDriverVersion"":""32.0.101.9000"",""AvailablePackageVersion"":""32.0.101.9175"",""MetadataStatus"":""Available"",""SupportUrl"":""https://www.intel.com/content/www/us/en/support/articles/000090440/graphics.html""},{""Hardware"":""AMD Radeon RX 7800 XT"",""DeviceId"":""PCI fixture 2"",""Kind"":""Graphics"",""PackageId"":""amd-software-adrenalin-edition"",""PackageName"":""AMD Software: Adrenalin Edition"",""Compatibility"":""Candidate"",""Reason"":""AMD display device detected; OEM and legacy model compatibility require review."",""InstalledDriverVersion"":""32.0.21037.1004"",""AvailablePackageVersion"":""26.10.2"",""MetadataStatus"":""Available"",""SupportUrl"":""https://www.amd.com/en/support/download/drivers.html""}]}");
+        }
         [STAThread]
         public static int Main(string[] args)
         {
@@ -64,6 +99,12 @@ namespace Freshkit
             {
                 IconTests.Run(Check);
                 var ui = Fixture();
+                var initialTweak = Field<Debloat>(ui, "debloat").Categories[0].Toggles[0];
+                Call(ui, "CompleteTweakDetection", new Dictionary<string, string> { { initialTweak.FeatureId, "Applied" } }, new List<string>(), true, new List<string>(), true, new List<string>());
+                Check(!initialTweak.IsSelected && initialTweak.StateText == "Applied", "Initial UI detection reports current state without selecting a setup change");
+                Call(ui, "SetRunning", true, "Synthetic job"); Call(ui, "SetRunning", false, null);
+                Check(!(bool)Call(ui, "IsTweakScanCurrent", 0), "A scan from before a completed job is rejected even after running becomes false");
+                Field<Debloat>(ui, "debloat").ApplyFeatures(new string[0]);
                 // Catalog and Apps page structure
                 var all = Field<List<AppItem>>(ui, "apps");
                 Check(all.Count >= 160 && all.FindAll(a => a.IsSelected).Count == 41, "Built-in catalog includes the Ninite apps with the curated default selection");
@@ -85,9 +126,9 @@ namespace Freshkit
                 var namesakes = Sources.Rank("afterclip", new List<SearchResult> {
                     new SearchResult { Source = "github", Id = "panzergen/AfterClip", Name = "AfterClip", Version = "0.3.0", Meta = "p", Popularity = 200 },
                     new SearchResult { Source = "github", Id = "minimalhandle/Afterclip", Name = "Afterclip", Version = "1.5.0", Meta = "m", Popularity = 3 } });
-                foreach (SearchResult r in namesakes) r.InstalledVersion = "1.5.0";   // both match the "Afterclip" Installed apps entry by name
-                Sources.AttributeInstalled(namesakes); Sources.PickBest(namesakes);
-                Check(namesakes[0].Id == "minimalhandle/Afterclip" && namesakes[0].IsBest && namesakes[0].InstalledVersion == "1.5.0" && namesakes[1].InstalledVersion == null && !namesakes[1].IsBest, "An installed app is attributed to the namesake releasing its version, which becomes the best match");
+                Sources.MarkInstalled(namesakes, new InstalledSnapshot(new[] { new InstalledRecord { RegistryPath = "test", Name = "Afterclip", Version = "1.4.0", Repository = "minimalhandle/Afterclip" } }, new Dictionary<string, string>()));
+                Sources.PickBest(namesakes);
+                Check(namesakes[0].Id == "minimalhandle/Afterclip" && namesakes[0].IsBest && namesakes[0].InstalledVersion == "1.4.0" && namesakes[1].InstalledVersion == null && !namesakes[1].IsBest, "Repository evidence attributes an older installed version to the correct namesake");
                 var newest = Sources.Rank("icloud", new List<SearchResult> {
                     new SearchResult { Source = "choco", Id = "icloud", Name = "iCloud", Version = "7.21.0.23", Meta = "icloud", Popularity = 50000 },
                     new SearchResult { Source = "store", Id = "9PKTQ5699M62", Name = "iCloud", Version = "15.8.118.0", Meta = "9PKTQ5699M62" } });
@@ -176,16 +217,142 @@ namespace Freshkit
                 int failed = (int)Call(ui, "BeginSearch", "failed", "choco");
                 Call(ui, "CompleteSearch", failed, "failed", "choco", null, "Connection unavailable", "");
                 Check(Get<Button>(ui, "BtnSearchRetry").Visibility == Visibility.Visible && Get<TextBlock>(ui, "SearchStateDetail").Text.Contains("Connection unavailable"), "Failed search offers retry and explains the error");
+                int progressive = (int)Call(ui, "BeginSearch", "progressive", "all");
+                var cancelledSearch = Field<System.Threading.CancellationTokenSource>(ui, "searchCancellation");
+                Call(ui, "PublishSearch", progressive, "progressive", results, "", false);
+                Call(ui, "PublishSearch", progressive, "progressive", results, "", true);
+                Check(Field<ObservableCollection<SearchResult>>(ui, "searchResults").Count == 1, "Progressive completion replaces earlier rows without duplicates");
+                var possible = new SearchResult { Source = "github", Id = "example/App", Name = "App", InstalledMatch = new InstalledMatch { Record = new InstalledRecord { Name = "App", Version = "1.0", RegistryPath = "fixture" }, Reason = "Name only" } };
+                Call(ui, "PublishSearch", progressive, "progressive", new List<SearchResult> { possible }, "", true);
+                var searchRoot = (FrameworkElement)ui.Window.Content;
+                searchRoot.Measure(new Size(1160, 780)); searchRoot.Arrange(new Rect(0, 0, 1160, 780)); searchRoot.UpdateLayout();
+                if (args.Length > 0 && args[0] == "--render") Render(ui, "search-identity-small", 1064, 641);
+                var link = FindButton(Get<ItemsControl>(ui, "SearchResults"), "link-installed");
+                if (link != null) link.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, link));
+                Check(link != null && Get<TextBlock>(ui, "DlgTitle").Text == "Link this installed app?", "The actual search-result link button opens identity confirmation");
+                Call(ui, "HideDialog"); SetField(ui, "dialogOk", null);
                 Call(ui, "CloseSearch");
+                Check(cancelledSearch.IsCancellationRequested, "Closing the search cancels the active source requests");
+
+                var savedRecipe = (SetupRecipe)Call(ui, "CaptureRecipe");
+                var appOnly = SetupRecipe.Parse("{\"Sources\":[{\"SourceDetails\":{\"Name\":\"winget\"},\"Packages\":[{\"PackageIdentifier\":\"Example.Tool\"}]}]}", savedRecipe.ListText);
+                var priorTweaks = Field<Debloat>(ui, "debloat").SelectedFeatures();
+                Call(ui, "PreviewRecipe", appOnly);
+                if (args.Length > 0 && args[0] == "--render") Render(ui, "recipe-preview-small", 1064, 641);
+                var previewRoot = (FrameworkElement)ui.Window.Content;
+                previewRoot.Measure(new Size(1064, 641)); previewRoot.Arrange(new Rect(0, 0, 1064, 641)); previewRoot.UpdateLayout();
+                var applyRecipeButton = Get<Button>(ui, "DlgOk"); var applyOrigin = applyRecipeButton.TranslatePoint(new Point(), previewRoot);
+                Check(Get<TextBlock>(ui, "DlgTitle").Text == "Import setup recipe?" && applyOrigin.Y >= 0 && applyOrigin.Y + applyRecipeButton.ActualHeight <= 641 && !Field<bool>(ui, "running"), "Recipe preview keeps Apply visible at minimum size and leaves setup idle");
+                Call(ui, "HideDialog"); SetField(ui, "dialogOk", null);
+                Call(ui, "ApplyRecipe", appOnly);
+                Check(Field<List<AppItem>>(ui, "apps").FindAll(a => a.IsSelected).Count == 1 && Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Example.Tool").IsSelected && priorTweaks.SequenceEqual(Field<Debloat>(ui, "debloat").SelectedFeatures()) && !Field<bool>(ui, "running"), "Applying a winget recipe changes selections without running setup or changing tweaks");
+                Call(ui, "ApplyRecipe", savedRecipe);
+                Check(Field<List<AppItem>>(ui, "apps").FindAll(a => a.IsSelected).Count == savedRecipe.Apps.Count, "Native recipe restores the captured app selection");
+                bool recipeRejected = false; var badRecipe = (SetupRecipe)Call(ui, "CaptureRecipe"); badRecipe.Tweaks.Add("UnknownFeature");
+                string sessionBeforeRecipe = Engine.SessionList;
+                try { Call(ui, "ApplyRecipe", badRecipe); } catch (TargetInvocationException ex) { recipeRejected = ex.InnerException is InvalidDataException; }
+                Check(recipeRejected && Engine.SessionList == sessionBeforeRecipe, "Unavailable recipe tweaks are rejected before the session changes");
+
+                var optionItem = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Mozilla.Firefox.en-GB");
+                int selectedBeforeOptions = Field<List<AppItem>>(ui, "apps").Count(a => a.IsSelected);
+                var optionWindow = (Window)Call(ui, "BuildAppOptionsWindow", optionItem);
+                var argumentBox = FindNamed<TextBox>(optionWindow, "AppArguments"); var saveOptions = FindNamed<Button>(optionWindow, "SaveAppOptions");
+                argumentBox.Text = "--id Another.App";
+                Check(!saveOptions.IsEnabled, "App options rejects package-selection arguments before saving");
+                argumentBox.Text = "/S"; saveOptions.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, saveOptions));
+                var afterOptions = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == optionItem.Id);
+                Check(afterOptions.Parameters == "/S" && Field<List<AppItem>>(ui, "apps").Count(a => a.IsSelected) == selectedBeforeOptions && Engine.CurrentListText(out customList).Contains("Mozilla.Firefox.en-GB|Mozilla Firefox|/S"), "App options saves arguments into the session catalog while preserving selections");
+                var recipeWithOptions = (SetupRecipe)Call(ui, "CaptureRecipe");
+                Check(SetupRecipe.Parse(recipeWithOptions.Serialize(), recipeWithOptions.ListText).ListText.Contains("Mozilla.Firefox.en-GB|Mozilla Firefox|/S"), "Edited app arguments survive recipe export and import");
+                var localeWindow = (Window)Call(ui, "BuildAppOptionsWindow", afterOptions);
+                var languageBox = FindNamed<ComboBox>(localeWindow, "AppLanguage");
+                languageBox.SelectedItem = languageBox.Items.Cast<AppLanguage>().First(l => l.Code == "fr");
+                Check(FindNamed<TextBlock>(localeWindow, "AppOptionsPreview").Text.Contains("Mozilla.Firefox.fr") && FindNamed<TextBox>(localeWindow, "AppArguments").Text == "/S", "Guided language selection previews the exact package without discarding advanced arguments");
+                var localeSave = FindNamed<Button>(localeWindow, "SaveAppOptions"); localeSave.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, localeSave));
+                var french = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Mozilla.Firefox.fr");
+                var frenchRecipe = (SetupRecipe)Call(ui, "CaptureRecipe");
+                Check(french != null && french.IsSelected && !Field<List<AppItem>>(ui, "apps").Any(a => a.Id == "Mozilla.Firefox.en-GB") && frenchRecipe.Apps.Contains("winget:Mozilla.Firefox.fr"), "Saving a guided language updates the selected package and exported recipe identity");
+                Call(ui, "ApplyRecipe", recipeWithOptions);
+                var git = Field<List<AppItem>>(ui, "apps").First(a => a.Source == "choco" && (a.Id == "git" || a.Id == "git.install"));
+                var gitWindow = (Window)Call(ui, "BuildAppOptionsWindow", git); var gitInput = FindNamed<TextBox>(gitWindow, "AppArguments");
+                gitInput.Text = "/SChannel"; FindNamed<CheckBox>(gitWindow, "GitShellIntegration").IsChecked = false; FindNamed<CheckBox>(gitWindow, "GitLfs").IsChecked = false;
+                Check(gitInput.Text.Contains("/SChannel") && gitInput.Text.Contains("/NoShellIntegration") && gitInput.Text.Contains("/NoGitLfs"), "Guided component checkboxes preserve custom arguments while adding omission switches");
+                var resetGuided = FindNamed<Button>(gitWindow, "ResetAppDefaults"); resetGuided.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, resetGuided));
+                Check(gitInput.Text == "" && FindNamed<CheckBox>(gitWindow, "GitLfs").IsChecked == true, "Reset defaults restores guided components and clears advanced overrides");
+                gitWindow.Close();
+
+                Call(ui, "Navigate", "NavTweaks");
+                var renderedRoot = (FrameworkElement)ui.Window.Content; renderedRoot.Measure(new Size(1264, 801)); renderedRoot.Arrange(new Rect(0, 0, 1264, 801)); renderedRoot.UpdateLayout();
+                var sectionSelect = FindButton(Get<ItemsControl>(ui, "TweakGroups"), "tweak-select-all");
+                var targetSection = sectionSelect == null ? null : sectionSelect.DataContext as TweakCategory;
+                if (sectionSelect != null) sectionSelect.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, sectionSelect));
+                Check(targetSection != null && targetSection.Toggles.All(t => t.IsSelected) && targetSection.Choices.All(c => c.SelectedIndex == 1), "The section Select all button routes through the tweak UI");
+                Call(ui, "ApplyTweakQuickSelect", "AI");
+                Check(Field<Debloat>(ui, "debloat").Categories.First(c => c.Id == "AI").Toggles.All(t => t.IsSelected), "AI quick select selects the vendor AI category in the UI");
+                var removalFixture = Field<Debloat>(ui, "debloat").Apps[0]; removalFixture.IsSelected = true; removalFixture.Installed = false;
+                Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = true;
+                Get<CheckBox>(ui, "OnlyInstalledRemovals").RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                Check(removalFixture.Visibility == Visibility.Collapsed && removalFixture.IsSelected && Get<TextBlock>(ui, "RemovalCount").Text.Contains("hidden"), "Installed-only UI filtering preserves and reports hidden selected apps");
+                Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = false; Call(ui, "FilterTweaks");
 
                 var apps = Field<List<AppItem>>(ui, "apps");
+                var tweakModel = Field<Debloat>(ui, "debloat");
+                tweakModel.ApplyFeatures(new string[0]); tweakModel.ApplyApps(new string[0]); Get<CheckBox>(ui, "ForceEdgeSwitch").IsChecked = false;
+                var desiredTweak = tweakModel.Categories[0].Toggles[0];
+                tweakModel.ApplyFeatures(new[] { desiredTweak.FeatureId }); tweakModel.ApplyDetection(new Dictionary<string, string> { { desiredTweak.FeatureId, "Applied" } }); Call(ui, "RefreshTweakCounts");
+                Check(!Get<Button>(ui, "BtnApplyTweaks").IsEnabled && ((SetupRecipe)Call(ui, "CaptureRecipe")).Tweaks.Contains(desiredTweak.FeatureId), "Already-current intent remains in recipes while Apply stays disabled for a no-op");
                 foreach (AppItem a in apps) a.IsSelected = false;
                 AppItem first = apps[0]; first.IsSelected = true;
+                Call(ui, "OpenInstallPlan");
+                Check(((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs == null && Get<TextBlock>(ui, "ReviewTweaksDetail").Text.Contains("Already applied"), "Setup review identifies skipped current settings and excludes them from the actual job");
+                Call(ui, "CompleteTweakDetection", new Dictionary<string, string> { { desiredTweak.FeatureId, "Unknown" } }, new List<string>(), true, new List<string>(), true, new List<string>());
+                Check(Get<CheckBox>(ui, "ReviewTweaks").IsEnabled && Get<CheckBox>(ui, "ReviewTweaks").IsChecked != true && ((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs == null, "A detection refresh cannot silently enable newly pending work in an open review");
+                Get<CheckBox>(ui, "ReviewTweaks").IsChecked = true;
+                Check(((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs.Contains("-" + desiredTweak.FeatureId), "Newly pending tweaks require explicit review selection before entering the job");
+                Call(ui, "CloseReview");
+                var secondDesiredTweak = tweakModel.Categories[0].Toggles[1];
+                tweakModel.ApplyFeatures(new[] { desiredTweak.FeatureId, secondDesiredTweak.FeatureId });
+                tweakModel.ApplyDetection(new Dictionary<string, string> { { desiredTweak.FeatureId, "Unknown" }, { secondDesiredTweak.FeatureId, "Applied" } });
+                Call(ui, "OpenInstallPlan");
+                Check(Get<CheckBox>(ui, "ReviewTweaks").IsChecked == true, "Review initially enables the explicitly selected pending tweak");
+                Call(ui, "CompleteTweakDetection", new Dictionary<string, string>(), new List<string>(), true, new List<string>(), true, new List<string>());
+                Check(Get<CheckBox>(ui, "ReviewTweaks").IsChecked != true && ((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs == null, "Growing an already-enabled pending tweak set requires renewed review selection");
+                Get<CheckBox>(ui, "ReviewTweaks").IsChecked = true;
+                Check(((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs.Contains("-" + secondDesiredTweak.FeatureId), "Explicitly re-enabling review accepts the refreshed pending set");
+                Call(ui, "CloseReview");
                 var debloat = Field<Debloat>(ui, "debloat");
+                TweakTests.Run(Check);
                 Check(debloat != null, "Embedded tweak data is available");
                 debloat.ApplyFeatures(new string[0]); debloat.ApplyApps(new string[0]);
                 Get<CheckBox>(ui, "ForceEdgeSwitch").IsChecked = false;
                 Call(ui, "OpenInstallPlan");
+                SetField(ui, "driverPreviewBusy", true); Call(ui, "UpdateReviewStart");
+                Check(!Get<Button>(ui, "BtnReviewStart").IsEnabled, "Setup waits for a driver preview while driver installation is selected");
+                Check(Call(ui, "BuildReviewedJob") == null && Get<TextBlock>(ui, "ReviewValidation").Text.Contains("driver"), "Job construction also blocks drivers while a preview refresh is pending");
+                Get<CheckBox>(ui, "ReviewDrivers").IsChecked = false;
+                Check(Get<Button>(ui, "BtnReviewStart").IsEnabled, "Disabling drivers allows setup to proceed independently of the driver scan");
+                SetField(ui, "driverPreviewBusy", false); Get<CheckBox>(ui, "ReviewDrivers").IsChecked = true; Call(ui, "UpdateReviewStart");
+                int generation = (int)Call(ui, "BeginReviewPreflight");
+                Check(!Get<Button>(ui, "BtnReviewStart").IsEnabled && Call(ui, "BuildReviewedJob") == null, "Pending preflight blocks both the Start button and job construction");
+                var readyFacts = new PreflightSnapshot { SystemFreeBytes = 100L * 1073741824, TempFreeBytes = 100L * 1073741824, RestartPending = true, WingetAvailable = true, RunningProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase) };
+                foreach (string source in new[] { "Chocolatey", "winget", "Store", "GitHub" }) readyFacts.Sources[source] = true;
+                Call(ui, "CompleteReviewPreflight", generation - 1, readyFacts);
+                Check(!Get<Button>(ui, "BtnReviewStart").IsEnabled, "Old asynchronous preflight completion cannot enable Start");
+                Call(ui, "CompleteReviewPreflight", generation, readyFacts);
+                Check(Get<Button>(ui, "BtnReviewStart").IsEnabled && Get<TextBlock>(ui, "ReviewPreflightSummary").Text.Contains("attention"), "Completed preflight exposes restart guidance while allowing reviewed warnings");
+                readyFacts.CheckedUtc = DateTime.UtcNow.AddMinutes(-10); Call(ui, "UpdateReviewStart");
+                Check(!Get<Button>(ui, "BtnReviewStart").IsEnabled && Call(ui, "BuildReviewedJob") == null, "Expired readiness facts cannot start a setup");
+                readyFacts.CheckedUtc = DateTime.UtcNow; Call(ui, "UpdateReviewStart");
+                SetField(ui, "driverPreview", PreviewFixture()); int continued = 0;
+                var previewWindow = (Window)Call(ui, "BuildDriverPreviewWindow", (Action)delegate { continued++; });
+                var previewContinue = FindNamed<Button>(previewWindow, "DriverPreviewContinue");
+                Check(continued == 0 && previewContinue.IsEnabled && FindNamed<TextBlock>(previewWindow, "DriverPreviewStatus").Text.Contains("proposed installers"), "Constructing a populated driver preview is read-only and does not continue installation");
+                previewContinue.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, previewContinue));
+                previewContinue.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, previewContinue));
+                Check(continued == 1, "Driver installation continuation requires an explicit click and runs only once");
+                SetField(ui, "driverPreviewBusy", true);
+                var busyPreview = (Window)Call(ui, "BuildDriverPreviewWindow", (Action)delegate { continued++; });
+                Check(!FindNamed<Button>(busyPreview, "DriverPreviewContinue").IsEnabled, "A cached driver report cannot enable Continue while a fresh scan is pending"); busyPreview.Close(); SetField(ui, "driverPreviewBusy", false);
                 Check(Get<Grid>(ui, "ReviewSheet").Visibility == Visibility.Visible && !Field<bool>(ui, "running"), "Opening review does not start setup");
                 Check(!Get<RadioButton>(ui, "NavApps").IsEnabled && !Get<TextBox>(ui, "SearchBox").IsEnabled, "Review prevents keyboard editing of selections behind the sheet");
                 Check(Get<TextBlock>(ui, "ReviewAppsDetail").Text.Contains(first.Name) && Get<TextBlock>(ui, "ReviewAppsDetail").Text.Contains(first.Id), "Review lists selected app names and package IDs");
@@ -235,14 +402,81 @@ namespace Freshkit
                 Get<Button>(ui, "BtnReviewTweaks").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Check(Get<Grid>(ui, "ReviewSheet").Visibility == Visibility.Collapsed && Get<Grid>(ui, "PageTweaks").Visibility == Visibility.Visible && !Field<bool>(ui, "running"), "Edit tweaks returns to selections without running setup");
                 Call(ui, "CloseReview");
+                var auditRecipe = (SetupRecipe)Call(ui, "CaptureRecipe");
+                var auditTarget = new AuditTarget { Recipe = auditRecipe };
+                var auditReport = new AuditReport { CheckedUtc = DateTime.UtcNow };
+                auditReport.Rows.Add(new AuditRow { Category = "Apps", Key = "fixture-present", Name = "Installed fixture", Status = "Verified", Detail = "Exact package identity · version 1.0" });
+                auditReport.Rows.Add(new AuditRow { Category = "Apps", Key = "fixture-missing", Name = "Missing fixture", Status = "Missing", Detail = "Not found in completed inventories. Review setup to install it." });
+                string catalogBeforeAudit = Engine.SessionList, selectionsBeforeAudit = string.Join(",", apps.Where(a => a.IsSelected).Select(a => a.Key));
+                var auditWindow = (Window)Call(ui, "BuildAuditWindow", auditTarget, auditReport, "Setup comparison", false);
+                Check(FindNamed<StackPanel>(auditWindow, "AuditRows").Children.Count == 1, "Audit details initially show issues while preserving successful checks");
+                FindNamed<CheckBox>(auditWindow, "AuditIssuesOnly").IsChecked = false;
+                Check(FindNamed<StackPanel>(auditWindow, "AuditRows").Children.Count == 2, "Audit filter can reveal every verified result");
+                Check(Engine.SessionList == catalogBeforeAudit && string.Join(",", apps.Where(a => a.IsSelected).Select(a => a.Key)) == selectionsBeforeAudit && !Field<bool>(ui, "running"), "Constructing and filtering setup comparison cannot apply recipes or start setup");
+                auditWindow.Close();
+                int auditGeneration = (int)Call(ui, "BeginPostAudit", auditTarget);
+                int auditEpoch = Field<int>(ui, "tweakStateEpoch");
+                Call(ui, "CompletePostAudit", auditGeneration - 1, auditEpoch, auditReport);
+                Check(Field<AuditReport>(ui, "postAuditReport") == null, "Obsolete verification callbacks cannot populate current results");
+                Call(ui, "CompletePostAudit", auditGeneration, auditEpoch, auditReport);
+                Check(Get<TextBlock>(ui, "VerificationSummary").Text.Contains("need attention") && Get<Button>(ui, "BtnViewVerification").IsEnabled, "Completed verification appears separately on Progress");
+                Call(ui, "InvalidateAuditResults");
+                Call(ui, "CompletePostAudit", auditGeneration, auditEpoch, auditReport);
+                Check(Field<AuditReport>(ui, "postAuditReport") == null, "A new system-changing job invalidates older verification results");
                 if (args.Length > 0 && args[0] == "--render")
                 {
+                    var compareWindow = (Window)Call(ui, "BuildAuditWindow", auditTarget, auditReport, "Setup comparison", false);
+                    RenderOptions(compareWindow, "setup-comparison", 920, 700); RenderOptions(compareWindow, "setup-comparison-small", 620, 450);
+                    var compareRoot = (FrameworkElement)compareWindow.Content; var auditClose = FindNamed<Button>(compareWindow, "AuditClose"); var auditOrigin = auditClose.TranslatePoint(new Point(), compareRoot);
+                    Check(auditOrigin.Y >= 0 && auditOrigin.Y + auditClose.ActualHeight <= 450, "Comparison keeps Close and Recheck visible at minimum size");
+                    compareWindow.Close();
+                    Call(ui, "InitProgress");
+                    var completedJob = new JobSpec { Action = "Install", Apps = "fixture", DriverKit = "fixture drivers", WifiKit = "fixture wifi", DebloatArgs = new List<string> { "-Fixture" }, RestoreZip = "fixture.zip" };
+                    var completedRecord = new SetupRecord { Recipe = completedJob, Steps = SetupProgress.Create(completedJob) };
+                    foreach (var step in completedRecord.Steps) { step.Status = "Done"; step.Detail = "Completed successfully"; }
+                    SetField(ui, "sessionSetup", completedRecord);
+                    Call(ui, "ShowSnapshot", new RunSnapshot { Status = "Completed", When = DateTime.Now }, false, false); Call(ui, "ShowSetupSteps", false);
+                    int shownGeneration = (int)Call(ui, "BeginPostAudit", auditTarget); Call(ui, "CompletePostAudit", shownGeneration, Field<int>(ui, "tweakStateEpoch"), auditReport);
+                    foreach (string page in Field<string[]>(ui, "pages")) Get<FrameworkElement>(ui, page).Visibility = page == "PageProgress" ? Visibility.Visible : Visibility.Collapsed;
+                    Render(ui, "verification-progress-small", 1064, 641);
+                    var progressRoot = (FrameworkElement)ui.Window.Content; var viewVerification = Get<Button>(ui, "BtnViewVerification"); var verificationOrigin = viewVerification.TranslatePoint(new Point(), progressRoot);
+                    Check(verificationOrigin.Y >= 0 && verificationOrigin.Y + viewVerification.ActualHeight <= 641, "Completed setup keeps verification results accessible at minimum size");
+                    SetField(ui, "sessionSetup", null);
+                    var manyDevices = PreviewFixture();
+                    for (int i = 0; i < 30; i++) manyDevices.Rows.Add(new DriverPreviewRow { Hardware = "AMD PCI device " + i, DeviceId = "PCI fixture chipset " + i, Kind = "Chipset", PackageId = "amd-chipset-drivers", PackageName = "AMD Chipset Drivers", Compatibility = "Candidate", Reason = "Detected AMD system devices; review manufacturer compatibility.", InstalledDriverVersion = "1.0." + i, AvailablePackageVersion = "7.1", MetadataStatus = "Available", SupportUrl = "https://www.amd.com/en/support/download/drivers.html" });
+                    SetField(ui, "driverPreview", manyDevices);
+                    var driverWindow = (Window)Call(ui, "BuildDriverPreviewWindow", (Action)delegate { });
+                    Check(!FindNamed<Expander>(driverWindow, "DriverDevices").IsExpanded && FindNamed<TextBlock>(driverWindow, "DriverPreviewStatus").Text.Contains("3 proposed installers"), "Many-device preview defaults to three installer cards with collapsed device details");
+                    RenderOptions(driverWindow, "driver-preview", 920, 700); RenderOptions(driverWindow, "driver-preview-small", 620, 450);
+                    var driverContent = (FrameworkElement)driverWindow.Content; var continueButton = FindNamed<Button>(driverWindow, "DriverPreviewContinue"); var driverOrigin = continueButton.TranslatePoint(new Point(), driverContent);
+                    Check(driverOrigin.Y >= 0 && driverOrigin.Y + continueButton.ActualHeight <= 450, "Driver preview retains the explicit Continue action at minimum size"); driverWindow.Close();
+                    Call(ui, "Navigate", "NavTweaks");
+                    var states = new Dictionary<string, string>();
+                    states[debloat.Categories[0].Toggles[0].FeatureId] = "Applied";
+                    Call(ui, "CompleteTweakDetection", states, new List<string> { debloat.Apps[0].AppId }, true, new List<string>(), true, new List<string>());
+                    Render(ui, "tweaks-small", 1064, 641); Render(ui, "tweaks", 1264, 801);
+                    Get<TextBox>(ui, "TweakSearch").Text = "remove apps";
+                    Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = true; Call(ui, "FilterTweaks");
+                    Render(ui, "removal-installed-small", 1064, 641);
+                    Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = false; Get<TextBox>(ui, "TweakSearch").Text = "";
+                    var optionsPreview = (Window)Call(ui, "BuildAppOptionsWindow", apps.First(a => a.Id == "Mozilla.Firefox.en-GB"));
+                    RenderOptions(optionsPreview); optionsPreview.Close();
                     foreach (AppItem a in apps) a.IsSelected = a.DefaultOn;
                     apps[0].Installed = true;
                     Field<ObservableCollection<AppGroup>>(ui, "groups")[0].Items[0].Installed = true;
                     Call(ui, "Navigate", "NavApps");
                     Render(ui, "apps", 1264, 801);
                     Render(ui, "apps-small", 1064, 641);
+                    var sidebarRoot = (FrameworkElement)ui.Window.Content;
+                    var pc = Get<Border>(ui, "ThisPcPanel"); var pcOrigin = pc.TranslatePoint(new Point(), sidebarRoot);
+                    Check(pcOrigin.Y >= 0 && pcOrigin.Y + pc.ActualHeight <= 641 && Get<TextBlock>(ui, "SysBuild").ActualHeight > 0, "This PC shows a separate build line and all details at minimum size");
+                    Get<Border>(ui, "ResumeBanner").Visibility = Visibility.Visible;
+                    Get<TextBlock>(ui, "SysWindows").Text = "Windows 11 Enterprise multi-session 25H2";
+                    Render(ui, "sidebar-resume-small", 1064, 641);
+                    pcOrigin = pc.TranslatePoint(new Point(), sidebarRoot);
+                    Check(pcOrigin.Y >= 0 && pcOrigin.Y + pc.ActualHeight <= 641 && Get<ScrollViewer>(ui, "SidebarNavigation").ActualHeight > 0, "Long OS details and a resume banner keep This PC visible and navigation scrollable");
+                    Get<Border>(ui, "ResumeBanner").Visibility = Visibility.Collapsed;
+                    Get<TextBlock>(ui, "SysWindows").Text = "Windows 11 Enterprise 25H2";
                     Call(ui, "OpenSearch"); Render(ui, "search-empty", 1264, 801);
                     int request = (int)Call(ui, "BeginSearch", "example", "winget");
                     Render(ui, "search-loading", 1064, 641);

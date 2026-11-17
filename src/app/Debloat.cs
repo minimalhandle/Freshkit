@@ -17,8 +17,13 @@ namespace Freshkit
         public string FeatureId { get; set; }
         public string Label { get; set; }
         public string Tooltip { get; set; }
+        public int SelectionVersion { get; private set; }
+        string state = "Not checked";
+        public string StateText { get { return state; } internal set { state = value; Raise("StateText"); Raise("CurrentText"); Raise("PlanText"); } }
+        public string CurrentText { get { return "Current: " + state; } }
+        public string PlanText { get { return !selected ? "Next setup: no change" : state == "Applied" ? "Next setup: already applied · skip" : "Next setup: apply this tweak"; } }
         public Action Changed;
-        public bool IsSelected { get { return selected; } set { if (selected == value) return; selected = value; Raise("IsSelected"); if (Changed != null) Changed(); } }
+        public bool IsSelected { get { return selected; } set { SelectionVersion++; if (selected == value) return; selected = value; Raise("IsSelected"); Raise("PlanText"); if (Changed != null) Changed(); } }
         public Visibility Visibility { get { return visibility; } set { visibility = value; Raise("Visibility"); } }
     }
 
@@ -28,10 +33,17 @@ namespace Freshkit
         public string GroupId { get; set; }
         public string Label { get; set; }
         public string Tooltip { get; set; }
+        public int SelectionVersion { get; private set; }
+        string state = "Not checked";
+        public string StateText { get { return state; } internal set { state = value; Raise("StateText"); Raise("PlanText"); } }
+        int currentIndex;
+        public int CurrentIndex { get { return currentIndex; } internal set { currentIndex = value; Raise("CurrentIndex"); Raise("PlanText"); } }
+        public bool AlreadyCurrent { get { return index > 0 && index == currentIndex; } }
+        public string PlanText { get { return index <= 0 ? "Next setup: no change" : AlreadyCurrent ? "Next setup: already current · skip" : "Next setup: " + Options[index]; } }
         public List<string> Options { get; set; }          // [0] = "Don't change"
         public List<string[]> Values { get; set; }         // feature ids per option (index-1)
         public Action Changed;
-        public int SelectedIndex { get { return index; } set { if (index == value) return; index = value < 0 ? 0 : value; Raise("SelectedIndex"); if (Changed != null) Changed(); } }
+        public int SelectedIndex { get { return index; } set { SelectionVersion++; if (index == value) return; index = value < 0 || Options == null || value >= Options.Count ? 0 : value; Raise("SelectedIndex"); Raise("PlanText"); if (Changed != null) Changed(); } }
         public Visibility Visibility { get { return visibility; } set { visibility = value; Raise("Visibility"); } }
         public string[] SelectedFeatures { get { return index > 0 && index - 1 < Values.Count ? Values[index - 1] : new string[0]; } }
     }
@@ -39,6 +51,7 @@ namespace Freshkit
     public sealed class TweakCategory : Notifier
     {
         Visibility visibility = Visibility.Visible;
+        public string Id { get; set; }
         public string Name { get; set; }
         public string Glyph { get; set; }
         public ObservableCollection<TweakToggle> Toggles { get; private set; }
@@ -63,6 +76,11 @@ namespace Freshkit
     {
         bool selected; Visibility visibility = Visibility.Visible;
         public string AppId { get; set; }
+        public List<string> AppIds = new List<string>();
+        public string RemovalMethod = "Appx";
+        bool? installed;
+        public bool? Installed { get { return installed; } set { installed = value; Raise("RemovalTip"); } }
+        public string RemovalTip { get { return Tooltip + "\n" + (Installed.HasValue ? Installed.Value ? "Installed on this PC" : "Not installed on this PC" : "Installation state unknown"); } }
         public string Name { get; set; }
         public string Tooltip { get; set; }
         public bool DefaultOn { get; set; }
@@ -134,7 +152,7 @@ namespace Freshkit
                 {
                     string id = J.S(c, "CategoryId");
                     string label = J.S(J.Get(langCats, id), "Label");
-                    var cat = new TweakCategory { Name = label.Length > 0 ? label : J.S(c, "Name"), Glyph = Glyph(J.S(c, "Icon")) };
+                    var cat = new TweakCategory { Id = id, Name = label.Length > 0 ? label : J.S(c, "Name"), Glyph = Glyph(J.S(c, "Icon")) };
                     d.Categories.Add(cat);
                     byKey[id] = cat; byKey[J.S(c, "Name")] = cat; byKey[cat.Name] = cat;
                 }
@@ -200,12 +218,15 @@ namespace Freshkit
                 // removable apps
                 foreach (object a in J.A(apps, "Apps"))
                 {
-                    string id = J.S(a, "AppId");
+                    var ids = new List<string>();
+                    foreach (object rawId in J.A(a, "AppId")) { var value = rawId as string; if (!string.IsNullOrWhiteSpace(value)) ids.Add(value.Trim()); }
+                    if (ids.Count == 0) continue;
+                    string id = ids[0];
                     object la = J.Get(langApps, id);
                     string name = J.S(la, "FriendlyName");
                     string rec = J.S(a, "Recommendation");
                     // Win11Debloat's default mode removes the apps marked SelectedByDefault.
-                    var app = new RemovalApp { AppId = id, Name = (name.Length > 0 ? name : id) + (rec.Equals("unsafe", StringComparison.OrdinalIgnoreCase) ? "  (caution)" : ""), DefaultOn = J.B(a, "SelectedByDefault") };
+                    var app = new RemovalApp { AppId = id, AppIds = ids, RemovalMethod = J.S(a, "RemovalMethod") == "WinGet" ? "WinGet" : "Appx", Name = (name.Length > 0 ? name : id) + (rec.Equals("unsafe", StringComparison.OrdinalIgnoreCase) ? "  (caution)" : ""), DefaultOn = J.B(a, "SelectedByDefault") };
                     app.Tooltip = (J.S(la, "Description").Length > 0 ? J.S(la, "Description") + "\n" : "") + id +
                         (rec.Length > 0 && !rec.Equals("safe", StringComparison.OrdinalIgnoreCase) ? "\nWin11Debloat recommendation: " + rec : "");
                     d.Apps.Add(app);
@@ -230,10 +251,19 @@ namespace Freshkit
             return list;
         }
 
+        public List<string> PendingFeatures()
+        {
+            var list = new List<string>(); var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in AllToggles) if (t.IsSelected && t.StateText != "Applied" && seen.Add(t.FeatureId)) list.Add(t.FeatureId);
+            foreach (var c in AllChoices) if (!c.AlreadyCurrent) foreach (string id in c.SelectedFeatures) if (seen.Add(id)) list.Add(id);
+            return list;
+        }
+
         public List<string> SelectedApps()
         {
             var list = new List<string>();
-            foreach (RemovalApp a in Apps) if (a.IsSelected) list.Add(a.AppId);
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (RemovalApp a in Apps) if (a.IsSelected) foreach (string id in a.AppIds.Count > 0 ? a.AppIds : new List<string> { a.AppId }) if (seen.Add(id)) list.Add(id);
             return list;
         }
 
@@ -252,14 +282,78 @@ namespace Freshkit
         public void ApplyApps(ICollection<string> ids)
         {
             var set = new HashSet<string>(ids, StringComparer.OrdinalIgnoreCase);
-            foreach (RemovalApp a in Apps) a.IsSelected = set.Contains(a.AppId);
+            foreach (RemovalApp a in Apps) a.IsSelected = set.Contains(a.AppId) || a.AppIds.Exists(set.Contains);
+        }
+
+        public void SelectCategory(TweakCategory category, bool selected, bool visibleOnly)
+        {
+            foreach (var t in category.Toggles) if (!visibleOnly || t.Visibility == Visibility.Visible) t.IsSelected = selected;
+            foreach (var c in category.Choices) if (!visibleOnly || c.Visibility == Visibility.Visible) c.SelectedIndex = selected && c.Values.Count > 0 ? 1 : 0;
+            category.Refresh();
+        }
+
+        public void SelectCategoryById(string id, bool selected)
+        {
+            var category = Categories.Find(c => c.Id == id);
+            if (category != null) SelectCategory(category, selected, false);
+        }
+
+        public void ApplyDetection(IDictionary<string, string> states)
+        {
+            foreach (var t in AllToggles)
+            {
+                string state; if (!states.TryGetValue(t.FeatureId, out state)) state = "Unknown";
+                t.StateText = state;
+            }
+            foreach (var c in AllChoices)
+            {
+                int current = 0, matches = 0; bool unknown = false;
+                for (int i = 0; i < c.Values.Count; i++)
+                {
+                    bool applied = true;
+                    foreach (string id in c.Values[i])
+                    {
+                        string state;
+                        if (!states.TryGetValue(id, out state) || state == "Unknown") unknown = true;
+                        if (state != "Applied") applied = false;
+                    }
+                    if (applied) { current = i + 1; matches++; }
+                }
+                c.StateText = matches == 1 ? "Current: " + c.Options[current] : unknown || matches > 1 ? "Current: Unknown" : "Current: No matching option";
+                c.CurrentIndex = matches == 1 ? current : 0;
+            }
+        }
+
+        public void InvalidateDetection() { ApplyDetection(new Dictionary<string, string>()); }
+
+        public void FilterRemoval(string query, bool installedOnly)
+        {
+            string q = (query ?? "").Trim();
+            foreach (var a in Apps)
+            {
+                bool matches = q.Length == 0 || a.Name.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || a.AppId.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 || a.AppIds.Exists(id => id.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) || "remove apps".IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+                a.Visibility = matches && (!installedOnly || a.Installed != false) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        public void DetectInstalledApps(ICollection<string> appx, bool appxComplete, ICollection<string> winget, bool wingetComplete)
+        {
+            var packageNames = new HashSet<string>(appx, StringComparer.OrdinalIgnoreCase);
+            var packageIds = new HashSet<string>(winget, StringComparer.OrdinalIgnoreCase);
+            foreach (var a in Apps)
+            {
+                var identities = a.RemovalMethod == "WinGet" ? packageIds : packageNames;
+                bool found = identities.Contains(a.AppId) || a.AppIds.Exists(identities.Contains);
+                bool complete = a.RemovalMethod == "WinGet" ? wingetComplete : appxComplete;
+                a.Installed = found ? true : complete ? (bool?)false : null;
+            }
         }
 
         /// Win11Debloat command-line arguments for the current selection (null when nothing is selected).
         public List<string> BuildArguments(bool restorePoint, bool forceRemoveEdge)
         {
             var args = new List<string>();
-            foreach (string f in SelectedFeatures()) if (!args.Contains("-" + f)) args.Add("-" + f);
+            foreach (string f in PendingFeatures()) if (!args.Contains("-" + f)) args.Add("-" + f);
             List<string> apps = SelectedApps();
             if (apps.Count > 0) { args.Add("-RemoveApps"); args.Add("-Apps"); args.Add(string.Join(",", apps.ToArray())); }
             if (forceRemoveEdge) args.Add("-ForceRemoveEdge");

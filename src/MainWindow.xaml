@@ -315,7 +315,11 @@
             <Border x:Name="bd" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,11" MinHeight="58">
               <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding Label}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource Text}" Margin="0,0,10,0"/>
+                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                  <TextBlock Text="{Binding Label}" TextWrapping="Wrap" Foreground="{StaticResource Text}"/>
+                  <TextBlock Text="{Binding CurrentText}" FontSize="10.5" Foreground="{StaticResource Subtle}" Margin="0,4,0,0"/>
+                  <TextBlock Text="{Binding PlanText}" FontSize="10.5" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                </StackPanel>
                 <Border x:Name="track" Grid.Column="1" Width="36" Height="20" CornerRadius="10" Background="#252A33" BorderBrush="#4B5563" BorderThickness="1" VerticalAlignment="Center">
                   <Ellipse x:Name="knob" Width="10" Height="10" Fill="#C9CED6" HorizontalAlignment="Left" Margin="4,0,0,0"/>
                 </Border>
@@ -625,12 +629,12 @@
     <Border x:Name="SidebarSurface" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
       <DockPanel Margin="14,20,14,16">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,26">
-          <Border Width="38" Height="38" CornerRadius="10" Background="{StaticResource LogoBrush}">
-            <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="19" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <Border Width="38" Height="38" CornerRadius="10" Background="#1C2631">
+            <Image Source="{DynamicResource BrandMark}" Width="34" Height="34" Stretch="Uniform"/>
           </Border>
           <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
             <TextBlock Text="Freshkit" FontSize="18" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Segoe UI"/>
-            <TextBlock Text="Fresh Windows setup" FontSize="11.5" Foreground="{StaticResource Subtle}"/>
+            <TextBlock Text="Fresh start. Your setup." FontSize="11.5" Foreground="{StaticResource Subtle}" TextWrapping="Wrap"/>
           </StackPanel>
         </StackPanel>
 
@@ -644,16 +648,21 @@
               <TextBlock Text="Open Progress to follow it." TextWrapping="Wrap" FontSize="12" Foreground="#D6C79A" Margin="0,4,0,0"/>
             </StackPanel>
           </Border>
-          <Border Background="#171A21" CornerRadius="10" Padding="12,10">
+          <Border x:Name="ThisPcPanel" Background="#171A21" CornerRadius="10" Padding="12,10">
             <StackPanel>
               <TextBlock Text="THIS PC" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource Subtle}" Margin="0,0,0,6"/>
-              <TextBlock x:Name="SysWindows" FontSize="12" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
-              <TextBlock x:Name="SysChoco" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
-              <TextBlock x:Name="SysNet" FontSize="12" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="SysWindows" FontSize="12" Foreground="{StaticResource Muted}" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysBuild" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysArchitecture" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysDisk" FontSize="11.5" Foreground="{StaticResource Muted}" Margin="0,7,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysChoco" FontSize="11.5" Foreground="{StaticResource Muted}" Margin="0,7,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysWinget" FontSize="11.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SysNet" Text="Checking connection…" FontSize="11.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextWrapping="Wrap"/>
             </StackPanel>
           </Border>
         </StackPanel>
 
+        <ScrollViewer x:Name="SidebarNavigation" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
         <StackPanel>
           <RadioButton x:Name="NavApps" Style="{StaticResource Nav}" Tag="&#xE71D;" Content="Apps" IsChecked="True"/>
           <RadioButton x:Name="NavTweaks" Style="{StaticResource Nav}" Tag="&#xE90F;" Content="Windows tweaks"/>
@@ -662,6 +671,7 @@
           <RadioButton x:Name="NavUpdates" Style="{StaticResource Nav}" Tag="&#xE895;" Content="Updates"/>
           <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE777;" Content="Settings backup"/>
         </StackPanel>
+        </ScrollViewer>
       </DockPanel>
     </Border>
 
@@ -754,6 +764,7 @@
                             <CheckBox Style="{StaticResource AppCard}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Visibility="{Binding Visibility}" ToolTip="{Binding Tooltip}">
                               <CheckBox.ContextMenu>
                                 <ContextMenu>
+                                  <MenuItem Header="Installation options…" Tag="app-options"/>
                                   <MenuItem Header="Remove from list" Tag="remove-app"/>
                                 </ContextMenu>
                               </CheckBox.ContextMenu>
@@ -781,6 +792,7 @@
               <TextBlock x:Name="SelExtra" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+              <Button x:Name="BtnCompareSetup" Style="{StaticResource Ghost}" Content="Compare" ToolTip="Read-only comparison of current setup selections against this PC"/>
               <Button x:Name="BtnDefaults" Style="{StaticResource Ghost}" Content="Defaults" ToolTip="Restore the built-in default selection"/>
               <Button x:Name="BtnNone" Style="{StaticResource Ghost}" Content="Clear" ToolTip="Untick every app shown"/>
             </StackPanel>
@@ -798,9 +810,10 @@
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <StackPanel>
           <TextBlock Text="Windows tweaks" Style="{StaticResource PageTitle}"/>
-          <TextBlock Style="{StaticResource PageSub}" Text="Privacy, Start menu, taskbar, File Explorer and AI settings, plus removal of preinstalled apps. Powered by Win11Debloat (built in). Selected tweaks run as part of the next install, or apply them now."/>
+          <TextBlock Style="{StaticResource PageSub}" Text="Inspect current settings, then choose changes for the next setup. Detection never selects work; settings already applied are skipped. Powered by Win11Debloat."/>
         </StackPanel>
         <Grid Grid.Row="1" Margin="0,18,8,14">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Grid>
             <TextBox x:Name="TweakSearch" Style="{StaticResource Input}" Tag="Search tweaks and apps" Padding="32,7,10,7"/>
@@ -813,6 +826,11 @@
           <Button x:Name="BtnDebloatGui" Grid.Column="2" Style="{StaticResource Ghost}" ToolTip="Opens Win11Debloat's own window with every option. Its data is removed when you close it.">
             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A7;" FontFamily="{StaticResource Icons}" VerticalAlignment="Center" Margin="0,0,7,0"/><TextBlock Text="Open Win11Debloat (all options)"/></StackPanel>
           </Button>
+          <WrapPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0">
+            <Button x:Name="BtnTweakQuickSelect" Style="{StaticResource Secondary}" Content="Quick select ▾" Padding="12,5" Margin="0,0,8,6"/>
+            <Button x:Name="BtnTweakRefresh" Style="{StaticResource Ghost}" Content="Refresh detection" Padding="10,5" Margin="0,0,8,6"/>
+            <TextBlock x:Name="TweakScanStatus" Text="Current settings are checked when this page opens." FontSize="11" Foreground="{StaticResource Subtle}" MaxWidth="450" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,0,6"/>
+          </WrapPanel>
         </Grid>
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
           <StackPanel>
@@ -825,6 +843,8 @@
                       <TextBlock Text="{Binding Glyph}" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,9,0"/>
                       <TextBlock Text="{Binding Header}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
                       <TextBlock Text="{Binding CountText}" FontSize="11.5" Foreground="{StaticResource Subtle}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                      <Button Content="Select all" Tag="tweak-select-all" Style="{StaticResource Link}" FontSize="11.5" Margin="16,0,10,0"/>
+                      <Button Content="Clear" Tag="tweak-clear" Style="{StaticResource Link}" FontSize="11.5"/>
                     </StackPanel>
                     <ItemsControl ItemsSource="{Binding Choices}">
                       <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -833,7 +853,10 @@
                           <Border Width="300" Margin="0,0,10,10" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="14,9" MinHeight="58" Visibility="{Binding Visibility}" ToolTip="{Binding Tooltip}">
                             <StackPanel VerticalAlignment="Center">
                               <TextBlock Text="{Binding Label}" Foreground="{StaticResource Text}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                              <TextBlock Text="{Binding StateText}" FontSize="10.5" Foreground="{StaticResource Subtle}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                              <TextBlock Text="Next setup" FontSize="10.5" Foreground="{StaticResource Muted}" Margin="0,8,0,4"/>
                               <ComboBox ItemsSource="{Binding Options}" SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"/>
+                              <TextBlock Text="{Binding PlanText}" FontSize="10.5" Foreground="{StaticResource Accent}" Margin="0,5,0,0" TextWrapping="Wrap"/>
                             </StackPanel>
                           </Border>
                         </DataTemplate>
@@ -861,6 +884,7 @@
                 <Button x:Name="BtnRemovalRecommended" Style="{StaticResource Link}" Content="Recommended" Margin="0,0,12,0" VerticalAlignment="Center"/>
                 <Button x:Name="BtnRemovalNone" Style="{StaticResource Link}" Content="None" VerticalAlignment="Center"/>
               </StackPanel>
+              <CheckBox x:Name="OnlyInstalledRemovals" Style="{StaticResource Switch}" Content="Only show installed apps" Margin="0,0,0,12" ToolTip="Filters by exact Appx names and winget IDs. Unknown scan results stay visible; selections are preserved."/>
               <ItemsControl x:Name="RemovalPresets" Margin="0,0,0,6">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -870,7 +894,7 @@
               <ItemsControl x:Name="RemovalList">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
-                  <DataTemplate><CheckBox Style="{StaticResource Chip}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="{Binding Tooltip}" Visibility="{Binding Visibility}"/></DataTemplate>
+                  <DataTemplate><CheckBox Style="{StaticResource Chip}" IsChecked="{Binding IsSelected, Mode=TwoWay}" ToolTip="{Binding RemovalTip}" Visibility="{Binding Visibility}"/></DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
               <CheckBox x:Name="ForceEdgeSwitch" Style="{StaticResource Switch}" Margin="0,10,0,0"><TextBlock Text="Also force-remove Microsoft Edge (not recommended: some Windows features rely on it)" TextWrapping="Wrap"/></CheckBox>
@@ -881,7 +905,7 @@
           <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-              <TextBlock x:Name="TweakCount" FontWeight="SemiBold"/>
+              <TextBlock x:Name="TweakCount" FontWeight="SemiBold" TextWrapping="Wrap"/>
               <CheckBox x:Name="RestorePointSwitch" Style="{StaticResource Switch}" IsChecked="True" Margin="0,8,0,0" Content="Create a System Restore point first"/>
             </StackPanel>
             <Button x:Name="BtnApplyTweaks" Grid.Column="1" Style="{StaticResource Primary}" VerticalAlignment="Center">
@@ -915,7 +939,7 @@
               </StackPanel>
             </Border>
           </UniformGrid>
-          <TextBlock Foreground="{StaticResource Subtle}" FontSize="12" Margin="2,12,0,0" TextWrapping="Wrap" Text="NVIDIA/AMD matching is by vendor and device class. It doesn't fully verify model or OEM compatibility."/>
+          <TextBlock Foreground="{StaticResource Subtle}" FontSize="12" Margin="2,12,0,0" TextWrapping="Wrap" Text="NVIDIA/AMD matching uses the hardware vendor and device class. Intel uses reviewed Arc/Core Ultra device IDs; older or unreviewed Intel GPUs need the OEM/Intel driver selector. Model operation and OEM compatibility aren't fully verified."/>
 
           <TextBlock Text="OPTIONAL DRIVER EXPORT" Style="{StaticResource SectionHead}" Margin="2,28,0,10"/>
           <UniformGrid Columns="2">
@@ -997,6 +1021,11 @@
               <Button x:Name="BtnCancelResume" Style="{StaticResource Secondary}" Content="Cancel saved install" Margin="0,0,10,0"/>
               <Button x:Name="BtnOpenLogs" Style="{StaticResource Ghost}" Content="Open log folder"/>
               <Button x:Name="BtnDeleteLogs" Style="{StaticResource Ghost}" Content="Delete logs" Visibility="Collapsed" ToolTip="Removes Freshkit's logs and install reports from this PC."/>
+            </WrapPanel>
+            <TextBlock x:Name="VerificationSummary" Text="Verification runs after setup finishes." Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"/>
+            <WrapPanel Margin="0,8,0,0">
+              <Button x:Name="BtnViewVerification" Style="{StaticResource Secondary}" Content="View verification" Visibility="Collapsed" Margin="0,0,8,0"/>
+              <Button x:Name="BtnVerifySetup" Style="{StaticResource Ghost}" Content="Verify again" Visibility="Collapsed"/>
             </WrapPanel>
           </StackPanel>
         </Border>
@@ -1230,6 +1259,7 @@
                         </DockPanel>
                         <TextBlock Text="{Binding Meta}" Foreground="{StaticResource Subtle}" FontSize="12" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" ToolTip="{Binding Meta}"/>
                         <DockPanel Margin="0,4,0,0">
+                          <Button DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Possible match · Link installed app" Tag="link-installed" ToolTip="{Binding IdentityNote}" Margin="10,0,0,0" Visibility="{Binding LinkVisibility}"/>
                           <Button DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Website ↗" Tag="open-homepage" ToolTip="{Binding Homepage}" Margin="10,0,0,0" Visibility="{Binding HomepageVisibility}" VerticalAlignment="Center"/>
                           <TextBlock Text="{Binding Summary}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/>
                         </DockPanel>
@@ -1275,6 +1305,15 @@
             <StackPanel>
               <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
                 <StackPanel>
+                  <DockPanel><Button x:Name="BtnReviewRecheck" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Recheck"/><TextBlock Text="Preflight checks" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+                  <TextBlock x:Name="ReviewPreflightSummary" Text="Checking readiness…" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                  <StackPanel x:Name="ReviewPreflightIssues"/>
+                  <Button x:Name="BtnReviewStorage" Style="{StaticResource Link}" Content="Open Windows Storage settings" HorizontalAlignment="Left" Margin="0,10,0,0" Visibility="Collapsed"/>
+                  <Expander x:Name="ReviewPreflightReady" Style="{StaticResource ReviewExpander}" Header="Passed checks" Foreground="{StaticResource Muted}" Margin="0,12,0,0" Visibility="Collapsed"><TextBlock x:Name="ReviewPreflightPassed" TextWrapping="Wrap" Foreground="{StaticResource Text}" Margin="4,12,0,4" FontSize="12"/></Expander>
+                </StackPanel>
+              </Border>
+              <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                <StackPanel>
                   <DockPanel><Button x:Name="BtnReviewApps" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Edit apps"/><TextBlock x:Name="ReviewAppsTitle" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
                   <TextBlock x:Name="ReviewInstalled" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,12"/>
                   <CheckBox x:Name="ReviewUpgrade" Style="{StaticResource Switch}" Margin="0,0,0,14"><TextBlock Text="Update selected apps that are already installed" TextWrapping="Wrap"/></CheckBox>
@@ -1293,7 +1332,8 @@
                 <StackPanel>
                   <TextBlock Text="Hardware drivers" FontWeight="SemiBold" Margin="0,0,0,12"/>
                   <CheckBox x:Name="ReviewDrivers" Style="{StaticResource Switch}"><TextBlock Text="Install matching chipset and graphics drivers" TextWrapping="Wrap"/></CheckBox>
-                  <TextBlock Text="Uses Freshkit's hardware detection. Review detected hardware on Drivers &amp; offline kit if needed." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12"/>
+                  <TextBlock x:Name="ReviewDriversDetail" Text="Preview detected hardware and proposed packages before starting." Foreground="{StaticResource Muted}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="160" Margin="0,10,0,0" FontSize="12" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                  <Button x:Name="BtnReviewDriverPreview" Content="Open full driver preview…" Style="{StaticResource Link}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                 </StackPanel>
               </Border>
               <Border x:Name="ReviewKitCard" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">

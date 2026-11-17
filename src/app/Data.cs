@@ -32,7 +32,8 @@ namespace Freshkit
         public Brush TileBrush { get; set; }
         public Brush TileForeground { get; set; }
         AppIcon artwork;
-        public AppIcon Artwork { get { return artwork ?? (artwork = AppIcons.Get(Id, Name, Source)); } }
+        // GitHub projects share names with unrelated apps, so they never borrow an installed app's icon by name.
+        public AppIcon Artwork { get { return artwork ?? (artwork = AppIcons.Get(Id, Name, Source, Source != "github")); } }
         public Action Changed;
         /// Selection key used by the runner and profiles: choco id, winget:<Id> or github:<owner/repo>.
         public string Key { get { return Data.KeyFor(Source, Id); } }
@@ -49,7 +50,7 @@ namespace Freshkit
             {
                 return Name + (IsGitHub ? "\nLatest GitHub release of: github.com/" : IsStore ? "\nMicrosoft Store app (via winget): " : IsWinget ? "\nwinget package: " : "\nChocolatey package: ") + Id +
                     (Parameters.Length > 0 ? "\nParameters: " + Parameters : "") + (installed ? "\nAlready installed on this PC" : "") +
-                    "\nRight-click to remove it from the list.";
+                    "\nRight-click for installation options or to remove it from the list.";
             }
         }
         public Visibility WingetVisibility { get { return IsWinget || IsGitHub ? Visibility.Visible : Visibility.Collapsed; } }
@@ -267,6 +268,8 @@ namespace Freshkit
             e.Id = id;
             e.Name = parts.Length > 1 && parts[1].Trim().Length > 0 ? parts[1].Trim() : id;
             e.Parameters = parts.Length > 2 ? parts[2].Trim() : "";
+            string error = AppOptions.Validate(winget ? "winget" : "choco", id, e.Parameters);
+            if (error != null) throw new InvalidDataException("Invalid arguments for " + id + ": " + error);
             e.Enabled = enabled;
             e.IsWinget = winget;
             return e;
@@ -319,6 +322,50 @@ namespace Freshkit
         }
 
         public static void RemovePackage(bool winget, string id) { RemovePackage(winget ? "winget" : "choco", id); }
+
+        public static void SetPackageParameters(string source, string id, string parameters)
+        {
+            SetPackageOptions(source, id, id, parameters);
+        }
+
+        public static void SetPackageOptions(string source, string id, string targetId, string parameters)
+        {
+            bool changedId = !string.Equals(id, targetId, StringComparison.OrdinalIgnoreCase);
+            if (changedId && (source != "winget" || !AppOptions.IsLocalizedFirefox(id) || !AppOptions.IsLocalizedFirefox(targetId)))
+                throw new InvalidDataException("Only supported Firefox language packages can be switched here.");
+            string error = AppOptions.Validate(source, targetId, parameters);
+            if (error != null) throw new InvalidDataException(error);
+            List<string> lines = LoadLines();
+            if (changedId)
+                foreach (var entry in Parse(string.Join("\r\n", lines.ToArray())).Packages)
+                    if (entry.Source == source && string.Equals(entry.Id, targetId, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("That Firefox language package is already in this session. Remove the duplicate before changing language.");
+            string section = SectionFor(source);
+            int begin = lines.FindIndex(l => l.TrimEnd() == "::BEGIN_" + section);
+            int end = lines.FindIndex(l => l.TrimEnd() == "::END_" + section);
+            var pattern = new Regex(@"^::(?:PACKAGE|DISABLED|WINGET|GITHUB)\s+" + Regex.Escape(id) + @"\s*(?:\||$)", RegexOptions.IgnoreCase);
+            if (begin >= 0 && end > begin)
+                for (int i = begin + 1; i < end; i++) if (pattern.IsMatch(lines[i]))
+                {
+                    string[] parts = lines[i].Split('|');
+                    string prefix = Regex.Match(parts[0], @"^::\w+\s+").Value;
+                    lines[i] = prefix + targetId + "|" + (parts.Length > 1 ? parts[1] : id) + "|" + (parameters ?? "").Trim();
+                    if (changedId)
+                    {
+                        string oldKey = Data.KeyFor(source, id), newKey = Data.KeyFor(source, targetId);
+                        for (int j = 0; j < lines.Count; j++)
+                            if (Regex.IsMatch(lines[j], @"^::PROFILE\s+"))
+                                lines[j] = Regex.Replace(lines[j], @"(?i)(\|\s*apps\s*=\s*)([^|]*)", delegate(Match m)
+                                {
+                                    var keys = new List<string>();
+                                    foreach (string key in m.Groups[2].Value.Split(',')) keys.Add(string.Equals(key.Trim(), oldKey, StringComparison.OrdinalIgnoreCase) ? newKey : key);
+                                    return m.Groups[1].Value + string.Join(",", keys.ToArray());
+                                });
+                    }
+                    Parse(string.Join("\r\n", lines.ToArray()));
+                    SaveLines(lines); return;
+                }
+            throw new InvalidDataException("This app is no longer in the session catalog. Reload the list and try again.");
+        }
 
         public static void RemovePackage(string source, string id)
         {
