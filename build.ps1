@@ -1,6 +1,6 @@
 ﻿# Builds dist\Freshkit.exe: one self-contained file (engine, Win11Debloat, lists, UI and icon embedded).
 # Needs only the .NET Framework 4.x that ships with Windows 10/11.
-param([string]$OutDir = '')
+param([string]$OutDir = '', [switch]$RefreshIconCache)
 $ErrorActionPreference = 'Stop'
 $src  = Join-Path $PSScriptRoot 'src'
 $out  = if ($OutDir) { $OutDir } else { Join-Path $PSScriptRoot 'dist' }
@@ -29,6 +29,7 @@ $res = @(
     "/resource:$src\Freshkit.lists.txt,Freshkit.lists.txt",
     "/resource:$src\MainWindow.xaml,MainWindow.xaml",
     "/resource:$src\app.ico,app.ico",
+    "/resource:$src\freshkit-logo.png,freshkit-logo.png",
     "/resource:$zipPath,win11debloat.zip"
 )
 Get-ChildItem "$src\payload" -File | ForEach-Object { $res += "/resource:$($_.FullName),payload/$($_.Name)" }
@@ -42,4 +43,22 @@ $sources = @(Get-ChildItem "$src\app\*.cs" | ForEach-Object { $_.FullName })
 $refs += @(& "$PSScriptRoot\tools\icon-build.ps1")
 & "$fw\csc.exe" /nologo /target:winexe /platform:anycpu /optimize+ /warn:4 /out:"$out\Freshkit.exe" /win32manifest:"$src\app.manifest" /win32icon:"$src\app.ico" $refs $res $sources
 if ($LASTEXITCODE) { throw "csc failed ($LASTEXITCODE)" }
+# Tell Explorer that this file's icon may have changed when rebuilding in place.
+# The explicit cache refresh is useful when an older icon is already cached.
+try {
+    if (-not ('FreshkitBuildShell' -as [type])) {
+        Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class FreshkitBuildShell {
+    [DllImport("shell32.dll", CharSet=CharSet.Unicode)]
+    public static extern void SHChangeNotify(int eventId, uint flags, [MarshalAs(UnmanagedType.LPWStr)] string item, IntPtr unused);
+}
+'@
+    }
+    $exePath = [IO.Path]::GetFullPath((Join-Path $out 'Freshkit.exe'))
+    if ($RefreshIconCache) { [FreshkitBuildShell]::SHChangeNotify(0x08000000, 0x1000, $null, [IntPtr]::Zero) }
+    [FreshkitBuildShell]::SHChangeNotify(0x00002000, 0x1005, $exePath, [IntPtr]::Zero)
+    [FreshkitBuildShell]::SHChangeNotify(0x00001000, 0x1005, [IO.Path]::GetDirectoryName($exePath), [IntPtr]::Zero)
+} catch { Write-Warning ('Build succeeded; Explorer notification was unavailable: ' + $_.Exception.Message) }
 Get-Item "$out\Freshkit.exe" | Select-Object Name, @{n = 'KB'; e = { [int]($_.Length / 1KB) } }
