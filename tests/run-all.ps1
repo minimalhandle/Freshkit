@@ -9,8 +9,11 @@ $total = [Diagnostics.Stopwatch]::StartNew()
 
 function Invoke-Step([string]$name, [string]$script) {
     $sw = [Diagnostics.Stopwatch]::StartNew()
-    $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script 2>&1 | Out-String
+    # In Windows PowerShell 5.1, 'Stop' would turn a child's stderr output into a terminating error and abort the run.
+    $ErrorActionPreference = 'Continue'
+    $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script 2>&1 | ForEach-Object { "$_" } | Out-String
     $ok = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = 'Stop'
     $lines = @($output.Trim() -split "`r?`n" | Where-Object { $_.Trim() })
     $last = if ($lines.Count) { $lines[-1].Trim() } else { '' }
     $results.Add([pscustomobject]@{ Test = $name; Result = $(if ($ok) { 'PASS' } else { 'FAIL' }); Seconds = [math]::Round($sw.Elapsed.TotalSeconds, 1); Summary = $last })
