@@ -13,7 +13,11 @@ function Step([string]$Name){Write-Host '';Write-Host ('==> '+$Name)}
 function Has([string]$Name){return ($job.PSObject.Properties[$Name] -and $job.$Name)}
 $code=0
 try{
-    $isAdmin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $identity=[Security.Principal.WindowsIdentity]::GetCurrent()
+    try{
+        if($job.ExpectedUserSid -ne $identity.User.Value){throw 'Run Freshkit from the same Windows account that will approve the administrator prompt. Using another account would apply user settings and installs to the wrong profile.'}
+        $isAdmin=([Security.Principal.WindowsPrincipal]$identity).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    }finally{$identity.Dispose()}
     if(-not $isAdmin){throw 'The Freshkit job must run as administrator.'}
 
     if(Has 'DriverKit'){

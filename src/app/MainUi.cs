@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -290,6 +291,7 @@ namespace Freshkit
                     work = Engine.ExtractWork();
                     File.WriteAllText(Path.Combine(work, "lists.txt"), spec.ListText, new UTF8Encoding(false));
                     var job = new Dictionary<string, object>();
+                    using (var identity = WindowsIdentity.GetCurrent()) job["ExpectedUserSid"] = identity.User.Value;
                     job["LogDir"] = Engine.LogsDir;
                     job["LogFile"] = logFile;
                     job["SelfPath"] = Engine.ExePath;

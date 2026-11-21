@@ -72,6 +72,8 @@ Native driver, Wi-Fi, tweak and update failures are checked. A failed prerequisi
 
 **Review setup** lists selected apps, tweaks and removals and lets you choose driver installation, app upgrades, an available offline kit and optional settings restore. Edit links return to your selections. Opening or closing the review never starts a job; **Start setup** begins the reviewed work.
 
+Run Freshkit from the administrator account you are setting up and approve UAC from that account. Setup stops before making changes if the prompt is approved with a different account's credentials. Freshkit may restart Windows automatically during setup. Save open work first and sign back in to the same account to continue.
+
 ## Portability and outputs
 
 Built-in apps ship with bundled 96px logos (`src/icons`, provenance in `src/icons/sources.json`); `tools/add-missing-icons.ps1` fetches logos for new catalog entries using only Windows PowerShell. App logos load in the background in search results, the installed-app scan, and app cards. Freshkit uses bundled logos for its built-in apps, then cached or installed-program icons, then Chocolatey metadata or a winget package's website icon. PNG, ICO and SVG images are supported. Downloaded icons are cached under `%LOCALAPPDATA%\Freshkit\icons` for offline reuse; unavailable icons keep the app's initial. Icon downloads never block adding an app. SVG rendering libraries and their license notices are embedded in the EXE (see `vendor/icons`).
@@ -162,7 +164,7 @@ UI checks use synthetic search completions and build job specifications without 
 ### Catalog health check
 
 ```
-powershell -ExecutionPolicy Bypass -File toolscheck-catalog.ps1
+powershell -ExecutionPolicy Bypass -File tools\check-catalog.ps1
 ```
 
 Run it before a release (needs internet; changes nothing). It reports an **error** when a Chocolatey package has no current version, a Store product or winget ID no longer exists, a GitHub entry's latest release has no usable installer, or a logo is unreadable, and a **warning** for Chocolatey packages not updated in two years (`-StaleDays`), missing logos or unrecorded logo sources. Exit code 1 means at least one error. Some stale warnings are expected (old Visual C++ runtimes are frozen; Steam updates itself).
