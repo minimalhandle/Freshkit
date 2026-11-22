@@ -11,7 +11,7 @@ $chocoExe=Join-Path $root 'bin\choco.exe'
 $wingetExe=$null;$cmd=Get-Command winget.exe -ErrorAction SilentlyContinue|Select-Object -First 1
 if($cmd){$wingetExe=$cmd.Source}elseif($env:LOCALAPPDATA -and (Test-Path (Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe'))){$wingetExe=Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe'}
 $wingetCommon=@('--silent','--source','winget','--accept-package-agreements','--accept-source-agreements','--disable-interactivity')
-function Show($lines){foreach($l in $lines){$t=([string]$l).TrimEnd();if($t.Trim() -and $t -notmatch '^[\s\-\\|/]+$' -and $t -notmatch '[▀-▟]'){Write-Host $t}}}
+function Show($lines){foreach($l in $lines){$t=([string]$l).TrimEnd();if($t.Trim() -and $t -notmatch '^[\s\-\\|/]+$' -and $t -notmatch '[\u2580-\u259F]'){Write-Host $t}}}   # block-element progress bars; keep ASCII (PS 5.1 reads BOM-less files as ANSI)
 
 $chocoIds=@($Choco -split ','|ForEach-Object {$_.Trim()}|Where-Object {$_})
 $wingetIds=@($Winget -split ','|ForEach-Object {$_.Trim()}|Where-Object {$_})

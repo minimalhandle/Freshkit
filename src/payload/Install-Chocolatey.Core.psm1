@@ -208,7 +208,7 @@ function Invoke-SetupWingetApp {
     if($App.packageParameters){$arguments+=@('--override',[string]$App.packageParameters)}
     Write-Host ('winget '+($arguments -join ' '))
     $output=@(& $winget @arguments 2>&1);$code=$LASTEXITCODE
-    foreach($line in $output){$text=([string]$line).TrimEnd();if($text.Trim() -and $text -notmatch '^[\s\-\\|/]+$' -and $text -notmatch '[▀-▟]'){Write-Host $text}}
+    foreach($line in $output){$text=([string]$line).TrimEnd();if($text.Trim() -and $text -notmatch '^[\s\-\\|/]+$' -and $text -notmatch '[\u2580-\u259F]'){Write-Host $text}}   # block-element progress bars; keep this file ASCII (PS 5.1 reads BOM-less files as ANSI)
     $notNeeded=@(-1978335189,-1978335135)   # 0x8A15002B no applicable update, 0x8A150061 already installed
     $reboot=@(3010,1641,-1978334967,-1978334966)
     if($code -ne 0 -and $code -notin $notNeeded -and $code -notin $reboot){throw ('winget '+$verb+' returned 0x{0:X8}.' -f $code)}
