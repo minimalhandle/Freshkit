@@ -323,10 +323,29 @@ namespace Freshkit
 
         // ---------------------------------------------------------------- reopen after sign-in
         const string RunOnceKey = @"Software\Microsoft\Windows\CurrentVersion\RunOnce";
+        static string ReopenCommand { get { return "\"" + ExePath + "\" --progress"; } }
         public static void SetReopenAfterRestart()
         {
-            try { using (var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RunOnceKey)) k.SetValue("Freshkit", "\"" + ExePath + "\" --progress"); }
+            try { using (var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RunOnceKey)) k.SetValue("Freshkit", ReopenCommand); }
             catch { }
+        }
+        /// Explorer runs (and deletes) RunOnce entries whenever it starts, not only at sign-in, so an Explorer
+        /// restart mid-install (tweaks do this) would use the entry up. Call while an install is tracked.
+        /// Returns true when the entry had to be put back.
+        public static bool EnsureReopenAfterRestart()
+        {
+            try
+            {
+                using (var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RunOnceKey))
+                    return RearmReopen(ReopenCommand, delegate { return k.GetValue("Freshkit") as string; }, delegate (string v) { k.SetValue("Freshkit", v); });
+            }
+            catch { return false; }
+        }
+        internal static bool RearmReopen(string command, Func<string> read, Action<string> write)
+        {
+            if (string.Equals(read(), command, StringComparison.OrdinalIgnoreCase)) return false;
+            write(command);
+            return true;
         }
         public static void ClearReopenAfterRestart()
         {

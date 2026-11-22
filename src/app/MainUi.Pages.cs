@@ -306,6 +306,7 @@ namespace Freshkit
             RunSnapshot active = Runs.ReadActive();
             JobState job = JobState.Load();
             bool tracking = job != null && job.Stage == "running";
+            if (tracking && Engine.EnsureReopenAfterRestart()) Log("Re-armed reopen after restart (Windows had used up the entry, for example when Explorer restarted).");
 
             // Finish a tracked install once the engine has written its final report.
             if (active == null && tracking && !jobRunning && !restoreRunning && !running && !job.WorkerAlive)

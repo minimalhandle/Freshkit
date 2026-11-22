@@ -61,6 +61,15 @@ namespace Freshkit
                 stages.Find(s => s.Id == "Apps").Status = "Done";
                 retry = SetupProgress.Retry(recipe, stages, null);
                 Check(retry.Action == null && retry.DebloatArgs != null, "Retry avoids repeating successful app and driver stages");
+
+                // Reopen-after-restart: an Explorer restart runs and deletes RunOnce entries mid-install.
+                string reopen = "\"C:\\Kit\\Freshkit.exe\" --progress", stored = null; int writes = 0;
+                Func<string> read = delegate { return stored; };
+                Action<string> write = delegate (string v) { stored = v; writes++; };
+                Check(Engine.RearmReopen(reopen, read, write) && stored == reopen, "A used-up reopen entry is put back during an install");
+                Check(!Engine.RearmReopen(reopen, read, write) && writes == 1, "An intact reopen entry is left alone");
+                stored = "\"E:\\Old\\Freshkit.exe\" --progress";
+                Check(Engine.RearmReopen(reopen, read, write) && stored == reopen, "A reopen entry for another EXE location is replaced");
                 stages.Find(s => s.Id == "Apps").Status = "Failed";
                 recipe.Apps = "steam";
                 var unrelated = new RunSnapshot { RunId = "old" };

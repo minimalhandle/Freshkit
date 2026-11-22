@@ -72,7 +72,7 @@ Native driver, Wi-Fi, tweak and update failures are checked. A failed prerequisi
 
 **Review setup** lists selected apps, tweaks and removals and lets you choose driver installation, app upgrades, an available offline kit and optional settings restore. Edit links return to your selections. Opening or closing the review never starts a job; **Start setup** begins the reviewed work.
 
-Run Freshkit from the administrator account you are setting up and approve UAC from that account. Setup stops before making changes if the prompt is approved with a different account's credentials. Freshkit may restart Windows automatically during setup. Save open work first and sign back in to the same account to continue.
+Run Freshkit from the administrator account you are setting up and approve UAC from that account. Setup stops before making changes if the prompt is approved with a different account's credentials. Freshkit may restart Windows automatically during setup. Save open work first and sign back in to the same account to continue. After any restart during setup, including a crash or power cut, Freshkit reopens on Progress when you sign in, then finishes the install and restores your app settings. The EXE must still be at the same path (for a USB drive, plug it back in before signing in).
 
 ## Portability and outputs
 
