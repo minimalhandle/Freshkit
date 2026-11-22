@@ -347,7 +347,8 @@ function Invoke-SetupGitHubApp {
     param($App)
     $repo=[string]$App.githubRepo;$upgrade=($App.PSObject.Properties['upgrade'] -and $App.upgrade)
     $before=Test-SetupGitHubInstalled -Name $App.name -Repo $repo
-    if($upgrade -and -not $before.Installed){throw ('Repository identity is not confirmed for '+$App.name+'; link the installed app in Freshkit before updating.')}
+    # Upgrade mode refuses only an unconfirmed lookalike (a name-only match); an app with no match at all is installed.
+    if($upgrade -and -not $before.Installed -and $before.Possible){throw ('Repository identity is not confirmed for '+$App.name+'; link the installed app in Freshkit before updating.')}
     if($before.Installed -and -not $upgrade){return [pscustomobject]@{Status='PackageInstalled';ExitCode=0;Version=$before.Version;Detail='Already installed; not reinstalled.'}}
     $release=Get-SetupGitHubRelease $repo
     $tag=([string]$release.tag_name) -replace '^[vV]',''
