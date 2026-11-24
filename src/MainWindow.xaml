@@ -1184,6 +1184,40 @@
               </StackPanel>
             </Border>
           </Grid>
+          <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,8,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE823;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Daily backup"/>
+                <TextBlock x:Name="DailyBackupStatus" Style="{StaticResource CardText}" Text="Off"/>
+                <Grid Margin="0,0,0,12">
+                  <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <TextBox x:Name="DailyBackupFolder" Style="{StaticResource Input}" Tag="Backup folder"/>
+                  <Button x:Name="BtnDailyBackupBrowse" Grid.Column="1" Style="{StaticResource Secondary}" Content="Browse" Margin="8,0,0,0" Padding="12,7"/>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                  <ComboBox x:Name="DailyBackupTime" Width="100" Margin="0,0,10,0" ToolTip="Time of day"/>
+                  <ComboBox x:Name="DailyBackupKeep" Width="140" ToolTip="Automatic backups to keep"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnDailyBackupOn" Style="{StaticResource Primary}" Content="Turn on" Margin="0,0,10,0"/>
+                  <Button x:Name="BtnDailyBackupOff" Style="{StaticResource Secondary}" Content="Turn off"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}" Margin="8,0,0,0">
+              <StackPanel>
+                <Border Style="{StaticResource IconBadge}"><TextBlock Style="{StaticResource BadgeGlyph}" Text="&#xE777;"/></Border>
+                <TextBlock Style="{StaticResource CardTitle}" Text="Reinstalling Windows?"/>
+                <TextBlock Style="{StaticResource CardText}" Text="Prepare for reinstall saves your recipe (apps, tweaks and backup choices), a settings backup and your Steam library locations to one folder. Drivers aren't copied. After reinstalling, restore from that folder to set everything up again."/>
+                <StackPanel Orientation="Horizontal">
+                  <Button x:Name="BtnPrepareReinstall" Style="{StaticResource Primary}" Content="Prepare for reinstall..." Margin="0,0,10,0"/>
+                  <Button x:Name="BtnRestoreReinstall" Style="{StaticResource Secondary}" Content="Restore from folder..."/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </Grid>
         </StackPanel>
       </ScrollViewer>
 

@@ -50,6 +50,7 @@ namespace Freshkit
         {
             if (running) throw new InvalidOperationException("Wait for the current job to finish before importing a recipe.");
             ValidateRecipe(recipe);
+            pendingSteamLibraries = null; // a reinstall folder sets these again after applying its recipe
             var backupSelections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var p in settingsProfiles) if (p.IsSelected) backupSelections.Add(p.Id);
             Engine.SessionList = recipe.ListText;
@@ -91,10 +92,13 @@ namespace Freshkit
             catch (Exception ex) { Info("Couldn't import recipe", ex.Message); }
         }
 
-        void PreviewRecipe(SetupRecipe recipe)
+        void PreviewRecipe(SetupRecipe recipe) { PreviewRecipeWith(recipe, null, null, null); }
+
+        void PreviewRecipeWith(SetupRecipe recipe, string title, string extra, Action applied)
         {
                 ValidateRecipe(recipe);
                 var preview = new StringBuilder();
+                if (!string.IsNullOrEmpty(extra)) preview.AppendLine(extra).AppendLine();
                 var selected = new HashSet<string>(recipe.Apps, StringComparer.OrdinalIgnoreCase);
                 foreach (var p in ListFile.Parse(recipe.ListText).Packages)
                 {
@@ -109,9 +113,9 @@ namespace Freshkit
                     preview.AppendLine("Restore point: " + recipe.RestorePoint + "; force Edge removal: " + recipe.ForceEdge);
                 }
                 var details = new TextBox { Text = preview.ToString(), IsReadOnly = true, TextWrapping = System.Windows.TextWrapping.Wrap, VerticalContentAlignment = System.Windows.VerticalAlignment.Top, Height = 180, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new System.Windows.Thickness(0, 10, 0, 0), Style = StyleOf("Input") };
-                Confirm("Import setup recipe?", recipe.Apps.Count + " selected app" + (recipe.Apps.Count == 1 ? ". " : "s. ") + (recipe.HasWindowsSelections ? "Replaces this session's list, app selection, Windows tweaks, removals and backup selections." : "Imports app selections from winget's built-in sources; version pins are ignored and the current release will be used. Windows and backup selections stay as they are.") + " Review the source IDs and installer arguments below. Apply changes the selections; Review setup starts installation.", "Apply to session", delegate
+                Confirm(title ?? "Import setup recipe?", recipe.Apps.Count + " selected app" + (recipe.Apps.Count == 1 ? ". " : "s. ") + (recipe.HasWindowsSelections ? "Replaces this session's list, app selection, Windows tweaks, removals and backup selections." : "Imports app selections from winget's built-in sources; version pins are ignored and the current release will be used. Windows and backup selections stay as they are.") + " Review the source IDs and installer arguments below. Apply changes the selections; Review setup starts installation.", "Apply to session", delegate
                 {
-                    try { ApplyRecipe(recipe); } catch (Exception ex) { Info("Couldn't apply recipe", ex.Message); }
+                    try { ApplyRecipe(recipe); if (applied != null) applied(); } catch (Exception ex) { Info("Couldn't apply recipe", ex.Message); }
                 }, details);
         }
     }

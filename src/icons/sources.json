@@ -670,5 +670,45 @@
     {
         "package":  "winget-zoom.zoom",
         "url":  "https://cdn.statically.io/gh/mikecole/chocolatey-packages/master/icons/zoom.png"
+    },
+    {
+        "package":  "winget-elgato.4kcaptureutility",
+        "url":  "https://www.elgato.com/favicon.ico"
+    },
+    {
+        "package":  "winget-elgato.streamdeck",
+        "url":  "https://www.elgato.com/favicon.ico"
+    },
+    {
+        "package":  "winget-elgato.studio",
+        "url":  "https://www.elgato.com/favicon.ico"
+    },
+    {
+        "package":  "winget-guru3d.afterburner",
+        "url":  "https://www.msi.com/favicon.ico"
+    },
+    {
+        "package":  "winget-guru3d.rtss",
+        "url":  "https://www.guru3d.com/favicon.ico"
+    },
+    {
+        "package":  "winget-microsoft.office",
+        "url":  "https://raw.githubusercontent.com/jordigg/chocolatey-officebusiness/master/icons/Windows365.png"
+    },
+    {
+        "package":  "winget-microsoft.windowsterminal",
+        "url":  "https://cdn.jsdelivr.net/gh/mkevenaar/chocolatey-packages@7d924f094e0faea8c264d6b973e7388c5f3a9ac8/icons/microsoft-windows-terminal.png"
+    },
+    {
+        "package":  "winget-mtkennerly.ludusavi",
+        "url":  "https://cdn.statically.io/gh/mtkennerly/ludusavi/23ab8165/assets/icon.svg"
+    },
+    {
+        "package":  "winget-rustlang.rustup",
+        "url":  "https://www.rust-lang.org/logos/rust-logo-512x512.png"
+    },
+    {
+        "package":  "winget-vb-audio.voicemeeter.potato",
+        "url":  "https://vb-audio.com/favicon.ico"
     }
 ]

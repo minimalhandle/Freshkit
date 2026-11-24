@@ -690,6 +690,7 @@ namespace Freshkit
             Act("BtnRestore", delegate { Restore("Restore"); });
             Act("BtnRestorePlan", delegate { Restore("RestorePlan"); });
             Act("BtnInspect", delegate { Restore("Inspect"); });
+            InitReinstallAndDailyBackup();
         }
 
         string SelectedSettingsProfiles()

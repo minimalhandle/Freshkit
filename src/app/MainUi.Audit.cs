@@ -108,6 +108,7 @@ namespace Freshkit
         void StartPostSetupVerification(SetupRecord record)
         {
             if (record == null) return;
+            ApplyPendingSteamLibraries(record);
             var job = record.VerificationJob ?? record.Recipe;
             if (job == null || string.IsNullOrEmpty(job.ListText) || (job.Action != "Install" && job.Action != "Drivers" && string.IsNullOrEmpty(job.DriverKit) && (job.DebloatArgs == null || job.DebloatArgs.Count == 0))) return;
             var target = AuditTarget.FromJob(job);

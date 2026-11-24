@@ -214,6 +214,7 @@ namespace Freshkit
                 spec.Action = "Install"; spec.Apps = selection; spec.TrackAsInstall = true;
                 spec.SkipDrivers = Get<CheckBox>("ReviewDrivers").IsChecked != true;
                 spec.Upgrade = Get<CheckBox>("ReviewUpgrade").IsChecked == true;
+                if (pendingSteamLibraries != null && pendingSteamLibraries.Count > 0) spec.SteamLibraries = new List<string>(pendingSteamLibraries);
                 if (Get<CheckBox>("ReviewRestore").IsChecked == true)
                 {
                     string zip = Get<CheckBox>("ReviewRestore").Tag as string;

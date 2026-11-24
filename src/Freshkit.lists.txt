@@ -159,6 +159,9 @@
 ::WINGET VideoLAN.VLC|VLC media player|
 ::WINGET Audacity.Audacity|Audacity|
 ::WINGET Stremio.Stremio|Stremio|
+::DISABLED VB-Audio.Voicemeeter.Potato|Voicemeeter Potato|
+::DISABLED Elgato.Studio|Elgato Studio|
+::DISABLED Elgato.4KCaptureUtility|Elgato 4K Capture Utility|
 ::DISABLED HandBrake.HandBrake|HandBrake|
 ::DISABLED PeterPawlowski.foobar2000|foobar2000|
 ::DISABLED Winamp.Winamp|Winamp|
@@ -182,10 +185,15 @@
 ::DISABLED TheDocumentFoundation.LibreOffice|LibreOffice|
 ::DISABLED geeksoftwareGmbH.PDF24Creator|PDF24 Creator|
 ::DISABLED Evernote.Evernote|Evernote|
+::DISABLED Microsoft.Office|Microsoft 365 Apps|
 ::GROUP Gaming & devices
 ::WINGET Valve.Steam|Steam|
 ::WINGET EpicGames.EpicGamesLauncher|Epic Games Launcher|
 ::WINGET RockstarGames.Launcher|Rockstar Games Launcher|
+::DISABLED Elgato.StreamDeck|Elgato Stream Deck|
+::DISABLED Guru3D.Afterburner|MSI Afterburner|
+::DISABLED Guru3D.RTSS|RivaTuner Statistics Server|
+::DISABLED mtkennerly.ludusavi|Ludusavi|
 ::GROUP Security
 ::WINGET AgileBits.1Password|1Password|
 ::DISABLED Bitwarden.Bitwarden|Bitwarden|
@@ -228,6 +236,8 @@
 ::DISABLED Python.Python.2|Python 2.7 (legacy)|
 ::DISABLED Docker.DockerDesktop|Docker Desktop|
 ::DISABLED WinMerge.WinMerge|WinMerge|
+::DISABLED Microsoft.WindowsTerminal|Windows Terminal|
+::DISABLED Rustlang.Rustup|Rustup|
 ::END_WINGET
 ::BEGIN_GITHUB
 :: GitHub releases: ::GITHUB owner/repo|Display name|Optional silent installer arguments (::DISABLED = unticked).

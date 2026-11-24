@@ -319,6 +319,114 @@
                                    ],
                          "exclude":  ["*.log", "*.tmp", "cache", "shader-cache", "watch_later"],
                          "evidence":  "https://mpv.io/manual/stable/#files-on-windows"
+                     },
+                     {
+                         "id":  "firefox",
+                         "name":  "Firefox (bookmarks, history, extensions; no passwords or cookies)",
+                         "packageId":  "firefox",
+                         "versionPattern":  "^Mozilla Firefox",
+                         "processes":  ["firefox"],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Mozilla\\Firefox"
+                                       }
+                                   ],
+                         "exclude":  ["logins.json", "logins-backup.json", "key4.db", "cookies.sqlite*", "parent.lock", "lock", "cache2", "startupCache", "shader-cache", "crashes", "minidumps", "Crash Reports", "Pending Pings", "datareporting", "saved-telemetry-pings", "gmp-widevinecdm", "gmp-gmpopenh264", "security_state", "suggest.sqlite*", "Profiles/*/storage/temporary", "*.log", "*.tmp"],
+                         "evidence":  "https://support.mozilla.org/kb/profiles-where-firefox-stores-user-data and https://support.mozilla.org/kb/back-and-restore-information-firefox-profiles. profiles.ini/installs.ini are kept so the restored profile stays the default. Saved passwords (logins.json/key4.db) and cookies are excluded; Firefox Sync covers those."
+                     },
+                     {
+                         "id":  "streamdeck",
+                         "name":  "Elgato Stream Deck (profiles, plugins, icon packs)",
+                         "packageId":  "streamdeck",
+                         "versionPattern":  "^Elgato Stream Deck",
+                         "processes":  ["StreamDeck"],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Elgato\\StreamDeck\\ProfilesV3"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Elgato\\StreamDeck\\Plugins"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Elgato\\StreamDeck\\IconPacks"
+                                       }
+                                   ],
+                         "exclude":  ["logs", "*.log", "*.tmp", "Sentry"],
+                         "evidence":  "Observed: Stream Deck 7 keeps button profiles in %APPDATA%\\Elgato\\StreamDeck\\ProfilesV3 and installed plugins/icon packs beside them. BackupV3 (its own automatic backups), logs and the embedded browser cache are left out."
+                     },
+                     {
+                         "id":  "voicemeeter",
+                         "name":  "Voicemeeter (mixer settings)",
+                         "packageId":  "voicemeeter",
+                         "versionPattern":  "^Voicemeeter",
+                         "processes":  [],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "VoiceMeeterPotatoDefault.xml"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "VoiceMeeterBananaDefault.xml"
+                                       },
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "VoiceMeeterDefault.xml"
+                                       }
+                                   ],
+                         "exclude":  [],
+                         "evidence":  "Observed: Voicemeeter saves its current configuration to %APPDATA%\\VoiceMeeter<Edition>Default.xml when it closes and loads it at start. No process check: Voicemeeter normally runs all the time, so backups take the last saved file. Restore before Voicemeeter first starts (as setup does), otherwise it overwrites the file when it closes."
+                     },
+                     {
+                         "id":  "playnite",
+                         "name":  "Playnite (configuration and game library)",
+                         "packageId":  "playnite",
+                         "versionPattern":  "^Playnite",
+                         "processes":  ["Playnite.DesktopApp", "Playnite.FullscreenApp"],
+                         "rules":  [
+                                       {
+                                           "root":  "APPDATA",
+                                           "path":  "Playnite"
+                                       }
+                                   ],
+                         "exclude":  ["browsercache", "cache", "JITProfiles", "Backup", "*.log", "*.tmp", "*.dmp"],
+                         "evidence":  "https://api.playnite.link/docs/manual/library/libraryBackup.html - installed Playnite stores config.json, library\\ and extensions data in %APPDATA%\\Playnite. Its own backup ZIPs and browser cache are left out."
+                     },
+                     {
+                         "id":  "elgato-studio",
+                         "name":  "Elgato Studio (capture card settings)",
+                         "packageId":  "elgato-studio",
+                         "versionPattern":  "^Elgato Studio",
+                         "appxName":  "Elgato.Studio",
+                         "processes":  ["Elgato.Studio"],
+                         "rules":  [
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "Packages\\Elgato.Studio_g54w8ztgkx496\\LocalState"
+                                       }
+                                   ],
+                         "exclude":  ["Logs", "DataMasterPendingEvents.json", "ws-info.json", "*.log", "*.tmp"],
+                         "evidence":  "Observed: Elgato Studio (Store package Elgato.Studio_g54w8ztgkx496) keeps Settings.json, EGAVDSSettings.json and EDID data in its LocalState folder. Logs and pending analytics events are left out."
+                     },
+                     {
+                         "id":  "windows-terminal",
+                         "name":  "Windows Terminal settings",
+                         "packageId":  "windows-terminal",
+                         "versionPattern":  "^Windows Terminal",
+                         "appxName":  "Microsoft.WindowsTerminal",
+                         "processes":  ["WindowsTerminal"],
+                         "rules":  [
+                                       {
+                                           "root":  "LOCALAPPDATA",
+                                           "path":  "Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json"
+                                       }
+                                   ],
+                         "exclude":  [],
+                         "evidence":  "https://learn.microsoft.com/windows/terminal/install#settings-json-file"
                      }
                  ]
 }

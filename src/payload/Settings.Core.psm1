@@ -43,6 +43,7 @@ function Get-SettingsProfiles {
             if($rules.ContainsKey($key)){throw 'Duplicate settings rule.'};$rules[$key]=$true
         }
         if(-not $profile.rules.Count){throw 'Settings profile has no rules.'}
+        if($profile.PSObject.Properties['appxName'] -and [string]$profile.appxName -notmatch '\A[A-Za-z0-9][A-Za-z0-9.-]{0,99}\z'){throw 'Invalid Store package name in settings profile.'}
     }
     foreach($id in $Ids){if(-not $seen.ContainsKey($id)){throw "No settings profile: $id"}}
     foreach($profile in $data.profiles){if(-not $Ids.Count -or $profile.id -in $Ids){$profile}}
@@ -88,6 +89,11 @@ function Get-SettingsInstalledState {
                 $record.Installed=$true
                 try {$xml=[xml]::new();$xml.XmlResolver=$null;$xml.LoadXml([IO.File]::ReadAllText($nuspec));$record.Version=$xml.SelectSingleNode('//*[local-name()="metadata"]/*[local-name()="version"]').InnerText}catch{}
             }
+        }
+        # Store/MSIX apps have no uninstall entry; match their package name instead.
+        if(-not $record.Installed -and $profile.PSObject.Properties['appxName'] -and $profile.appxName){
+            try{$appx=@(Get-AppxPackage -Name ([string]$profile.appxName) -ErrorAction Stop)|Select-Object -First 1}catch{$appx=$null}
+            if($appx){$record.Installed=$true;$record.Version=[string]$appx.Version}
         }
         $state[$profile.id]=$record
     }
@@ -349,4 +355,11 @@ function Restore-SettingsBackup {
     }finally{$inputStream.Dispose()}
     return [pscustomobject]@{SafetyArchive=$safety.Archive;Results=@($rows.ToArray())}
 }
-Export-ModuleMember -Function Get-SettingsRoots,Get-SettingsProfiles,Get-SettingsInstalledState,New-SettingsBackup,Read-SettingsArchive,Restore-SettingsBackup
+function Remove-SettingsOldAutoBackups {
+    # Daily backups: keep the newest $Keep automatic ZIPs. Only settings-backup-auto-YYYYMMDD-HHMMSS.zip files are touched.
+    param([string]$Folder,[int]$Keep)
+    if($Keep -lt 1){throw 'Keep at least one automatic backup.'}
+    $old=@(Get-ChildItem -LiteralPath $Folder -File -Filter 'settings-backup-auto-*.zip'|Where-Object {$_.Name -match '\Asettings-backup-auto-\d{8}-\d{6}\.zip\z'}|Sort-Object Name -Descending|Select-Object -Skip $Keep)
+    foreach($file in $old){Remove-Item -LiteralPath $file.FullName -Force;$file.Name}
+}
+Export-ModuleMember -Function Get-SettingsRoots,Get-SettingsProfiles,Get-SettingsInstalledState,New-SettingsBackup,Read-SettingsArchive,Restore-SettingsBackup,Remove-SettingsOldAutoBackups

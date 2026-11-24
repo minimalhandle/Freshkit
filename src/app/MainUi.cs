@@ -32,6 +32,7 @@ namespace Freshkit
         public bool AllowMismatch;
         public string ListText;
         public List<string> RestoreProfiles;
+        public List<string> SteamLibraries; // from a reinstall folder; added to Steam after setup
     }
 
     internal sealed partial class MainUi

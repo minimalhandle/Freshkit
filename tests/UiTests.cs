@@ -449,6 +449,9 @@ namespace Freshkit
                     var progressRoot = (FrameworkElement)ui.Window.Content; var viewVerification = Get<Button>(ui, "BtnViewVerification"); var verificationOrigin = viewVerification.TranslatePoint(new Point(), progressRoot);
                     Check(verificationOrigin.Y >= 0 && verificationOrigin.Y + viewVerification.ActualHeight <= 641, "Completed setup keeps verification results accessible at minimum size");
                     SetField(ui, "sessionSetup", null);
+                    foreach (string page in Field<string[]>(ui, "pages")) Get<FrameworkElement>(ui, page).Visibility = page == "PageSettings" ? Visibility.Visible : Visibility.Collapsed;
+                    Render(ui, "settings-small", 1064, 641); Render(ui, "settings", 1264, 801);
+                    Check(Get<Button>(ui, "BtnPrepareReinstall") != null && Get<Button>(ui, "BtnRestoreReinstall") != null && Get<Button>(ui, "BtnDailyBackupOn") != null && Get<TextBox>(ui, "DailyBackupFolder") != null, "Settings backup page offers daily backups and the reinstall folder");
                     var manyDevices = PreviewFixture();
                     for (int i = 0; i < 30; i++) manyDevices.Rows.Add(new DriverPreviewRow { Hardware = "AMD PCI device " + i, DeviceId = "PCI fixture chipset " + i, Kind = "Chipset", PackageId = "amd-chipset-drivers", PackageName = "AMD Chipset Drivers", Compatibility = "Candidate", Reason = "Detected AMD system devices; review manufacturer compatibility.", InstalledDriverVersion = "1.0." + i, AvailablePackageVersion = "7.1", MetadataStatus = "Available", SupportUrl = "https://www.amd.com/en/support/download/drivers.html" });
                     SetField(ui, "driverPreview", manyDevices);

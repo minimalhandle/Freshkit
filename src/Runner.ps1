@@ -17,11 +17,13 @@ param(
     [string]$EngineDir='',         # folder holding the engine payload
     [switch]$Ui,                   # Freshkit in-app install (no extra console windows)
     [string]$LogDir='',            # transcript folder for Freshkit's live log
-    [switch]$SkipDrivers           # install apps without the driver stage
+    [switch]$SkipDrivers,          # install apps without the driver stage
+    [string]$Time='',              # ScheduleBackup: daily time (HH:mm)
+    [int]$Keep=0                   # ScheduleBackup: automatic backups to keep
 )
 $ErrorActionPreference='Stop'
 if($Capture){try{[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)}catch{}}
-$valid=@('Home','Menu','Plan','List','Install','Bootstrap','Drivers','DriverPlan','Resume','CancelResume','Backup','Restore','Inspect','SettingsList','BackupPlan','RestorePlan')
+$valid=@('Home','Menu','Plan','List','Install','Bootstrap','Drivers','DriverPlan','Resume','CancelResume','Backup','Restore','Inspect','SettingsList','BackupPlan','RestorePlan','ScheduleBackup','UnscheduleBackup')
 $match=@($valid|Where-Object {$_ -ieq $Action})
 if(-not $match.Count){throw ('Unknown action "'+$Action+'". Use one of: '+($valid -join ', ')+'.')}
 $action=$match[0]
@@ -146,9 +148,9 @@ try {
     $null=@(Get-SettingsProfiles $profilePath)
 
     function Invoke-EngineAction([string]$Selected){
-        $settings=($Selected -in @('Backup','Restore','Inspect','SettingsList','BackupPlan','RestorePlan'))
+        $settings=($Selected -in @('Backup','Restore','Inspect','SettingsList','BackupPlan','RestorePlan','ScheduleBackup','UnscheduleBackup'))
         $scriptName='Start-Setup.ps1';$childAction=$Selected
-        if($settings){$scriptName='Settings.ps1';$childAction=$Selected -replace 'Plan$','';if($Selected -eq 'SettingsList'){$childAction='List'}}
+        if($settings){$scriptName='Settings.ps1';$childAction=$Selected -replace 'Plan$','';if($Selected -eq 'SettingsList'){$childAction='List'};if($Selected -eq 'ScheduleBackup'){$childAction='Schedule'};if($Selected -eq 'UnscheduleBackup'){$childAction='Unschedule'}}
         $params=@{Action=$childAction}
         if($Selected -in @('Install','Menu','Plan','List')){if($selectedIds.Count){$params.Apps=$selectedIds}elseif($Selected -eq 'Install'){$params.All=$true}}
         if($Selected -in @('Resume','CancelResume') -and $RunId){$params.RunId=$RunId}
@@ -158,6 +160,7 @@ try {
             if($Profiles -eq 'ALL'){$params.All=$true}elseif($Profiles){$params.Apps=@($Profiles -split ','|ForEach-Object {$_.Trim()}|Where-Object {$_})}
             if($Selected -in @('BackupPlan','RestorePlan')){$params.WhatIf=$true}
             if($AllowVersionMismatch -and $childAction -eq 'Restore'){$params.AllowVersionMismatch=$true}
+            if($childAction -eq 'Schedule'){if($Time){$params.Time=$Time};if($Keep -gt 0){$params.Keep=$Keep}}
         }
         $global:LASTEXITCODE=0
         $script=Join-Path $runRoot $scriptName

@@ -259,6 +259,11 @@ namespace Freshkit
             var compare = new MenuItem { Header = "Compare recipe with this PC…", IsEnabled = !running };
             compare.Click += delegate { CompareRecipeFile(); }; menu.Items.Add(compare);
             menu.Items.Add(new Separator { Background = (Brush)Window.FindResource("Line"), Margin = new Thickness(6, 4, 6, 4) });
+            var prepare = new MenuItem { Header = "Prepare for reinstall…", IsEnabled = !running };
+            prepare.Click += delegate { PrepareForReinstall(); }; menu.Items.Add(prepare);
+            var restore = new MenuItem { Header = "Restore from reinstall folder…", IsEnabled = !running };
+            restore.Click += delegate { RestoreFromReinstallFolder(); }; menu.Items.Add(restore);
+            menu.Items.Add(new Separator { Background = (Brush)Window.FindResource("Line"), Margin = new Thickness(6, 4, 6, 4) });
             add("Select every app shown", "BtnAll");
             add("Edit list...", "BtnEditList");
             add("Reset to built-in defaults", "BtnReload");
