@@ -180,7 +180,7 @@
         "url":  "https://raw.githubusercontent.com/chocolatey/chocolatey-coreteampackages/938aeca0853717399b72289f38b9dddad0417640/icons/filezilla.svg"
     },
     {
-        "package":  "winget-mozilla.firefox.en-gb",
+        "package":  "winget-mozilla.firefox",
         "url":  "https://cdn.jsdelivr.net/gh/chocolatey-community/chocolatey-packages@8a7376cf4e5b7cde0eb1c6a608529601bfcd9546/icons/firefox.svg"
     },
     {

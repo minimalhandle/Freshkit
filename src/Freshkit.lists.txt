@@ -4,15 +4,15 @@
 :: Listed but unticked: ::DISABLED package-id|Display name|Optional package parameters
 :: ::GROUP lines name the Apps page section for the packages below them.
 ::GROUP Browsers
-::DISABLED googlechrome|Google Chrome|
+::PACKAGE googlechrome|Google Chrome|
 ::DISABLED microsoft-edge|Microsoft Edge|
 ::DISABLED brave|Brave|
 ::GROUP Media
 ::PACKAGE spotify|Spotify|
-::PACKAGE mpvio.install|mpv|
-::PACKAGE obs-studio|OBS Studio|
-::PACKAGE streamlink|Streamlink|
-::PACKAGE streamlink-twitch-gui|Streamlink Twitch GUI|
+::DISABLED mpvio.install|mpv|
+::DISABLED obs-studio|OBS Studio|
+::DISABLED streamlink|Streamlink|
+::DISABLED streamlink-twitch-gui|Streamlink Twitch GUI|
 ::DISABLED musicbee|MusicBee|
 ::DISABLED aimp|AIMP|
 ::DISABLED mediamonkey|MediaMonkey|
@@ -21,7 +21,7 @@
 ::GROUP Imaging & 3D
 ::DISABLED xnview|XnView|
 ::GROUP Documents & AI
-::PACKAGE claude|Claude|
+::DISABLED claude|Claude|
 ::DISABLED openoffice|Apache OpenOffice|
 ::DISABLED cutepdf|CutePDF Writer|
 ::DISABLED ghostscript|Ghostscript|
@@ -29,10 +29,10 @@
 ::DISABLED googleearthpro|Google Earth Pro|
 ::DISABLED nvda|NVDA screen reader|
 ::GROUP Gaming & devices
-::PACKAGE playnite|Playnite|
-::PACKAGE lghub|Logitech G HUB|
-::PACKAGE openrgb.install|OpenRGB|
-::PACKAGE pawnio|PawnIO|
+::DISABLED playnite|Playnite|
+::DISABLED lghub|Logitech G HUB|
+::DISABLED openrgb.install|OpenRGB|
+::DISABLED pawnio|PawnIO|
 ::GROUP Security
 ::DISABLED keepass|KeePass 2|
 ::DISABLED malwarebytes|Malwarebytes|
@@ -42,7 +42,7 @@
 ::DISABLED spybot|Spybot Search & Destroy|
 ::DISABLED superantispyware|SUPERAntiSpyware|
 ::GROUP Cloud & downloads
-::PACKAGE transmission|Transmission|
+::DISABLED transmission|Transmission|
 ::DISABLED dropbox|Dropbox|
 ::DISABLED onedrive|Microsoft OneDrive|
 ::GROUP Remote & network
@@ -50,13 +50,13 @@
 ::DISABLED tightvnc|TightVNC|
 ::DISABLED ultravnc|UltraVNC|
 ::GROUP Utilities
-::PACKAGE rpi-imager|Raspberry Pi Imager|
+::DISABLED rpi-imager|Raspberry Pi Imager|
 ::DISABLED peazip|PeaZip|
 ::DISABLED cdburnerxp|CDBurnerXP|
 ::GROUP Developer
-::PACKAGE git.install|Git for Windows|
-::PACKAGE nodejs.install|Node.js Current|
-::PACKAGE innosetup|Inno Setup|
+::DISABLED git.install|Git for Windows|
+::DISABLED nodejs.install|Node.js Current|
+::DISABLED innosetup|Inno Setup|
 ::DISABLED cursoride|Cursor|
 ::DISABLED nodejs-lts|Node.js LTS|
 ::DISABLED python3|Python 3|
@@ -141,14 +141,14 @@
 ::GROUP Utilities
 ::DISABLED CodeJelly.Launchy|Launchy|
 ::GROUP Browsers
-::WINGET Mozilla.Firefox.en-GB|Mozilla Firefox|
+::WINGET Mozilla.Firefox|Mozilla Firefox|
 ::DISABLED Vivaldi.Vivaldi|Vivaldi|
 ::DISABLED Opera.Opera|Opera|
 ::GROUP Messaging
 ::WINGET Discord.Discord|Discord|
-::WINGET ChatterinoTeam.Chatterino|Chatterino|
-::WINGET Tutanota.Tutanota|Tuta Mail|
-::DISABLED Zoom.Zoom|Zoom|
+::DISABLED ChatterinoTeam.Chatterino|Chatterino|
+::DISABLED Tutanota.Tutanota|Tuta Mail|
+::WINGET Zoom.Zoom|Zoom|
 ::DISABLED Microsoft.Teams|Microsoft Teams|
 ::DISABLED SlackTechnologies.Slack|Slack|
 ::DISABLED Telegram.TelegramDesktop|Telegram|
@@ -157,8 +157,8 @@
 ::DISABLED CeruleanStudios.Trillian|Trillian|
 ::GROUP Media
 ::WINGET VideoLAN.VLC|VLC media player|
-::WINGET Audacity.Audacity|Audacity|
-::WINGET Stremio.Stremio|Stremio|
+::DISABLED Audacity.Audacity|Audacity|
+::DISABLED Stremio.Stremio|Stremio|
 ::DISABLED VB-Audio.Voicemeeter.Potato|Voicemeeter Potato|
 ::DISABLED Elgato.Studio|Elgato Studio|
 ::DISABLED Elgato.4KCaptureUtility|Elgato 4K Capture Utility|
@@ -167,7 +167,7 @@
 ::DISABLED Winamp.Winamp|Winamp|
 ::DISABLED Apple.iTunes|iTunes|
 ::GROUP Imaging & 3D
-::WINGET Greenshot.Greenshot|Greenshot|
+::DISABLED Greenshot.Greenshot|Greenshot|
 ::DISABLED ShareX.ShareX|ShareX|
 ::DISABLED dotPDN.PaintDotNet|Paint.NET|
 ::DISABLED GIMP.GIMP.3|GIMP|
@@ -188,23 +188,24 @@
 ::DISABLED Microsoft.Office|Microsoft 365 Apps|
 ::GROUP Gaming & devices
 ::WINGET Valve.Steam|Steam|
-::WINGET EpicGames.EpicGamesLauncher|Epic Games Launcher|
-::WINGET RockstarGames.Launcher|Rockstar Games Launcher|
+::DISABLED EpicGames.EpicGamesLauncher|Epic Games Launcher|
+::DISABLED RockstarGames.Launcher|Rockstar Games Launcher|
 ::DISABLED Elgato.StreamDeck|Elgato Stream Deck|
+:: MSI Afterburner comes from Guru3D's official build (no bundled Norton offer); MSI's website installer adds one.
 ::DISABLED Guru3D.Afterburner|MSI Afterburner|
 ::DISABLED Guru3D.RTSS|RivaTuner Statistics Server|
 ::DISABLED mtkennerly.ludusavi|Ludusavi|
 ::GROUP Security
-::WINGET AgileBits.1Password|1Password|
+::DISABLED AgileBits.1Password|1Password|
 ::DISABLED Bitwarden.Bitwarden|Bitwarden|
 ::DISABLED KeePassXCTeam.KeePassXC|KeePassXC|
 ::GROUP Cloud & downloads
-::WINGET amir1376.ABDownloadManager|AB Download Manager|
+::DISABLED amir1376.ABDownloadManager|AB Download Manager|
 ::DISABLED qBittorrent.qBittorrent|qBittorrent|
 ::DISABLED Google.GoogleDrive|Google Drive|
 ::DISABLED IPVanish.SugarSync|SugarSync|
 ::GROUP Remote & network
-::WINGET Windscribe.Windscribe|Windscribe|
+::DISABLED Windscribe.Windscribe|Windscribe|
 ::DISABLED Tailscale.Tailscale|Tailscale|
 ::DISABLED WireGuard.WireGuard|WireGuard|
 ::DISABLED AnyDesk.AnyDesk|AnyDesk|
@@ -213,9 +214,9 @@
 ::DISABLED WiresharkFoundation.Wireshark|Wireshark|
 ::GROUP Utilities
 ::WINGET 7zip.7zip|7-Zip|
-::WINGET WinDirStat.WinDirStat|WinDirStat|
-::DISABLED voidtools.Everything|Everything search|
-::DISABLED Microsoft.PowerToys|Microsoft PowerToys|
+::DISABLED WinDirStat.WinDirStat|WinDirStat|
+::WINGET voidtools.Everything|Everything search|
+::WINGET Microsoft.PowerToys|Microsoft PowerToys|
 ::DISABLED RARLab.WinRAR|WinRAR|
 ::DISABLED AntibodySoftware.WizTree|WizTree|
 ::DISABLED CodeSector.TeraCopy|TeraCopy|
@@ -226,10 +227,10 @@
 ::DISABLED Piriform.CCleaner.Slim|CCleaner|
 ::DISABLED Glarysoft.GlaryUtilities|Glary Utilities|
 ::GROUP Developer
-::WINGET GitHub.cli|GitHub CLI|
+::DISABLED GitHub.cli|GitHub CLI|
 ::WINGET Notepad++.Notepad++|Notepad++|
-::WINGET PuTTY.PuTTY|PuTTY|
-::WINGET WinSCP.WinSCP|WinSCP|
+::DISABLED PuTTY.PuTTY|PuTTY|
+::DISABLED WinSCP.WinSCP|WinSCP|
 ::DISABLED Microsoft.VisualStudioCode|Visual Studio Code|
 ::DISABLED SublimeHQ.SublimeText.4|Sublime Text 4|
 ::DISABLED GitHub.GitHubDesktop|GitHub Desktop|
@@ -244,14 +245,14 @@
 :: Freshkit installs the latest release's x64 .msi or setup .exe silently (MSI, NSIS and Inno Setup are detected automatically).
 :: The display name must match the app's name in Settings > Apps > Installed apps.
 ::GROUP Media
-::GITHUB minimalhandle/SleekMeeter|Sleekmeeter|
+::DISABLED minimalhandle/SleekMeeter|Sleekmeeter|
 ::GROUP Gaming & devices
-::GITHUB minimalhandle/Afterclip|Afterclip|
+::DISABLED minimalhandle/Afterclip|Afterclip|
 ::END_GITHUB
 ::BEGIN_PROFILES
 :: Starter selections. ::PROFILE Name|apps=id,winget:Id,... (omit tweaks=/remove= to leave Windows tweaks unchanged).
-::PROFILE Starter: essentials|apps=winget:Mozilla.Firefox.en-GB,winget:7zip.7zip,winget:VideoLAN.VLC,winget:Notepad++.Notepad++,winget:SumatraPDF.SumatraPDF,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: gaming|apps=winget:Mozilla.Firefox.en-GB,winget:Discord.Discord,winget:Valve.Steam,winget:EpicGames.EpicGamesLauncher,playnite,obs-studio,spotify,winget:7zip.7zip,winget:VideoLAN.VLC,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: developer|apps=winget:Mozilla.Firefox.en-GB,git.install,winget:GitHub.cli,winget:GitHub.GitHubDesktop,winget:Microsoft.VisualStudioCode,nodejs-lts,python3,winget:Notepad++.Notepad++,winget:WinMerge.WinMerge,winget:PuTTY.PuTTY,winget:WinSCP.WinSCP,winget:7zip.7zip,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
-::PROFILE Starter: office & family|apps=winget:Mozilla.Firefox.en-GB,winget:TheDocumentFoundation.LibreOffice,winget:SumatraPDF.SumatraPDF,winget:Zoom.Zoom,winget:VideoLAN.VLC,winget:7zip.7zip,winget:Bitwarden.Bitwarden,malwarebytes,vcredist-all,dotnet-desktopruntime
+::PROFILE Starter: essentials|apps=winget:Mozilla.Firefox,winget:7zip.7zip,winget:VideoLAN.VLC,winget:Notepad++.Notepad++,winget:SumatraPDF.SumatraPDF,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: gaming|apps=winget:Mozilla.Firefox,winget:Discord.Discord,winget:Valve.Steam,winget:EpicGames.EpicGamesLauncher,playnite,obs-studio,spotify,winget:7zip.7zip,winget:VideoLAN.VLC,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: developer|apps=winget:Mozilla.Firefox,git.install,winget:GitHub.cli,winget:GitHub.GitHubDesktop,winget:Microsoft.VisualStudioCode,nodejs-lts,python3,winget:Notepad++.Notepad++,winget:WinMerge.WinMerge,winget:PuTTY.PuTTY,winget:WinSCP.WinSCP,winget:7zip.7zip,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime
+::PROFILE Starter: office & family|apps=winget:Mozilla.Firefox,winget:TheDocumentFoundation.LibreOffice,winget:SumatraPDF.SumatraPDF,winget:Zoom.Zoom,winget:VideoLAN.VLC,winget:7zip.7zip,winget:Bitwarden.Bitwarden,malwarebytes,vcredist-all,dotnet-desktopruntime
 ::END_PROFILES

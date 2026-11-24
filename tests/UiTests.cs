@@ -107,9 +107,9 @@ namespace Freshkit
                 Field<Debloat>(ui, "debloat").ApplyFeatures(new string[0]);
                 // Catalog and Apps page structure
                 var all = Field<List<AppItem>>(ui, "apps");
-                Check(all.Count >= 160 && all.FindAll(a => a.IsSelected).Count == 41, "Built-in catalog includes the Ninite apps with the curated default selection");
+                Check(all.Count >= 160 && all.FindAll(a => a.IsSelected).Count == 15, "Built-in catalog includes the Ninite apps with the curated default selection");
                 var sleek = all.Find(a => a.Id == "minimalhandle/SleekMeeter");
-                Check(sleek != null && sleek.IsGitHub && sleek.IsSelected && sleek.Key == "github:minimalhandle/SleekMeeter" && sleek.EnginePackageId == "github-minimalhandle-sleekmeeter" && sleek.SourceLabel == "GitHub" && sleek.Category == "Media", "GitHub catalog entries parse with their own key, engine ID and category");
+                Check(sleek != null && sleek.IsGitHub && !sleek.IsSelected && sleek.Key == "github:minimalhandle/SleekMeeter" && sleek.EnginePackageId == "github-minimalhandle-sleekmeeter" && sleek.SourceLabel == "GitHub" && sleek.Category == "Media", "GitHub catalog entries parse with their own key, engine ID and category");
                 Check(all.Find(a => a.Id == "minimalhandle/Afterclip").Artwork.Image != null, "Bundled logos load for GitHub entries");
                 Check(Sources.PickInstallerAsset(new[] { "App-1.0-arm64.msi", "App-1.0-portable.zip", "App_1.0_x86-setup.exe", "App_1.0_x86_64-setup.exe", "App.exe.sig" }) == "App_1.0_x86_64-setup.exe" && Sources.PickInstallerAsset(new[] { "a-setup.exe", "a.msi" }) == "a.msi", "GitHub asset choice prefers MSI, then x64 setup, and skips ARM, 32-bit and portable builds");
                 var ranked = Sources.Rank("sleekmeeter", new List<SearchResult> {
@@ -148,7 +148,7 @@ namespace Freshkit
                 var variants = Sources.Rank("vlc", new List<SearchResult> { new SearchResult { Source = "choco", Id = "vlc", Name = "VLC media player", Version = "3.0.24", Meta = "vlc" }, new SearchResult { Source = "choco", Id = "vlc.install", Name = "VLC media player (Install)", Version = "3.0.24", Meta = "vlc.install" }, new SearchResult { Source = "choco", Id = "vlc.portable", Name = "VLC media player (Portable)", Version = "3.0.21", Meta = "vlc.portable" } });
                 Check(variants.Count == 1, "Chocolatey install/portable variants of one package show as one app");
                 var firefox = all.Find(a => a.Name == "Mozilla Firefox");
-                Check(firefox != null && firefox.IsWinget && firefox.Id == "Mozilla.Firefox.en-GB" && firefox.IsSelected && firefox.Artwork.Image != null, "Firefox installs from Mozilla's en-GB winget package and stays ticked");
+                Check(firefox != null && firefox.IsWinget && firefox.Id == "Mozilla.Firefox" && firefox.IsSelected && firefox.Artwork.Image != null, "Firefox installs from Mozilla's en-GB winget package and stays ticked");
                 Check(all.Find(a => a.Id == "spotify") != null && all.Find(a => a.Id == "pawnio") != null && all.Find(a => a.Id == "openrgb.install") != null && all.Find(a => a.Id == "python3") != null, "Spotify, install-order pairs and Python 3 stay on Chocolatey");
                 var browsers = Field<ObservableCollection<AppGroup>>(ui, "groups").First(g => g.Name == "Browsers").Items.Select(a => a.Name).ToList();
                 Check(browsers.SequenceEqual(browsers.OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)), "Apps are alphabetical within each category across sources");
@@ -168,7 +168,7 @@ namespace Freshkit
                 detail.InstalledVersion = "1.2.8.0"; var unversioned = new SearchResult { InstalledVersion = "" }; var unsafeLink = new SearchResult { Homepage = "http://example.com" };
                 Check(detail.InstalledText == "Installed v1.2.8.0" && unversioned.InstalledText == "Installed" && unsafeLink.HomepageVisibility == Visibility.Collapsed, "Installed badges show the version, and non-https links are hidden");
                 Check(!Data.IsGitHubRepo("../etc") && !Data.IsGitHubRepo("owner/..") && Data.IsGitHubRepo("minimalhandle/Afterclip"), "GitHub repository IDs are validated");
-                Check(all.Find(a => a.Id == "googlechrome").Category == "Browsers" && !all.Find(a => a.Id == "googlechrome").DefaultOn, "Catalog ::GROUP sections drive categories and new apps start unticked");
+                Check(all.Find(a => a.Id == "brave").Category == "Browsers" && !all.Find(a => a.Id == "brave").DefaultOn, "Catalog ::GROUP sections drive categories and new apps start unticked");
                 Check(!all.Find(a => a.Id == "dotnet-7.0-desktopruntime").DefaultOn, "End-of-life .NET 7 runtime is not selected by default");
                 var store = all.Find(a => a.Id == "9NKSQGP7F2NH");
                 Check(store != null && store.IsWinget && store.SourceLabel == "Store", "Microsoft Store entries are labelled as Store apps");
@@ -189,7 +189,7 @@ namespace Freshkit
                 var tweaksAfter = Field<object>(ui, "debloat") == null ? 0 : ((System.Collections.ICollection)Field<object>(ui, "debloat").GetType().GetMethod("SelectedFeatures").Invoke(Field<object>(ui, "debloat"), null)).Count;
                 Check(all.Find(a => a.Id == "SumatraPDF.SumatraPDF").IsSelected && !all.Find(a => a.Id == "Valve.Steam").IsSelected && tweaksBefore == tweaksAfter, "Starter profile selects its apps and leaves Windows tweaks unchanged");
                 box.SelectedIndex = 1;
-                Check(all.FindAll(a => a.IsSelected).Count == 41, "List defaults restore the curated selection");
+                Check(all.FindAll(a => a.IsSelected).Count == 15, "List defaults restore the curated selection");
                 ListFile.AddPackage("github", "octo-org/Tool.App", "Tool App");
                 Call(ui, "LoadList", false);
                 var added = Field<List<AppItem>>(ui, "apps").Find(x => x.Id == "octo-org/Tool.App");
@@ -253,7 +253,7 @@ namespace Freshkit
                 try { Call(ui, "ApplyRecipe", badRecipe); } catch (TargetInvocationException ex) { recipeRejected = ex.InnerException is InvalidDataException; }
                 Check(recipeRejected && Engine.SessionList == sessionBeforeRecipe, "Unavailable recipe tweaks are rejected before the session changes");
 
-                var optionItem = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Mozilla.Firefox.en-GB");
+                var optionItem = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Mozilla.Firefox");
                 int selectedBeforeOptions = Field<List<AppItem>>(ui, "apps").Count(a => a.IsSelected);
                 var optionWindow = (Window)Call(ui, "BuildAppOptionsWindow", optionItem);
                 var argumentBox = FindNamed<TextBox>(optionWindow, "AppArguments"); var saveOptions = FindNamed<Button>(optionWindow, "SaveAppOptions");
@@ -261,9 +261,9 @@ namespace Freshkit
                 Check(!saveOptions.IsEnabled, "App options rejects package-selection arguments before saving");
                 argumentBox.Text = "/S"; saveOptions.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, saveOptions));
                 var afterOptions = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == optionItem.Id);
-                Check(afterOptions.Parameters == "/S" && Field<List<AppItem>>(ui, "apps").Count(a => a.IsSelected) == selectedBeforeOptions && Engine.CurrentListText(out customList).Contains("Mozilla.Firefox.en-GB|Mozilla Firefox|/S"), "App options saves arguments into the session catalog while preserving selections");
+                Check(afterOptions.Parameters == "/S" && Field<List<AppItem>>(ui, "apps").Count(a => a.IsSelected) == selectedBeforeOptions && Engine.CurrentListText(out customList).Contains("Mozilla.Firefox|Mozilla Firefox|/S"), "App options saves arguments into the session catalog while preserving selections");
                 var recipeWithOptions = (SetupRecipe)Call(ui, "CaptureRecipe");
-                Check(SetupRecipe.Parse(recipeWithOptions.Serialize(), recipeWithOptions.ListText).ListText.Contains("Mozilla.Firefox.en-GB|Mozilla Firefox|/S"), "Edited app arguments survive recipe export and import");
+                Check(SetupRecipe.Parse(recipeWithOptions.Serialize(), recipeWithOptions.ListText).ListText.Contains("Mozilla.Firefox|Mozilla Firefox|/S"), "Edited app arguments survive recipe export and import");
                 var localeWindow = (Window)Call(ui, "BuildAppOptionsWindow", afterOptions);
                 var languageBox = FindNamed<ComboBox>(localeWindow, "AppLanguage");
                 languageBox.SelectedItem = languageBox.Items.Cast<AppLanguage>().First(l => l.Code == "fr");
@@ -271,7 +271,7 @@ namespace Freshkit
                 var localeSave = FindNamed<Button>(localeWindow, "SaveAppOptions"); localeSave.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, localeSave));
                 var french = Field<List<AppItem>>(ui, "apps").Find(a => a.Id == "Mozilla.Firefox.fr");
                 var frenchRecipe = (SetupRecipe)Call(ui, "CaptureRecipe");
-                Check(french != null && french.IsSelected && !Field<List<AppItem>>(ui, "apps").Any(a => a.Id == "Mozilla.Firefox.en-GB") && frenchRecipe.Apps.Contains("winget:Mozilla.Firefox.fr"), "Saving a guided language updates the selected package and exported recipe identity");
+                Check(french != null && french.IsSelected && !Field<List<AppItem>>(ui, "apps").Any(a => a.Id == "Mozilla.Firefox") && frenchRecipe.Apps.Contains("winget:Mozilla.Firefox.fr"), "Saving a guided language updates the selected package and exported recipe identity");
                 Call(ui, "ApplyRecipe", recipeWithOptions);
                 var git = Field<List<AppItem>>(ui, "apps").First(a => a.Source == "choco" && (a.Id == "git" || a.Id == "git.install"));
                 var gitWindow = (Window)Call(ui, "BuildAppOptionsWindow", git); var gitInput = FindNamed<TextBox>(gitWindow, "AppArguments");
@@ -469,7 +469,7 @@ namespace Freshkit
                     Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = true; Call(ui, "FilterTweaks");
                     Render(ui, "removal-installed-small", 1064, 641);
                     Get<CheckBox>(ui, "OnlyInstalledRemovals").IsChecked = false; Get<TextBox>(ui, "TweakSearch").Text = "";
-                    var optionsPreview = (Window)Call(ui, "BuildAppOptionsWindow", apps.First(a => a.Id == "Mozilla.Firefox.en-GB"));
+                    var optionsPreview = (Window)Call(ui, "BuildAppOptionsWindow", apps.First(a => a.Id == "Mozilla.Firefox"));
                     RenderOptions(optionsPreview); optionsPreview.Close();
                     foreach (AppItem a in apps) a.IsSelected = a.DefaultOn;
                     apps[0].Installed = true;

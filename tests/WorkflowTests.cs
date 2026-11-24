@@ -11,7 +11,7 @@ namespace Freshkit
         public static void Recipes(Action<bool, string> check)
         {
             bool custom; string baseline = Engine.CurrentListText(out custom);
-            var recipe = new SetupRecipe { ListText = baseline, Apps = new List<string> { "winget:Mozilla.Firefox.en-GB", "github:minimalhandle/Afterclip" }, Tweaks = new List<string> { "DisableTelemetry" }, Remove = new List<string> { "Test.App" }, Backups = new List<string> { "afterclip" } };
+            var recipe = new SetupRecipe { ListText = baseline, Apps = new List<string> { "winget:Mozilla.Firefox", "github:minimalhandle/Afterclip" }, Tweaks = new List<string> { "DisableTelemetry" }, Remove = new List<string> { "Test.App" }, Backups = new List<string> { "afterclip" } };
             var roundtrip = SetupRecipe.Parse(recipe.Serialize(), baseline);
             check(roundtrip.Apps.Count == 2 && roundtrip.Apps.Contains("github:minimalhandle/Afterclip") && roundtrip.Tweaks[0] == "DisableTelemetry" && roundtrip.Backups[0] == "afterclip", "A recipe round trip preserves source identities, tweaks, removals and backup selections");
             string before = Engine.SessionList; bool invalid = false;
