@@ -12,8 +12,8 @@ using System.Windows;
 [assembly: AssemblyTitle("Freshkit")]
 [assembly: AssemblyProduct("Freshkit")]
 [assembly: AssemblyDescription("Freshkit - bulk install apps, drivers, tweaks and settings on a fresh Windows install")]
-[assembly: AssemblyVersion("3.0.0.0")]
-[assembly: AssemblyFileVersion("3.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 namespace Freshkit
 {

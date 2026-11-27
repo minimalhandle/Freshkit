@@ -25,9 +25,9 @@ This builds the EXE, runs every `tests\run-*.ps1` runner and every standalone `t
 
 - When you add a payload test script under `tests\`, `run-all.ps1` picks it up automatically. When you add a C# test file, add it to the `$sources` of the matching runner.
 - Tests must not install software, change Windows settings or depend on the network. Use synthetic fixtures (fake CIM, registry and inventory data).
-- To check portability, copy only `dist\Freshkit.exe` to an empty folder and run `Freshkit.exe Plan`.
+- To check portability, copy only `dist\Freshkit.exe` to an empty folder and run `Freshkit.exe DriverPlan` (the built-in catalog ticks no apps, so `Plan` stops by design).
 
 ## Workflow
 - Work on a feature branch and commit each finished, tested batch. Don't leave work uncommitted across sessions. Never push unless asked.
 - Before claiming a batch is done, run `tests\run-all.ps1` and `git diff --check`. If something couldn't be verified (for example, what Explorer shows), say so.
-- Keep `README.md` up to date with any behaviour a user would notice.
+- Keep `README.md` short and user-facing (features, where things are, screenshots in `docs/screenshots`, regenerated with `testsun-ui.ps1 -Render`). Put detailed behaviour, formats and limits in `docs/technical-reference.md`.
