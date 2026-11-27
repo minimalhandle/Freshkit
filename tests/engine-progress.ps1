@@ -7,7 +7,7 @@ try{
     @{Steps=@(@{Id='Drivers';Status='Pending';Detail=''},@{Id='Apps';Status='Pending';Detail=''},@{Id='Settings';Status='Pending';Detail=''})}|ConvertTo-Json -Depth 5|Set-Content $temporary
     Import-Module (Join-Path $root 'src\payload\Install-Run.Core.psm1') -Force -DisableNameChecking
     $module=Get-Module 'Install-Run.Core'
-    $state=[pscustomobject]@{DriverQueue=@(@{Id='nvidia-display-driver'});AppQueue=@(@{packageId='steam'});DriverResults=@();AppResults=@()}
+    $state=[pscustomobject]@{DriverQueue=@(@{Id='geforce-game-ready-driver'});AppQueue=@(@{packageId='steam'});DriverResults=@();AppResults=@()}
     & $module {param($s) Update-FreshkitEngineStages $s;Set-FreshkitStage '' '' '' -RunId 'test-run'} $state
     $record=Get-Content $temporary -Raw|ConvertFrom-Json
     if($record.EngineRunId -ne 'test-run' -or $record.Steps[0].Status -ne 'Running'){throw 'Driver stage or report identity missing'}

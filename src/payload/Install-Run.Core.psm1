@@ -285,6 +285,7 @@ function Invoke-InstallRunWorker {
     $State.Status='Running';Save-InstallRunState $State
     if(-not $State.DriverQueue.Count -and -not $State.AppQueue.Count){Complete-InstallRun $State;return $State}
     if(Test-InstallPendingReboot){Set-InstallRunAwaitingReboot $State 'Windows reports a pending reboot before the next installer.';return $State}
+    $driverInstalledThisBoot=$false
     while($State.DriverQueue.Count -or $State.AppQueue.Count){
         $phase=if($State.DriverQueue.Count){'Driver'}else{'App'}
         Update-FreshkitEngineStages $State
@@ -293,9 +294,12 @@ function Invoke-InstallRunWorker {
         $attemptKey=$phase+'-'+$package
         if($null -ne $State.InFlight){
             if($State.InFlight.PackageId -ne $package -or $State.InFlight.Phase -ne $phase){throw 'Interrupted item does not match the remaining queue.'}
-            $registered=Test-RunPackageRegistered $State $package $item
-            $verifiedDriver=($phase -ne 'Driver' -or @(Get-DriverRegistryEvidence $package).Count)
-            if($phase -eq 'Driver' -and $package -eq 'nvidia-display-driver'){$verifiedDriver=$verifiedDriver -and @(Get-DriverRegistryEvidence 'nvidia-app').Count -gt 0}
+            if($phase -eq 'Driver'){
+                # The interrupted driver counts only if Windows shows the version Chocolatey recorded.
+                $packageState=Get-DriverPackageState $State.Executable $package
+                $registered=$packageState.Installed
+                $verifiedDriver=$registered -and (Get-DriverInstallCheck $package $packageState.Version).Verified
+            }else{$registered=Test-RunPackageRegistered $State $package $item;$verifiedDriver=$true}
             if($registered -and $verifiedDriver){
                 $result=[pscustomobject]@{Id=$package;Name=$item.name;PackageId=$package;Status='RecoveredInstalled';ExitCode=$null;Version='';Detail='Interrupted item reconciled with local package registration after restart.'}
                 Add-InstallRunResult $State $phase $result;continue
@@ -331,6 +335,12 @@ function Invoke-InstallRunWorker {
         Add-InstallRunResult $State $phase $result
         if($result.Status -eq 'RebootRequired' -or $result.ExitCode -in @(3010,1641) -or (Test-InstallPendingReboot)){
             Set-InstallRunAwaitingReboot $State ($package+' requires a restart before continuing.');return $State
+        }
+        if($phase -eq 'Driver' -and $result.Status -in @('PackageInstalled','UnverifiedDriverInstall')){$driverInstalledThisBoot=$true}
+        # Chipset and graphics installers swap drivers in the running session. Restart once before apps so
+        # Windows starts cleanly on the new drivers instead of installing more software on top of the swap.
+        if($driverInstalledThisBoot -and -not $State.DriverQueue.Count -and $State.AppQueue.Count){
+            Set-InstallRunAwaitingReboot $State 'Drivers were installed. Restarting so Windows loads them before apps are installed.';return $State
         }
     }
     Complete-InstallRun $State

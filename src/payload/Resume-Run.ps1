@@ -2,6 +2,8 @@
 [CmdletBinding()]
 param([Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{32}$')][string]$RunId,[switch]$Automatic)
 $ErrorActionPreference='Stop'
+# Closing this window stops the install part-way; Freshkit then offers to continue it.
+try{$Host.UI.RawUI.WindowTitle='Freshkit install - keep this window open until it finishes'}catch{}
 if($env:LOCALAPPDATA -and (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Freshkit'))){try{$fkLogs=Join-Path $env:LOCALAPPDATA 'Freshkit\logs';[IO.Directory]::CreateDirectory($fkLogs)|Out-Null;Start-Transcript -LiteralPath (Join-Path $fkLogs ('resume-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.log')) -Append|Out-Null}catch{}}
 $expected=Join-Path (Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'FreshWindowsSetupResume') $RunId
 if([IO.Path]::GetFullPath($PSScriptRoot) -ne [IO.Path]::GetFullPath($expected)){throw 'Resume must run from its protected machine-local snapshot.'}

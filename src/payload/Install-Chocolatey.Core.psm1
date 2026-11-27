@@ -127,7 +127,31 @@ function Get-ChocolateyInstallArguments {
     $arguments=@($verb,$App.packageId,'-y',('--source='+$script:CommunitySource),'--use-package-exit-codes','--ignore-detected-reboot','--no-progress')
     if($App.packageParameters){$arguments+=('--package-parameters='+$App.packageParameters)}
     if($App.PSObject.Properties['installArguments'] -and $App.installArguments){$arguments+=('--install-arguments='+$App.installArguments)}
+    if($App.PSObject.Properties['force'] -and $App.force){$arguments+='--force'}
     return $arguments
+}
+# Installers that create no Start menu entry when run silently. The shortcut name and the app's EXE relative to
+# Program Files (64-bit first, then 32-bit).
+$script:MissingShortcutApps=@{
+    'streamlink-twitch-gui'=@{Name='Streamlink Twitch GUI';Exe='Streamlink Twitch GUI\streamlink-twitch-gui.exe'}
+}
+function Add-SetupStartMenuShortcut {
+    param(
+        [string]$PackageId,
+        [string]$StartMenu=(Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'),
+        [string[]]$ProgramDirs=@($env:ProgramFiles,${env:ProgramFiles(x86)}),
+        [scriptblock]$Create={param($Link,$Target) $shell=New-Object -ComObject WScript.Shell;$s=$shell.CreateShortcut($Link);$s.TargetPath=$Target;$s.WorkingDirectory=(Split-Path -Parent $Target);$s.IconLocation=$Target+',0';$s.Save()}
+    )
+    if(-not $script:MissingShortcutApps.ContainsKey($PackageId)){return ''}
+    $entry=$script:MissingShortcutApps[$PackageId]
+    try{
+        $target=@(foreach($dir in $ProgramDirs){if($dir){$path=Join-Path $dir $entry.Exe;if(Test-Path -LiteralPath $path -PathType Leaf){$path}}})|Select-Object -First 1
+        if(-not $target){return ' Its program file was not found, so no Start menu shortcut was added.'}
+        $link=Join-Path $StartMenu ($entry.Name+'.lnk')
+        if(Test-Path -LiteralPath $link){return ''}
+        & $Create $link $target
+        return ' Added a Start menu shortcut (the silent installer does not create one).'
+    }catch{return (' A Start menu shortcut could not be added: '+$_.Exception.Message)}
 }
 function Invoke-ChocolateyAppPlan {
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -163,7 +187,7 @@ function Invoke-ChocolateyAppPlan {
             if($local.ExitCode -ne 0 -or $matches.Count -ne 1){throw 'Chocolatey did not register the requested package after installation.'}
             $row.Version=($matches[0] -split '\|')[1]
             $row.Status='PackageInstalled'
-            $row.Detail='Chocolatey returned success and registered the package; application function has not been tested.'
+            $row.Detail='Chocolatey returned success and registered the package; application function has not been tested.'+(Add-SetupStartMenuShortcut $app.packageId)
             if($result.ExitCode -in @(3010,1641)){$row.Status='RebootRequired';$stopForReboot=$true}
         } catch {$row.Status='Failed';$row.Detail=$_.Exception.Message}
         $row
@@ -196,6 +220,60 @@ function Test-SetupWingetInstalled {
     }
     return [pscustomobject]@{Installed=($code -eq 0);Version=$version}
 }
+function Wait-SetupWingetInstalled {
+    # Some installers (Discord and other Squirrel-based apps) return before they register with Windows, so
+    # winget's installed list can lag a successful install. Keep checking for a while before calling it failed.
+    param([string]$Id,[int]$TimeoutSeconds=120,[int]$IntervalSeconds=5,[scriptblock]$Probe={param($i) Test-SetupWingetInstalled $i})
+    $deadline=[datetime]::UtcNow.AddSeconds($TimeoutSeconds)
+    while($true){
+        $result=& $Probe $Id
+        if($result.Installed -or [datetime]::UtcNow -ge $deadline){return $result}
+        Start-Sleep -Seconds $IntervalSeconds
+    }
+}
+function Get-SetupWingetErrorText {
+    param([string]$Verb,[int]$Code)
+    $hex='0x{0:X8}' -f $Code
+    $reason=switch($hex){
+        '0x8A150008' {'the download failed'}
+        '0x8A150010' {'winget has no installer that suits this PC'}
+        '0x8A150011' {"the download doesn't match the checksum in winget's catalog. The publisher has probably replaced the file; winget's catalog usually catches up within a few days"}
+        '0x8A150101' {'the app is running. Close it and retry'}
+        '0x8A150102' {'another installation was already running. Retry when it has finished'}
+        '0x8A150105' {'the disk is full'}
+        '0x8A150107' {'there was no network connection'}
+        default {''}
+    }
+    $text='winget '+$Verb+' returned '+$hex
+    if($reason){$text+=': '+$reason}
+    return $text+'.'
+}
+function Install-SetupDiscordHelper {
+    # Discord opens itself after installing and, on that first run, registers a 'Discord System Helper' service,
+    # asking for administrator rights with a UAC prompt to do it. Setup is already elevated, so it registers the
+    # service itself as soon as Discord has downloaded the helper; Discord then finds the service and doesn't ask.
+    param(
+        [string]$AppDir=(Join-Path $env:LOCALAPPDATA 'Discord'),[int]$TimeoutSeconds=90,
+        [scriptblock]$ServiceExists={[bool](Get-Service -Name 'DiscordSystemHelper' -ErrorAction SilentlyContinue)},
+        [scriptblock]$Trusted={param($Path) $s=Get-AuthenticodeSignature -LiteralPath $Path;$s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match '(?:^|,\s*)O=Discord Inc\.(?:,|$)'},
+        [scriptblock]$Run={param($Path) $p=Start-Process -FilePath $Path -ArgumentList 'install' -WindowStyle Hidden -PassThru;if(-not $p.WaitForExit(60000)){return -1};$p.ExitCode}
+    )
+    try{
+        if(& $ServiceExists){return ''}
+        $deadline=[datetime]::UtcNow.AddSeconds($TimeoutSeconds)
+        while($true){
+            $helper=@(Get-ChildItem -Path (Join-Path $AppDir 'app-*\modules\discord_utils-*\discord_utils\DiscordSystemHelper.exe') -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending)
+            # A helper still being written fails the signature check; it is retried until the deadline.
+            if($helper.Count -and (& $Trusted $helper[0].FullName)){
+                $code=& $Run $helper[0].FullName
+                if(& $ServiceExists){return ' Registered the Discord System Helper service, so Discord does not ask for administrator rights.'}
+                return (' Registering the Discord System Helper returned '+$code+'; Discord may ask for administrator rights the first time it opens.')
+            }
+            if([datetime]::UtcNow -ge $deadline){return ' Discord had not downloaded its System Helper yet; it may ask for administrator rights the first time it opens.'}
+            Start-Sleep -Milliseconds 250
+        }
+    }catch{return (' The Discord System Helper could not be registered ('+$_.Exception.Message+'); Discord may ask for administrator rights the first time it opens.')}
+}
 function Invoke-SetupWingetApp {
     param($App)
     $winget=Get-SetupWingetPath;$id=[string]$App.wingetId
@@ -211,11 +289,12 @@ function Invoke-SetupWingetApp {
     foreach($line in $output){$text=([string]$line).TrimEnd();if($text.Trim() -and $text -notmatch '^[\s\-\\|/]+$' -and $text -notmatch '[\u2580-\u259F]'){Write-Host $text}}   # block-element progress bars; keep this file ASCII (PS 5.1 reads BOM-less files as ANSI)
     $notNeeded=@(-1978335189,-1978335135)   # 0x8A15002B no applicable update, 0x8A150061 already installed
     $reboot=@(3010,1641,-1978334967,-1978334966)
-    if($code -ne 0 -and $code -notin $notNeeded -and $code -notin $reboot){throw ('winget '+$verb+' returned 0x{0:X8}.' -f $code)}
-    $after=Test-SetupWingetInstalled $id
-    if(-not $after.Installed){throw "winget finished but $id is not listed as installed."}
+    if($code -ne 0 -and $code -notin $notNeeded -and $code -notin $reboot){throw (Get-SetupWingetErrorText $verb $code)}
+    $extra='';if($id -eq 'Discord.Discord'){$extra=Install-SetupDiscordHelper;if($extra){Write-Host $extra.Trim()}}
+    $after=Wait-SetupWingetInstalled $id
+    if(-not $after.Installed){throw "winget reported success, but $id still wasn't in the installed list after 2 minutes."}
     $status=if($code -in $reboot){'RebootRequired'}else{'PackageInstalled'}
-    return [pscustomobject]@{Status=$status;ExitCode=$code;Version=$after.Version;Detail=('Installed with winget ('+$id+'); application function has not been tested.')}
+    return [pscustomobject]@{Status=$status;ExitCode=$code;Version=$after.Version;Detail=('Installed with winget ('+$id+'); application function has not been tested.'+$extra)}
 }
 # ---- GitHub releases (Freshkit): latest release's Windows installer, run silently ----
 function Test-SetupGitHubRepo {param([string]$Repo) return ($Repo -match '\A[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}\z' -and $Repo -notmatch '/\.\.?\z')}

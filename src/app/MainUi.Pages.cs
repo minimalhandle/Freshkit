@@ -330,8 +330,9 @@ namespace Freshkit
             bool busy = active != null || jobRunning || tracking || restoreRunning;
             var banner = Get<Border>("ResumeBanner");
             banner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-            Get<TextBlock>("ResumeBannerTitle").Text = active != null && active.Status == "AwaitingReboot" ? "Waiting for restart" : restoreRunning ? "Restoring settings" : "Install in progress";
-            Get<RadioButton>("NavProgress").Content = busy ? "Progress  •" : "Progress";
+            Get<TextBlock>("ResumeBannerTitle").Text = active != null && active.Status == "AwaitingReboot" ? "Waiting for restart" : active != null && active.Status == "Interrupted" ? "Install paused" : restoreRunning ? "Restoring settings" : "Install in progress";
+            Get<TextBlock>("ResumeBannerDetail").Text = active != null && active.Status == "Interrupted" ? "Open Progress to continue it." : "Open Progress to follow it.";
+            Get<RadioButton>("NavProgress").Content =busy ? "Progress  •" : "Progress";
             UpdateTaskbar(busy, active);
 
             if (Get<FrameworkElement>("PageProgress").Visibility != Visibility.Visible && !busy) return;
@@ -392,6 +393,8 @@ namespace Freshkit
                 {
                     case "AwaitingReboot": title.Text = "Waiting for a restart"; detail.Text = "Your PC restarts to continue. Sign back in to the same account and it carries on automatically."; glyph.Text = ""; break;
                     case "NeedsReview": title.Text = "Install stopped"; detail.Text = s.Failure; glyph.Text = ""; break;
+                    case "Interrupted": title.Text = "Install paused"; glyph.Text = "";
+                        detail.Text = "The install window was closed" + (s.Current.Length > 0 ? " while installing " + s.Current : "") + ". Continue saved install picks up where it stopped."; break;
                     case "Ready": title.Text = "Starting"; detail.Text = s.Done + " of " + s.Total + " done"; glyph.Text = ""; break;
                     default: title.Text = s.Current.Length > 0 ? "Installing " + s.Current : "Installing"; detail.Text = s.Done + " of " + s.Total + " done" + EstimateText(s); glyph.Text = ""; break;
                 }

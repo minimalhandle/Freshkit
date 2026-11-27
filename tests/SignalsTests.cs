@@ -18,10 +18,24 @@ namespace Freshkit
             check(SetupEta.Describe(null) == "" && SetupEta.Describe(TimeSpan.FromSeconds(40)) == "less than a minute left" && SetupEta.Describe(TimeSpan.FromSeconds(61)) == "about 2 minutes left" && SetupEta.Describe(TimeSpan.FromMinutes(1)) == "about 1 minute left", "Short estimates round up to whole minutes");
             check(SetupEta.Describe(TimeSpan.FromMinutes(95)).StartsWith("about 1.5 hour") && SetupEta.Describe(TimeSpan.FromHours(5)) == "more than 3 hours left", "Long estimates stay coarse");
 
+            string stateJson = "{\"Status\":\"Running\",\"Failure\":\"\",\"UpdatedUtc\":\"2026-11-17T12:00:00.0000000Z\",\"InFlight\":{\"Phase\":\"App\",\"PackageId\":\"msiafterburner\"}," +
+                "\"DriverQueue\":[],\"DriverResults\":[],\"AppResults\":[{\"PackageId\":\"winget-discord\",\"Name\":\"Discord\",\"Status\":\"PackageInstalled\"}]," +
+                "\"AppQueue\":[{\"packageId\":\"msiafterburner\",\"name\":\"MSI Afterburner\"},{\"packageId\":\"steam\",\"name\":\"Steam\"}]}";
+            object state = Engine.Json.DeserializeObject(stateJson);
+            RunSnapshot alive = Runs.Parse("r1", state, true, t0.AddMinutes(1));
+            check(alive.Status == "Running" && alive.Current == "MSI Afterburner" && alive.Rows[0].Outcome == "Running", "A run whose engine is alive shows its in-flight app as installing");
+            RunSnapshot gone = Runs.Parse("r1", state, false, t0.AddMinutes(1));
+            check(gone.Status == "Interrupted" && gone.Current == "MSI Afterburner" && gone.Rows[0].Outcome == "Pending" && gone.Rows[0].StatusText == "Interrupted" && gone.Queue == 2 && gone.Ok == 1,
+                "A Running run whose engine window was closed is shown as interrupted, not installing, and the stopped app stays queued");
+            check(!Runs.WorkerAlive("00000000000000000000000000000000"), "A run with no engine mutex has no live worker");
+            object ready = Engine.Json.DeserializeObject(stateJson.Replace("\"Running\"", "\"Ready\""));
+            check(Runs.Parse("r1", ready, false, t0.AddMinutes(1)).Status == "Ready" && Runs.Parse("r1", ready, false, t0.AddMinutes(5)).Status == "Interrupted", "A just-created run is still starting; one left Ready with no engine for minutes is interrupted");
+
             double value;
             check(SetupSignals.Taskbar(false, true, "Running", 3, 6, out value) == TaskbarSignal.None && value == 0, "The taskbar shows no progress when nothing is running");
             check(SetupSignals.Taskbar(true, true, "Running", 3, 6, out value) == TaskbarSignal.Normal && Math.Abs(value - 0.5) < 0.001, "A live install shows its fraction on the taskbar");
             check(SetupSignals.Taskbar(true, false, "", 0, 0, out value) == TaskbarSignal.Indeterminate, "Preparation stages show indeterminate taskbar progress");
+            check(SetupSignals.Taskbar(true, true, "Interrupted", 3, 6, out value) == TaskbarSignal.Paused, "An interrupted install is paused on the taskbar");
             check(SetupSignals.Taskbar(true, true, "AwaitingReboot", 3, 6, out value) == TaskbarSignal.Paused && SetupSignals.Taskbar(true, true, "NeedsReview", 3, 6, out value) == TaskbarSignal.Error, "Waiting for restart is paused and a stopped install is an error on the taskbar");
 
             check(SetupSignals.ShouldNotify(false, false) && SetupSignals.ShouldNotify(true, true) && !SetupSignals.ShouldNotify(true, false), "Finish notices appear only when Freshkit isn't in front");

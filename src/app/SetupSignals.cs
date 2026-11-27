@@ -48,7 +48,7 @@ namespace Freshkit
             value = total > 0 ? Math.Min(1, (double)done / total) : 0;
             if (!busy) { value = 0; return TaskbarSignal.None; }
             if (live && status == "NeedsReview") return TaskbarSignal.Error;
-            if (live && status == "AwaitingReboot") return TaskbarSignal.Paused;
+            if (live && (status == "AwaitingReboot" || status == "Interrupted")) return TaskbarSignal.Paused;
             if (live && total > 0) return TaskbarSignal.Normal;
             return TaskbarSignal.Indeterminate;
         }

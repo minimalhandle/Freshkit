@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Security.AccessControl;
+using System.Threading;
 using System.Windows.Media;
 
 namespace Freshkit
@@ -103,8 +105,36 @@ namespace Freshkit
             {
                 object st = Engine.ReadJsonFile(Path.Combine(Engine.ResumeRoot, id, "state.json"));
                 if (st == null) continue;
+                return Parse(id, st, WorkerAlive(id), DateTime.UtcNow);
+            }
+            return null;
+        }
+
+        /// True while the engine process for a run holds its named mutex (Invoke-InstallRun). The mutex goes away
+        /// with the process, so a closed install window leaves "Running" in state.json with nobody working on it.
+        /// Anything other than a clear "does not exist" counts as alive, so a run is never wrongly shown as stopped.
+        internal static bool WorkerAlive(string runId)
+        {
+            try
+            {
+                Mutex m;
+                if (!Mutex.TryOpenExisting(@"Global\FreshWindowsSetup-" + runId, MutexRights.Synchronize, out m)) return false;
+                m.Dispose();
+                return true;
+            }
+            catch (UnauthorizedAccessException) { return true; }   // exists, owned by the elevated engine
+            catch { return true; }
+        }
+
+        /// Builds the live snapshot from a parsed state.json. A Running (or long-Ready) run whose worker has gone is
+        /// reported as Interrupted: the in-flight app is not shown as installing.
+        internal static RunSnapshot Parse(string id, object st, bool workerAlive, DateTime nowUtc)
+        {
+            {
                 var s = new RunSnapshot { RunId = id, Status = J.S(st, "Status"), Failure = J.S(st, "Failure") };
                 DateTime.TryParse(J.S(st, "UpdatedUtc"), null, DateTimeStyles.RoundtripKind, out s.When);
+                if (!workerAlive && (s.Status == "Running" || (s.Status == "Ready" && nowUtc - s.When.ToUniversalTime() > TimeSpan.FromMinutes(2))))
+                    s.Status = "Interrupted";
                 object inflight = J.Get(st, "InFlight");
                 string inflightId = J.S(inflight, "PackageId");
                 foreach (string phase in new[] { "Driver", "App" })
@@ -122,10 +152,13 @@ namespace Freshkit
                     {
                         string pkg = driver ? J.S(q, "Id") : J.S(q, "packageId");
                         string name = driver ? J.S(q, "Name") : J.S(q, "name");
-                        bool running = pkg == inflightId && s.Status == "Running";
-                        var row = Row(name, pkg, running ? "Running" : "Pending", running ? "Installing..." : (s.Status == "AwaitingReboot" ? "After restart" : "Queued"),
-                            running ? "In progress" : "", KindOf(pkg, driver));
-                        if (running) s.Current = row.Name;
+                        bool inflightRow = pkg.Length > 0 && pkg == inflightId;
+                        bool running = inflightRow && s.Status == "Running";
+                        bool stopped = inflightRow && s.Status == "Interrupted";
+                        var row = Row(name, pkg, running ? "Running" : "Pending",
+                            running ? "Installing..." : stopped ? "Interrupted" : (s.Status == "AwaitingReboot" ? "After restart" : "Queued"),
+                            running ? "In progress" : stopped ? "Stopped part-way. Continue saved install checks it and tries again." : "", KindOf(pkg, driver));
+                        if (running || stopped) s.Current = row.Name;
                         s.Rows.Add(row); Count(s, row);
                     }
                 }
@@ -133,10 +166,9 @@ namespace Freshkit
                 s.Rows.Sort(delegate (RunRow a, RunRow b) { return Rank(a).CompareTo(Rank(b)); });
                 return s;
             }
-            return null;
         }
 
-        static int Rank(RunRow r) { return r.Outcome == "Running" ? 0 : r.Outcome == "Failed" ? 1 : r.Outcome == "Pending" ? 3 : 2; }
+        static int Rank(RunRow r) { return r.Outcome == "Running" || r.StatusText == "Interrupted" ? 0 :r.Outcome == "Failed" ? 1 : r.Outcome == "Pending" ? 3 : 2; }
 
         static string Detail(object r)
         {

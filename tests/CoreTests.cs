@@ -84,10 +84,10 @@ namespace Freshkit
                 SetupProgress.InterruptRestore(interrupted);
                 Check(stages.Find(s => s.Id == "Settings").Status == "Failed", "Interrupted restore becomes a targeted retry");
                 stages.Find(s => s.Id == "Drivers").Status = "Failed";
-                unrelated.Rows.Add(new RunRow { Package = "nvidia-display-driver", Kind = "Driver", Outcome = "Failed" });
+                unrelated.Rows.Add(new RunRow { Package = "geforce-game-ready-driver", Kind = "Driver", Outcome = "Failed" });
                 unrelated.Rows.Add(new RunRow { Package = "amd-ryzen-chipset", Kind = "Driver", Outcome = "Installed" });
                 retry = SetupProgress.Retry(recipe, stages, unrelated, "old");
-                Check(retry.DriverIds == "nvidia-display-driver", "Retry selects failed drivers without repeating successful driver packages");
+                Check(retry.DriverIds == "geforce-game-ready-driver", "Retry selects failed drivers without repeating successful driver packages");
                 Console.WriteLine(count + " checks passed"); return 0;
             }
             catch (Exception ex) { Console.Error.WriteLine("FAIL " + ex.Message); return 1; }
