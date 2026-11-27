@@ -128,6 +128,8 @@ namespace Freshkit
             var dock = new DockPanel { Margin = new Thickness(24) }; window.Content = dock;
             var footer = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
             DockPanel.SetDock(footer, Dock.Bottom); dock.Children.Add(footer);
+            var selectMissing = new Button { Name = "AuditSelectMissing", Content = "Select missing apps", Style = StyleOf("Secondary"), Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 8, 0), Visibility = Visibility.Collapsed, ToolTip = "Replaces the Apps selection with the recipe's apps that were not found on this PC. Unknown apps stay unticked; Windows and backup selections are unchanged." };
+            if (!postSetup) footer.Children.Add(selectMissing);
             var recheck = new Button { Name = "AuditRecheck", Content = "Recheck", Style = StyleOf("Secondary"), Padding = new Thickness(16, 8, 16, 8), Margin = new Thickness(0, 0, 8, 0) }; footer.Children.Add(recheck);
             var close = new Button { Name = "AuditClose", Content = "Close", Style = StyleOf("Primary"), IsCancel = true, Padding = new Thickness(16, 8, 16, 8) }; footer.Children.Add(close); close.Click += delegate { window.Close(); };
             var header = new StackPanel(); DockPanel.SetDock(header, Dock.Top); dock.Children.Add(header);
@@ -143,6 +145,10 @@ namespace Freshkit
             {
                 if (closed) return;
                 rows.Children.Clear(); recheck.IsEnabled = !busy && !running;
+                int missingApps = busy || shown == null ? 0 : RecipeGaps.MissingApps(shown).Count;
+                selectMissing.Visibility = missingApps > 0 ? Visibility.Visible : Visibility.Collapsed;
+                selectMissing.Content = "Select " + missingApps + " missing app" + (missingApps == 1 ? "" : "s");
+                selectMissing.IsEnabled = !running;
                 status.Text = busy ? "Checking installed apps, desired settings and requested inventories…" : shown == null ? "No completed scan. Select Recheck." : shown.Summary + " · " + shown.CheckedUtc.ToLocalTime().ToString("g");
                 if (busy || shown == null) return;
                 foreach (var row in shown.Rows)
@@ -172,6 +178,7 @@ namespace Freshkit
             };
             issuesOnly.Checked += delegate { render(); }; issuesOnly.Unchecked += delegate { render(); };
             recheck.Click += delegate { scan(); };
+            selectMissing.Click += delegate { if (shown != null && !busy) SelectMissingFromRecipe(target, shown, window); };
             window.Loaded += delegate { if (initial == null) scan(); };
             window.Closed += delegate { closed = true; generation++; };
             render(); return window;

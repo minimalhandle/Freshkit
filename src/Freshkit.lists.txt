@@ -4,11 +4,11 @@
 :: Listed but unticked: ::DISABLED package-id|Display name|Optional package parameters
 :: ::GROUP lines name the Apps page section for the packages below them.
 ::GROUP Browsers
-::PACKAGE googlechrome|Google Chrome|
+::DISABLED googlechrome|Google Chrome|
 ::DISABLED microsoft-edge|Microsoft Edge|
 ::DISABLED brave|Brave|
 ::GROUP Media
-::PACKAGE spotify|Spotify|
+::DISABLED spotify|Spotify|
 ::DISABLED mpvio.install|mpv|
 ::DISABLED obs-studio|OBS Studio|
 ::DISABLED streamlink|Streamlink|
@@ -63,9 +63,9 @@
 ::DISABLED filezilla|FileZilla|
 ::DISABLED eclipse|Eclipse IDE|
 ::GROUP Runtimes
-::PACKAGE vcredist-all|Visual C++ runtimes (all versions)|
-::PACKAGE dotnet-desktopruntime|.NET Desktop Runtime (latest)|
-::PACKAGE dotnet-8.0-desktopruntime|.NET Desktop Runtime 8|
+::DISABLED vcredist-all|Visual C++ runtimes (all versions)|
+::DISABLED dotnet-desktopruntime|.NET Desktop Runtime (latest)|
+::DISABLED dotnet-8.0-desktopruntime|.NET Desktop Runtime 8|
 ::DISABLED dotnet-7.0-desktopruntime|.NET Desktop Runtime 7 (end of life)|
 ::DISABLED dotnet-9.0-desktopruntime|.NET Desktop Runtime 9|
 ::DISABLED dotnet-10.0-desktopruntime|.NET Desktop Runtime 10|
@@ -141,14 +141,14 @@
 ::GROUP Utilities
 ::DISABLED CodeJelly.Launchy|Launchy|
 ::GROUP Browsers
-::WINGET Mozilla.Firefox|Mozilla Firefox|
+::DISABLED Mozilla.Firefox|Mozilla Firefox|
 ::DISABLED Vivaldi.Vivaldi|Vivaldi|
 ::DISABLED Opera.Opera|Opera|
 ::GROUP Messaging
-::WINGET Discord.Discord|Discord|
+::DISABLED Discord.Discord|Discord|
 ::DISABLED ChatterinoTeam.Chatterino|Chatterino|
 ::DISABLED Tutanota.Tutanota|Tuta Mail|
-::WINGET Zoom.Zoom|Zoom|
+::DISABLED Zoom.Zoom|Zoom|
 ::DISABLED Microsoft.Teams|Microsoft Teams|
 ::DISABLED SlackTechnologies.Slack|Slack|
 ::DISABLED Telegram.TelegramDesktop|Telegram|
@@ -156,7 +156,7 @@
 ::DISABLED Pidgin.Pidgin|Pidgin|
 ::DISABLED CeruleanStudios.Trillian|Trillian|
 ::GROUP Media
-::WINGET VideoLAN.VLC|VLC media player|
+::DISABLED VideoLAN.VLC|VLC media player|
 ::DISABLED Audacity.Audacity|Audacity|
 ::DISABLED Stremio.Stremio|Stremio|
 ::DISABLED VB-Audio.Voicemeeter.Potato|Voicemeeter Potato|
@@ -179,7 +179,7 @@
 ::DISABLED Bambulab.Bambustudio|Bambu Studio|
 ::DISABLED Ultimaker.Cura|UltiMaker Cura|
 ::GROUP Documents & AI
-::WINGET Adobe.Acrobat.Reader.64-bit|Adobe Acrobat Reader|
+::DISABLED Adobe.Acrobat.Reader.64-bit|Adobe Acrobat Reader|
 ::DISABLED SumatraPDF.SumatraPDF|SumatraPDF|
 ::DISABLED Foxit.FoxitReader|Foxit PDF Reader|
 ::DISABLED TheDocumentFoundation.LibreOffice|LibreOffice|
@@ -187,10 +187,11 @@
 ::DISABLED Evernote.Evernote|Evernote|
 ::DISABLED Microsoft.Office|Microsoft 365 Apps|
 ::GROUP Gaming & devices
-::WINGET Valve.Steam|Steam|
+::DISABLED Valve.Steam|Steam|
 ::DISABLED EpicGames.EpicGamesLauncher|Epic Games Launcher|
 ::DISABLED RockstarGames.Launcher|Rockstar Games Launcher|
 ::DISABLED Elgato.StreamDeck|Elgato Stream Deck|
+::DISABLED OpenRGB.OpenRGBEffectsPlugin|OpenRGB Effects Plugin|
 :: MSI Afterburner comes from Guru3D's official build (no bundled Norton offer); MSI's website installer adds one.
 ::DISABLED Guru3D.Afterburner|MSI Afterburner|
 ::DISABLED Guru3D.RTSS|RivaTuner Statistics Server|
@@ -213,10 +214,10 @@
 ::DISABLED Famatech.AdvancedIPScanner|Advanced IP Scanner|
 ::DISABLED WiresharkFoundation.Wireshark|Wireshark|
 ::GROUP Utilities
-::WINGET 7zip.7zip|7-Zip|
+::DISABLED 7zip.7zip|7-Zip|
 ::DISABLED WinDirStat.WinDirStat|WinDirStat|
-::WINGET voidtools.Everything|Everything search|
-::WINGET Microsoft.PowerToys|Microsoft PowerToys|
+::DISABLED voidtools.Everything|Everything search|
+::DISABLED Microsoft.PowerToys|Microsoft PowerToys|
 ::DISABLED RARLab.WinRAR|WinRAR|
 ::DISABLED AntibodySoftware.WizTree|WizTree|
 ::DISABLED CodeSector.TeraCopy|TeraCopy|
@@ -228,7 +229,7 @@
 ::DISABLED Glarysoft.GlaryUtilities|Glary Utilities|
 ::GROUP Developer
 ::DISABLED GitHub.cli|GitHub CLI|
-::WINGET Notepad++.Notepad++|Notepad++|
+::DISABLED Notepad++.Notepad++|Notepad++|
 ::DISABLED PuTTY.PuTTY|PuTTY|
 ::DISABLED WinSCP.WinSCP|WinSCP|
 ::DISABLED Microsoft.VisualStudioCode|Visual Studio Code|
@@ -239,6 +240,7 @@
 ::DISABLED WinMerge.WinMerge|WinMerge|
 ::DISABLED Microsoft.WindowsTerminal|Windows Terminal|
 ::DISABLED Rustlang.Rustup|Rustup|
+::DISABLED Microsoft.VisualStudio.BuildTools|Visual Studio Build Tools 2026|--quiet --wait --norestart --nocache --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended
 ::END_WINGET
 ::BEGIN_GITHUB
 :: GitHub releases: ::GITHUB owner/repo|Display name|Optional silent installer arguments (::DISABLED = unticked).
@@ -249,6 +251,12 @@
 ::GROUP Gaming & devices
 ::DISABLED minimalhandle/Afterclip|Afterclip|
 ::END_GITHUB
+::BEGIN_REQUIRES
+:: Apps that need another app: ::REQUIRES app|needed,needed (choco id, winget:Id or github:owner/repo). Ticking the app also ticks what it needs.
+::REQUIRES winget:OpenRGB.OpenRGBEffectsPlugin|openrgb.install
+::REQUIRES streamlink-twitch-gui|streamlink
+::REQUIRES openrgb.install|pawnio
+::END_REQUIRES
 ::BEGIN_PROFILES
 :: Starter selections. ::PROFILE Name|apps=id,winget:Id,... (omit tweaks=/remove= to leave Windows tweaks unchanged).
 ::PROFILE Starter: essentials|apps=winget:Mozilla.Firefox,winget:7zip.7zip,winget:VideoLAN.VLC,winget:Notepad++.Notepad++,winget:SumatraPDF.SumatraPDF,winget:voidtools.Everything,winget:Microsoft.PowerToys,vcredist-all,dotnet-desktopruntime,dotnet-8.0-desktopruntime

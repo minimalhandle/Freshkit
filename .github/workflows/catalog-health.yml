@@ -1,0 +1,34 @@
+# Weekly catalog health check: every built-in app must still exist at its source (Chocolatey, winget, Microsoft Store, GitHub)
+# and have a bundled logo. A failed run means an entry was removed or renamed upstream; GitHub emails the repository owner.
+name: Catalog health
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'  # Mondays 06:17 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/Freshkit.lists.txt'
+      - 'src/icons/**'
+      - 'tools/check-catalog.ps1'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check catalog entries
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # winget on hosted runners is not reliable; the script checks winget-pkgs manifests instead.
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch 'WindowsApps' }) -join ';'
+          ./tools/check-catalog.ps1 *>&1 | Tee-Object -FilePath catalog-health.txt
+          $code = $LASTEXITCODE
+          "## Catalog health`n``````n$(Get-Content catalog-health.txt -Raw)`n``````" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          exit $code

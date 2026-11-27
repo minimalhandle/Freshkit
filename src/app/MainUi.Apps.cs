@@ -25,7 +25,8 @@ namespace Freshkit
         readonly ObservableCollection<SearchResult> searchResults = new ObservableCollection<SearchResult>();
         readonly ObservableCollection<PickItem> pickItems = new ObservableCollection<PickItem>();
         List<SavedProfile> savedProfiles = new List<SavedProfile>();
-        bool applyingProfile, online = true;
+        bool applyingProfile, batching, starterDismissed, online = true;
+        Dictionary<string, List<string>> dependencies = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         int searchRequest;
         CancellationTokenSource searchCancellation;
         Action<List<PickItem>> pickOk;
@@ -48,7 +49,6 @@ namespace Freshkit
             Click("BtnAppsMore", delegate { OpenAppsMenu((Button)Get<Button>("BtnAppsMore")); });
             Click("BtnAll", delegate { Batch(delegate { foreach (AppItem a in apps) if (a.Visibility == Visibility.Visible) a.IsSelected = true; }); });
             Click("BtnNone", delegate { Batch(delegate { foreach (AppItem a in apps) if (a.Visibility == Visibility.Visible) a.IsSelected = false; }); });
-            Click("BtnDefaults", delegate { Batch(delegate { foreach (AppItem a in apps) a.IsSelected = a.DefaultOn; }); });
             Click("BtnEditList", delegate { EditList(); });
             Click("BtnReload", delegate { Confirm("Reset this session?", "Restores the built-in list and removes session profiles. No installed apps are changed.", "Reset", delegate { Engine.SessionList = null; picks.Clear(); LoadList(true); }); });
             Act("BtnInstall", delegate { OpenInstallPlan(); });
@@ -60,7 +60,7 @@ namespace Freshkit
             Click("BtnSaveProfile", delegate { PromptProfileName(null); });
             Click("BtnDeleteProfile", delegate
             {
-                int i = box.SelectedIndex - 2;
+                int i = box.SelectedIndex - 1;
                 if (i < 0 || i >= savedProfiles.Count) { Info("No saved profile selected", "Pick one of your saved profiles first."); return; }
                 string name = savedProfiles[i].Name;
                 Confirm("Delete profile \"" + name + "\"?", "Only the saved selection is removed. Your apps and list stay as they are.", "Delete", delegate
@@ -94,7 +94,19 @@ namespace Freshkit
             });
         }
 
-        void Batch(Action a) { a(); MarkCustom(); }
+        void Batch(Action a) { bool outer = batching; batching = true; try { a(); } finally { batching = outer; } MarkCustom(); }
+
+        /// Ticking an app also ticks the catalog apps it needs (::REQUIRES); unticking never cascades.
+        void TickDependencies(AppItem item)
+        {
+            var selected = new List<string>(); var all = new List<string>();
+            foreach (AppItem a in apps) { all.Add(a.Key); if (a.IsSelected) selected.Add(a.Key); }
+            var missing = new HashSet<string>(AppDependencies.Missing(item.Key, selected, all, dependencies), StringComparer.OrdinalIgnoreCase);
+            if (missing.Count == 0) return;
+            var names = new List<string>();
+            Batch(delegate { foreach (AppItem a in apps) if (missing.Contains(a.Key) && !a.IsSelected) { a.IsSelected = true; names.Add(a.Name); } });
+            if (names.Count > 0) Log("Also ticked " + string.Join(", ", names.ToArray()) + " because " + item.Name + " needs " + (names.Count == 1 ? "it" : "them") + ".");
+        }
 
         // ---------------------------------------------------------------- list
         void LoadList(bool announce)
@@ -122,7 +134,7 @@ namespace Freshkit
                 item.Installed = installedKeys.Contains(item.Key);
                 AppGroup g;
                 if (!byCat.TryGetValue(cat, out g)) { g = new AppGroup { Name = cat, Dot = Categories.Tile(cat, 0xFF) }; byCat[cat] = g; extraGroups.Add(cat); }
-                item.Changed = delegate { g.Refresh(); UpdateCount(); };
+                item.Changed = delegate { g.Refresh(); UpdateCount(); if (item.IsSelected && !batching && !applyingProfile) TickDependencies(item); };
                 g.Items.Add(item);
                 apps.Add(item);
             }
@@ -146,18 +158,19 @@ namespace Freshkit
             RefreshSettingsAvailability();
 
             savedProfiles = lf.Saved;
+            dependencies = AppDependencies.Parse(Engine.CurrentListText(out external));
+            BuildStarterBanner();
             applyingProfile = true;
             var box = Get<ComboBox>("ProfileBox");
             object previous = box.SelectedItem;
             box.Items.Clear();
             box.Items.Add("Custom selection");
-            box.Items.Add("List defaults");
             foreach (SavedProfile s in savedProfiles) box.Items.Add(s.Name);
             box.SelectedIndex = previous != null && box.Items.Contains(previous) ? box.Items.IndexOf(previous) : 0;
             ApplyFilter();
             UpdateCount();
             applyingProfile = false;
-            if (announce) Log(external ? "Loaded this session's list." : "Loaded the built-in defaults.");
+            if (announce) Log(external ? "Loaded this session's list." : "Loaded the built-in list.");
         }
 
         void ApplyFilter()
@@ -264,9 +277,11 @@ namespace Freshkit
             var restore = new MenuItem { Header = "Restore from reinstall folder…", IsEnabled = !running };
             restore.Click += delegate { RestoreFromReinstallFolder(); }; menu.Items.Add(restore);
             menu.Items.Add(new Separator { Background = (Brush)Window.FindResource("Line"), Margin = new Thickness(6, 4, 6, 4) });
+            var portable = new MenuItem { Header = "Export for winget / Chocolatey…", IsEnabled = !running };
+            portable.Click += delegate { ExportPortable(); }; menu.Items.Insert(menu.Items.IndexOf(compare) + 1, portable);
             add("Select every app shown", "BtnAll");
             add("Edit list...", "BtnEditList");
-            add("Reset to built-in defaults", "BtnReload");
+            add("Reset to built-in list", "BtnReload");
             menu.IsOpen = true;
         }
 
@@ -302,6 +317,7 @@ namespace Freshkit
             foreach (AppItem a in apps) if (a.IsSelected) { n++; if (a.Installed) detected++; }
             Get<TextBlock>("SelCount").Text = n + " of " + apps.Count + " apps selected" + (detected > 0 ? " · " + detected + " already installed" : "");
             UpdateRailCounts();
+            UpdateStarterBanner(n);
             int tweaks = debloat == null ? 0 : debloat.PendingFeatures().Count, removals = debloat == null ? 0 : debloat.SelectedApps().Count;
             var extra = new List<string>();
             if (tweaks > 0) extra.Add(tweaks + " Windows tweak" + (tweaks == 1 ? "" : "s"));
@@ -367,8 +383,7 @@ namespace Freshkit
             applyingProfile = true;
             try
             {
-                if (index == 1) { foreach (AppItem a in apps) a.IsSelected = a.DefaultOn; Log("Selection reset to the list defaults."); return; }
-                SavedProfile p = savedProfiles[index - 2];
+                SavedProfile p = savedProfiles[index - 1];
                 var set = new HashSet<string>(p.Apps, StringComparer.OrdinalIgnoreCase);
                 foreach (AppItem a in apps) a.IsSelected = set.Contains(a.Key);
                 if (debloat != null) { if (p.HasTweaks) debloat.ApplyFeatures(p.Tweaks); if (p.HasRemove) debloat.ApplyApps(p.Remove); RefreshTweakCounts(); }
@@ -383,10 +398,10 @@ namespace Freshkit
         {
             var box = new TextBox { Style = StyleOf("Input"), Tag = "Profile name, e.g. Gaming PC" };
             int sel = Get<ComboBox>("ProfileBox").SelectedIndex;
-            if (sel >= 2 && sel - 2 < savedProfiles.Count) box.Text = savedProfiles[sel - 2].Name;
+            if (sel >= 1 && sel - 1 < savedProfiles.Count) box.Text = savedProfiles[sel - 1].Name;
             int nTweaks = debloat == null ? 0 : debloat.SelectedFeatures().Count, nRemove = debloat == null ? 0 : debloat.SelectedApps().Count, nApps = 0;
             foreach (AppItem a in apps) if (a.IsSelected) nApps++;
-            ShowDialog("Save session profile", "Remembers " + nApps + " apps, " + nTweaks + " tweaks and " + nRemove + " app removals until Freshkit closes. Reopening restores built-in defaults.", "Save", "Cancel", delegate
+            ShowDialog("Save session profile", "Remembers " + nApps + " apps, " + nTweaks + " tweaks and " + nRemove + " app removals until Freshkit closes. Reopening restores the built-in list.", "Save", "Cancel", delegate
             {
                 string name = box.Text.Trim();
                 if (name.Length == 0) { Info("Name needed", "Give the profile a name."); return; }
@@ -399,7 +414,7 @@ namespace Freshkit
                     LoadList(false);
                     var cb = Get<ComboBox>("ProfileBox");
                     applyingProfile = true;
-                    for (int i = 2; i < cb.Items.Count; i++) if (string.Equals(cb.Items[i] as string, p.Name, StringComparison.OrdinalIgnoreCase)) cb.SelectedIndex = i;
+                    for (int i = 1; i < cb.Items.Count; i++) if (string.Equals(cb.Items[i] as string, p.Name, StringComparison.OrdinalIgnoreCase)) cb.SelectedIndex = i;
                     applyingProfile = false;
                     Log("Saved profile " + p.Name + ".");
                     if (after != null) after();

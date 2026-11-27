@@ -710,5 +710,13 @@
     {
         "package":  "winget-vb-audio.voicemeeter.potato",
         "url":  "https://vb-audio.com/favicon.ico"
+    },
+    {
+        "package":  "winget-openrgb.openrgbeffectsplugin",
+        "url":  "https://cdn.jsdelivr.net/gh/brogers5/chocolatey-package-openrgb.install@4559dfe2a59c5e2a7df1cb69957ab8e5125d4401/openrgb.install.png"
+    },
+    {
+        "package":  "winget-microsoft.visualstudio.buildtools",
+        "url":  "https://rawcdn.githack.com/jberezanski/ChocolateyPackages/0e962f3d7328af29a6382130db5f0b5239970a4d/icons/vs2026.png"
     }
 ]

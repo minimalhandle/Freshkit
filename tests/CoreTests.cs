@@ -15,6 +15,7 @@ namespace Freshkit
                 SystemFactsTests.Run(Check);
                 SignalsTests.Run(Check);
                 ReinstallTests.Run(Check);
+                ExtrasTests.Run(Check);
                 WorkflowTests.Updates(Check);
                 WorkflowTests.Search(Check);
                 WorkflowTests.Recipes(Check);

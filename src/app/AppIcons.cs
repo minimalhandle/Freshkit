@@ -122,7 +122,12 @@ namespace Freshkit
                 string file = source == "github" ? Data.GitHubEngineKey(id) : (source == "winget" ? "winget-" : "") + id.ToLowerInvariant();
                 using (Stream stream = Engine.Resource("icons/" + file + ".png"))
                 {
-                    if (stream == null) return null;
+                    if (stream == null)
+                    {
+                        // Other versions of a catalog app (e.g. Build Tools 2022) use the family's bundled logo.
+                        string family = AppOptions.CanonicalVersionId(source, id);
+                        return string.Equals(family, id, StringComparison.OrdinalIgnoreCase) ? null : For(family, source);
+                    }
                     var bitmap = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad); bitmap.Freeze(); return bitmap;
                 }
             }

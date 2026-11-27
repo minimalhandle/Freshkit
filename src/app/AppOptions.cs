@@ -18,8 +18,56 @@ namespace Freshkit
         public string Name, Arguments, Documentation;
         public override string ToString() { return Name; }
     }
+    internal sealed class AppVersion
+    {
+        public string Label, PackageId, DisplayName;
+        public override string ToString() { return Label; }
+    }
     internal static class AppOptions
     {
+        // One catalog entry, several installable versions. The first entry is the family's catalog default and logo.
+        // Fields: package id | picker label | display name in the app list.
+        static readonly string[][] VersionFamilies =
+        {
+            new[] { "winget",
+                "Microsoft.VisualStudio.BuildTools|2026 (latest)|Visual Studio Build Tools 2026",
+                "Microsoft.VisualStudio.2022.BuildTools|2022|Visual Studio Build Tools 2022",
+                "Microsoft.VisualStudio.2019.BuildTools|2019 (workloads as advanced arguments only)|Visual Studio Build Tools 2019" },
+            new[] { "choco",
+                "python3|Latest Python 3|Python 3",
+                "python314|3.14|Python 3.14",
+                "python313|3.13|Python 3.13",
+                "python312|3.12|Python 3.12",
+                "python311|3.11|Python 3.11" },
+        };
+        public static List<AppVersion> Versions(string source, string id)
+        {
+            var result = new List<AppVersion>();
+            foreach (string[] family in VersionFamilies)
+            {
+                if (family[0] != source) continue;
+                var versions = new List<AppVersion>();
+                bool member = false;
+                for (int i = 1; i < family.Length; i++)
+                {
+                    string[] f = family[i].Split('|');
+                    versions.Add(new AppVersion { PackageId = f[0], Label = f[1], DisplayName = f[2] });
+                    if (string.Equals(f[0], id, StringComparison.OrdinalIgnoreCase)) member = true;
+                }
+                if (member) return versions;
+            }
+            return result;
+        }
+        public static bool SameVersionFamily(string source, string a, string b)
+        {
+            return Versions(source, a).Exists(v => string.Equals(v.PackageId, b, StringComparison.OrdinalIgnoreCase));
+        }
+        /// The family's catalog default (used for its logo); the id itself when it has no other versions.
+        public static string CanonicalVersionId(string source, string id)
+        {
+            var versions = Versions(source, id);
+            return versions.Count > 0 ? versions[0].PackageId : id;
+        }
         public static bool IsLocalizedFirefox(string id)
         {
             return string.Equals(id, "Mozilla.Firefox", StringComparison.OrdinalIgnoreCase) || string.Equals(id, "Mozilla.Firefox.en-GB", StringComparison.OrdinalIgnoreCase) || string.Equals(id, "Mozilla.Firefox.de", StringComparison.OrdinalIgnoreCase) || string.Equals(id, "Mozilla.Firefox.fr", StringComparison.OrdinalIgnoreCase);
@@ -56,6 +104,78 @@ namespace Freshkit
                 result.Add(new AppComponent { Flag = "NoMaintenanceService", Name = "Mozilla Maintenance Service", ControlName = "FirefoxMaintenanceService" });
             }
             return result;
+        }
+        public static bool IsBuildTools(string source, string id)
+        {
+            return source == "winget" && (string.Equals(id, "Microsoft.VisualStudio.BuildTools", StringComparison.OrdinalIgnoreCase) || string.Equals(id, "Microsoft.VisualStudio.2022.BuildTools", StringComparison.OrdinalIgnoreCase) || string.Equals(id, "Microsoft.VisualStudio.2019.BuildTools", StringComparison.OrdinalIgnoreCase));
+        }
+        /// Keeps the chosen workloads that the other Build Tools version also offers (MAUI maps between its two IDs).
+        public static string SwitchBuildToolsVersion(string fromId, string toId, string existing)
+        {
+            if (!IsBuildTools("winget", toId)) return existing;
+            // Without a verified workload list for the target (2019), the arguments stay as they are for manual editing.
+            if (Workloads("winget", toId).Count == 0) return existing;
+            string maui = toId.IndexOf("2022", StringComparison.Ordinal) >= 0 ? "Microsoft.VisualStudio.Workload.XamarinBuildTools" : "Microsoft.VisualStudio.Workload.NetCrossPlatBuildTools";
+            var chosen = new List<string>(); var old = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var w in Workloads("winget", fromId))
+            {
+                old.Add(w.Flag);
+                if (HasWorkload(existing, w.Flag)) chosen.Add(w.Flag.EndsWith("XamarinBuildTools") || w.Flag.EndsWith("NetCrossPlatBuildTools") ? maui : w.Flag);
+            }
+            var tokens = ArgumentTokens(existing); var kept = new List<string>();
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                if (string.Equals(tokens[i], "--add", StringComparison.OrdinalIgnoreCase) && i + 1 < tokens.Count && old.Contains(tokens[i + 1].Split(';')[0])) { i++; continue; }
+                kept.Add(tokens[i]);
+            }
+            return WorkloadArguments(toId, string.Join(" ", kept.ToArray()), chosen.ToArray(), HasToken(existing, "--includeRecommended"));
+        }
+        /// Visual Studio Build Tools workloads (learn.microsoft.com: workload and component IDs for Build Tools).
+        public static List<AppComponent> Workloads(string source, string id)
+        {
+            var result = new List<AppComponent>();
+            if (!IsBuildTools(source, id) || id.IndexOf("2019", StringComparison.Ordinal) >= 0) return result;
+            bool vs2022 = id.IndexOf("2022", StringComparison.Ordinal) >= 0;
+            Action<string, string> add = (workload, name) => result.Add(new AppComponent { Flag = "Microsoft.VisualStudio.Workload." + workload, Name = name, ControlName = "Workload" + workload });
+            add("VCTools", "Desktop development with C++ (MSVC, Windows SDK)");
+            add("ManagedDesktopBuildTools", ".NET desktop build tools");
+            add("MSBuildTools", "MSBuild tools");
+            add("WebBuildTools", "Web development build tools");
+            add("NodeBuildTools", "Node.js build tools");
+            add("UniversalBuildTools", vs2022 ? "Universal Windows Platform build tools" : "WinUI application development build tools");
+            add(vs2022 ? "XamarinBuildTools" : "NetCrossPlatBuildTools", ".NET Multi-platform App UI development");
+            add("LinuxBuildTools", "C++ tools for Linux and Mac development");
+            add("DataBuildTools", "Data storage and processing build tools");
+            add("AzureBuildTools", "Azure development build tools");
+            add("OfficeBuildTools", "Office/SharePoint build tools");
+            add("VisualStudioExtensionBuildTools", "Visual Studio extension development");
+            return result;
+        }
+        public const string BuildToolsSilent = "--quiet --wait --norestart --nocache";
+        public static bool HasWorkload(string arguments, string workload)
+        {
+            var tokens = ArgumentTokens(arguments);
+            for (int i = 0; i + 1 < tokens.Count; i++) if (string.Equals(tokens[i], "--add", StringComparison.OrdinalIgnoreCase) && string.Equals(tokens[i + 1].Split(';')[0], workload, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+        public static bool HasToken(string arguments, string token) { return ArgumentTokens(arguments).Exists(t => string.Equals(t, token, StringComparison.OrdinalIgnoreCase)); }
+        /// Rebuilds the installer override: silent switches, then the chosen workloads; other custom arguments are kept.
+        public static string WorkloadArguments(string id, string existing, string[] workloads, bool includeRecommended)
+        {
+            var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var w in Workloads("winget", id)) known.Add(w.Flag);
+            var tokens = ArgumentTokens(existing); var kept = new List<string>();
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                if (string.Equals(tokens[i], "--add", StringComparison.OrdinalIgnoreCase) && i + 1 < tokens.Count && known.Contains(tokens[i + 1].Split(';')[0])) { i++; continue; }
+                if (string.Equals(tokens[i], "--includeRecommended", StringComparison.OrdinalIgnoreCase)) continue;
+                kept.Add(tokens[i]);
+            }
+            foreach (string s in BuildToolsSilent.Split(' ')) if (!kept.Exists(t => string.Equals(t, s, StringComparison.OrdinalIgnoreCase))) kept.Add(s);
+            var chosen = new HashSet<string>(workloads ?? new string[0], StringComparer.OrdinalIgnoreCase);
+            foreach (var w in Workloads("winget", id)) if (chosen.Contains(w.Flag)) { kept.Add("--add"); kept.Add(w.Flag); }
+            if (includeRecommended && chosen.Count > 0) kept.Add("--includeRecommended");
+            return string.Join(" ", kept.ToArray());
         }
         static List<string> ArgumentTokens(string arguments)
         {
@@ -110,6 +230,8 @@ namespace Freshkit
         {
             if (source == "store" || Data.IsStoreId(id)) return "Microsoft Store apps do not expose installer arguments. Language and optional features are managed by the Store app itself.";
             if (source == "choco") return "Passed as one --package-parameters value to this Chocolatey package. Use its documented package parameters for language or optional components; installer switches and Chocolatey CLI options are different. Empty uses package defaults.";
+            if (IsBuildTools(source, id) && Workloads(source, id).Count == 0) return "Passed as one --override value to the Visual Studio 2019 installer. Include the silent switches (" + BuildToolsSilent + ") and add workloads as --add <workload ID> arguments from Microsoft's Build Tools 2019 workload list.";
+            if (IsBuildTools(source, id)) return "Passed as one --override value to the Visual Studio installer. Choose workloads above; they become --add arguments next to the silent switches (" + BuildToolsSilent + "). Without a workload, Build Tools installs almost nothing. Other installer options, such as --add for single components, can stay here.";
             if (source == "github") return "EXE: replaces the detected silent arguments, so include the installer's silent switches. MSI: appends properties to /i, /qn and /norestart. Options depend on the latest release's installer. Empty keeps automatic silent defaults.";
             return "Passed as one --override value to this app's installer, replacing winget's default installer arguments. Include the installer's silent switches. These are not winget CLI options: --locale, --scope, --id and --source do not belong here. Empty uses winget's defaults. Language may require a separate localized package (Firefox en-GB is already in the catalog).";
         }

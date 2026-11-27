@@ -85,7 +85,8 @@ namespace Freshkit
                 Console.WriteLine("Freshkit - bulk install apps on a fresh Windows install");
                 Console.WriteLine();
                 Console.WriteLine("  Freshkit.exe                 Open the app");
-                Console.WriteLine("  Freshkit.exe Install         Unattended install of every enabled package (Chocolatey and winget)");
+                Console.WriteLine("  Freshkit.exe Install <recipe.json>   Unattended install of a recipe's apps (Freshkit recipe or winget export)");
+                Console.WriteLine("  Freshkit.exe Plan | List <recipe.json>   Preview a recipe's apps without installing");
                 Console.WriteLine("  Freshkit.exe Home            Text menu");
                 Console.WriteLine("  Freshkit.exe Plan | List | Drivers | DriverPlan | Bootstrap | SettingsList");
                 Console.WriteLine("  Freshkit.exe Resume | CancelResume [RunId]");
@@ -99,12 +100,27 @@ namespace Freshkit
             bool resume = Is(mode, "Resume", "CancelResume");
             if (args.Length > 1) values[resume ? "RunId" : "ArchivePath"] = args[1];
             if (args.Length > 2) values["Profiles"] = args[2];
+            List<string> switches = null;
+            if (CliRecipe.Accepts(mode, args))
+            {
+                // Install|Plan|List <recipe.json>: the recipe's catalog and app selection for this run only.
+                values.Remove("ArchivePath");
+                try
+                {
+                    var recipe = CliRecipe.Load(args[1], Engine.ReadResourceText(Engine.ListFileName));
+                    Engine.SessionList = recipe.ListText;
+                    values["Apps"] = string.Join(",", recipe.Apps.ToArray());
+                    switches = new List<string> { "IncludeDisabled" };
+                    Console.WriteLine(CliRecipe.Notice(recipe));
+                }
+                catch (Exception ex) { Console.WriteLine("ERROR: " + ex.Message); return Finish(ownConsole, 1); }
+            }
             string work = null, engine = null;
             int rc = 1;
             try
             {
                 work = Engine.ExtractWork(); engine = Engine.ExtractEngine();
-                var psi = new ProcessStartInfo(Engine.PowerShellPath, Engine.RunnerArguments(work, engine, mode, values, null, !interactive));
+                var psi = new ProcessStartInfo(Engine.PowerShellPath, Engine.RunnerArguments(work, engine, mode, values, switches, !interactive));
                 psi.UseShellExecute = false;
                 if (interactive) { using (Process p = Process.Start(psi)) { p.WaitForExit(); rc = p.ExitCode; } }
                 else rc = Proc.Stream(psi, delegate (string line) { lock (Console.Out) Console.Out.WriteLine(line); }, null);

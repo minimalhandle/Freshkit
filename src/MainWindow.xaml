@@ -645,7 +645,7 @@
                 <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource Icons}" Foreground="{StaticResource Warn}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="ResumeBannerTitle" Text="Install in progress" FontWeight="SemiBold" Foreground="{StaticResource Warn}" Margin="8,0,0,0"/>
               </StackPanel>
-              <TextBlock Text="Open Progress to follow it." TextWrapping="Wrap" FontSize="12" Foreground="#D6C79A" Margin="0,4,0,0"/>
+              <TextBlock x:Name="ResumeBannerDetail" Text="Open Progress to follow it." TextWrapping="Wrap" FontSize="12" Foreground="#D6C79A" Margin="0,4,0,0"/>
             </StackPanel>
           </Border>
           <Border x:Name="ThisPcPanel" Background="#171A21" CornerRadius="10" Padding="12,10">
@@ -745,6 +745,16 @@
           </ScrollViewer>
           <ScrollViewer x:Name="AppScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
             <StackPanel>
+              <Border x:Name="StarterBanner" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,10,16" Visibility="Collapsed">
+                <DockPanel>
+                  <Button x:Name="BtnStarterDismiss" DockPanel.Dock="Right" Style="{StaticResource Ghost}" Padding="8,4" VerticalAlignment="Top" ToolTip="Hide until Freshkit restarts"><TextBlock Text="&#xE711;" FontFamily="{StaticResource Icons}" FontSize="11"/></Button>
+                  <StackPanel>
+                    <TextBlock Text="Nothing is ticked yet" FontWeight="SemiBold"/>
+                    <TextBlock Text="Tick apps below, or start from a starter profile and adjust it. Starter profiles change only the app selection." Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,10"/>
+                    <WrapPanel x:Name="StarterButtons"/>
+                  </StackPanel>
+                </DockPanel>
+              </Border>
               <ItemsControl x:Name="GroupList">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
@@ -793,7 +803,6 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
               <Button x:Name="BtnCompareSetup" Style="{StaticResource Ghost}" Content="Compare" ToolTip="Read-only comparison of current setup selections against this PC"/>
-              <Button x:Name="BtnDefaults" Style="{StaticResource Ghost}" Content="Defaults" ToolTip="Restore the built-in default selection"/>
               <Button x:Name="BtnNone" Style="{StaticResource Ghost}" Content="Clear" ToolTip="Untick every app shown"/>
             </StackPanel>
             <Button x:Name="BtnInstall" Grid.Column="2" Style="{StaticResource Primary}" VerticalAlignment="Center">
@@ -1350,6 +1359,7 @@
                 <StackPanel>
                   <DockPanel><Button x:Name="BtnReviewApps" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Edit apps"/><TextBlock x:Name="ReviewAppsTitle" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
                   <TextBlock x:Name="ReviewInstalled" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,12"/>
+                  <DockPanel x:Name="ReviewEstimatePanel" Margin="0,0,0,12"><Button x:Name="BtnReviewSizes" DockPanel.Dock="Right" Style="{StaticResource Link}" Content="Check download sizes" VerticalAlignment="Top" Margin="12,0,0,0" ToolTip="Read-only: asks winget for the installer of each selected winget app and reads its size from the download server. Nothing is downloaded or installed."/><TextBlock x:Name="ReviewEstimate" Foreground="{StaticResource Muted}" TextWrapping="Wrap" FontSize="12.5"/></DockPanel>
                   <CheckBox x:Name="ReviewUpgrade" Style="{StaticResource Switch}" Margin="0,0,0,14"><TextBlock Text="Update selected apps that are already installed" TextWrapping="Wrap"/></CheckBox>
                   <Expander x:Name="ReviewAppList" Style="{StaticResource ReviewExpander}" Header="Selected apps" Foreground="{StaticResource Muted}"><TextBlock x:Name="ReviewAppsDetail" Foreground="{StaticResource Text}" TextWrapping="Wrap" Margin="4,12,0,4" FontSize="12.5"/></Expander>
                 </StackPanel>

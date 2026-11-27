@@ -107,7 +107,8 @@ namespace Freshkit
                 Field<Debloat>(ui, "debloat").ApplyFeatures(new string[0]);
                 // Catalog and Apps page structure
                 var all = Field<List<AppItem>>(ui, "apps");
-                Check(all.Count >= 160 && all.FindAll(a => a.IsSelected).Count == 15, "Built-in catalog includes the Ninite apps with the curated default selection");
+                Check(all.Count >= 160 && all.FindAll(a => a.IsSelected).Count == 0 && all.TrueForAll(a => !a.DefaultOn), "Built-in catalog includes the Ninite apps and opens with nothing ticked");
+                Check(all.Exists(a => a.Id == "OpenRGB.OpenRGBEffectsPlugin" && a.IsWinget && a.Category == "Gaming & devices") && all.Exists(a => a.Id == "Microsoft.VisualStudio.BuildTools" && a.Category == "Developer" && a.Parameters.Contains("Microsoft.VisualStudio.Workload.VCTools")), "OpenRGB Effects Plugin and Visual Studio Build Tools (C++ workload) are in the catalog");
                 var sleek = all.Find(a => a.Id == "minimalhandle/SleekMeeter");
                 Check(sleek != null && sleek.IsGitHub && !sleek.IsSelected && sleek.Key == "github:minimalhandle/SleekMeeter" && sleek.EnginePackageId == "github-minimalhandle-sleekmeeter" && sleek.SourceLabel == "GitHub" && sleek.Category == "Media", "GitHub catalog entries parse with their own key, engine ID and category");
                 Check(all.Find(a => a.Id == "minimalhandle/Afterclip").Artwork.Image != null, "Bundled logos load for GitHub entries");
@@ -148,7 +149,7 @@ namespace Freshkit
                 var variants = Sources.Rank("vlc", new List<SearchResult> { new SearchResult { Source = "choco", Id = "vlc", Name = "VLC media player", Version = "3.0.24", Meta = "vlc" }, new SearchResult { Source = "choco", Id = "vlc.install", Name = "VLC media player (Install)", Version = "3.0.24", Meta = "vlc.install" }, new SearchResult { Source = "choco", Id = "vlc.portable", Name = "VLC media player (Portable)", Version = "3.0.21", Meta = "vlc.portable" } });
                 Check(variants.Count == 1, "Chocolatey install/portable variants of one package show as one app");
                 var firefox = all.Find(a => a.Name == "Mozilla Firefox");
-                Check(firefox != null && firefox.IsWinget && firefox.Id == "Mozilla.Firefox" && firefox.IsSelected && firefox.Artwork.Image != null, "Firefox installs from Mozilla's en-GB winget package and stays ticked");
+                Check(firefox != null && firefox.IsWinget && firefox.Id == "Mozilla.Firefox" && !firefox.IsSelected && firefox.Artwork.Image != null, "Firefox installs from Mozilla's winget package and starts unticked");
                 Check(all.Find(a => a.Id == "spotify") != null && all.Find(a => a.Id == "pawnio") != null && all.Find(a => a.Id == "openrgb.install") != null && all.Find(a => a.Id == "python3") != null, "Spotify, install-order pairs and Python 3 stay on Chocolatey");
                 var browsers = Field<ObservableCollection<AppGroup>>(ui, "groups").First(g => g.Name == "Browsers").Items.Select(a => a.Name).ToList();
                 Check(browsers.SequenceEqual(browsers.OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase)), "Apps are alphabetical within each category across sources");
@@ -183,13 +184,18 @@ namespace Freshkit
                 rail.First(c => c.Key == "*").IsChecked = true;
                 var box = Get<ComboBox>(ui, "ProfileBox");
                 int starter = -1; for (int i = 0; i < box.Items.Count; i++) if ((box.Items[i] as string ?? "").StartsWith("Starter: essentials")) starter = i;
-                Check(starter > 1, "Starter profiles are offered in the profile picker");
+                Check(starter > 0 && !box.Items.Contains("List defaults") && ui.Window.FindName("BtnDefaults") == null, "Starter profiles are offered in the profile picker and there is no list-defaults selection");
                 var tweaksBefore = Field<object>(ui, "debloat") == null ? 0 : ((System.Collections.ICollection)Field<object>(ui, "debloat").GetType().GetMethod("SelectedFeatures").Invoke(Field<object>(ui, "debloat"), null)).Count;
+                Check(Get<Border>(ui, "StarterBanner").Visibility == Visibility.Visible && Get<WrapPanel>(ui, "StarterButtons").Children.Count == 4, "With nothing ticked, the Apps page offers the four starter profiles");
                 box.SelectedIndex = starter;
+                Check(Get<Border>(ui, "StarterBanner").Visibility == Visibility.Collapsed, "The starter banner hides once apps are ticked");
                 var tweaksAfter = Field<object>(ui, "debloat") == null ? 0 : ((System.Collections.ICollection)Field<object>(ui, "debloat").GetType().GetMethod("SelectedFeatures").Invoke(Field<object>(ui, "debloat"), null)).Count;
                 Check(all.Find(a => a.Id == "SumatraPDF.SumatraPDF").IsSelected && !all.Find(a => a.Id == "Valve.Steam").IsSelected && tweaksBefore == tweaksAfter, "Starter profile selects its apps and leaves Windows tweaks unchanged");
-                box.SelectedIndex = 1;
-                Check(all.FindAll(a => a.IsSelected).Count == 15, "List defaults restore the curated selection");
+                var plugin = all.Find(a => a.Id == "OpenRGB.OpenRGBEffectsPlugin"); plugin.IsSelected = true;
+                Check(all.Find(a => a.Id == "openrgb.install").IsSelected && all.Find(a => a.Id == "pawnio").IsSelected, "Ticking the OpenRGB Effects Plugin also ticks OpenRGB and PawnIO");
+                all.Find(a => a.Id == "openrgb.install").IsSelected = false;
+                Check(plugin.IsSelected && all.Find(a => a.Id == "pawnio").IsSelected, "Unticking a needed app does not cascade");
+                foreach (string id in new[] { "OpenRGB.OpenRGBEffectsPlugin", "pawnio" }) all.Find(a => a.Id == id).IsSelected = false;
                 ListFile.AddPackage("github", "octo-org/Tool.App", "Tool App");
                 Call(ui, "LoadList", false);
                 var added = Field<List<AppItem>>(ui, "apps").Find(x => x.Id == "octo-org/Tool.App");
@@ -280,6 +286,24 @@ namespace Freshkit
                 var resetGuided = FindNamed<Button>(gitWindow, "ResetAppDefaults"); resetGuided.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent, resetGuided));
                 Check(gitInput.Text == "" && FindNamed<CheckBox>(gitWindow, "GitLfs").IsChecked == true, "Reset defaults restores guided components and clears advanced overrides");
                 gitWindow.Close();
+                var buildTools = Field<List<AppItem>>(ui, "apps").First(a => a.Id == "Microsoft.VisualStudio.BuildTools");
+                var toolsWindow = (Window)Call(ui, "BuildAppOptionsWindow", buildTools); var toolsInput = FindNamed<TextBox>(toolsWindow, "AppArguments");
+                Check(FindNamed<CheckBox>(toolsWindow, "WorkloadVCTools").IsChecked == true && FindNamed<CheckBox>(toolsWindow, "WorkloadWebBuildTools").IsChecked == false && FindNamed<CheckBox>(toolsWindow, "WorkloadRecommended").IsChecked == true, "Build Tools options show the catalog workloads as checkboxes");
+                FindNamed<CheckBox>(toolsWindow, "WorkloadWebBuildTools").IsChecked = true; FindNamed<CheckBox>(toolsWindow, "WorkloadVCTools").IsChecked = false;
+                Check(toolsInput.Text.Contains("--add Microsoft.VisualStudio.Workload.WebBuildTools") && !toolsInput.Text.Contains("VCTools") && toolsInput.Text.StartsWith(AppOptions.BuildToolsSilent), "Workload checkboxes rewrite the installer override: " + toolsInput.Text);
+                var versionBox = FindNamed<ComboBox>(toolsWindow, "AppVersion");
+                versionBox.SelectedItem = versionBox.Items.Cast<AppVersion>().First(v => v.PackageId == "Microsoft.VisualStudio.2022.BuildTools");
+                Check(FindNamed<CheckBox>(toolsWindow, "WorkloadXamarinBuildTools") != null && FindNamed<CheckBox>(toolsWindow, "WorkloadNetCrossPlatBuildTools") == null && FindNamed<CheckBox>(toolsWindow, "WorkloadWebBuildTools").IsChecked == true && FindNamed<TextBlock>(toolsWindow, "AppOptionsPreview").Text.Contains("Microsoft.VisualStudio.2022.BuildTools"), "Choosing Build Tools 2022 rebuilds the workload list and keeps chosen workloads");
+                versionBox.SelectedItem = versionBox.Items.Cast<AppVersion>().First(v => v.PackageId == "Microsoft.VisualStudio.2019.BuildTools");
+                Check(FindNamed<CheckBox>(toolsWindow, "WorkloadVCTools") == null && toolsInput.Text.Contains("WebBuildTools"), "Build Tools 2019 shows no workload checkboxes and keeps the arguments");
+                Check(AppIcons.For("Microsoft.VisualStudio.2022.BuildTools", "winget") != null, "Other versions use the family logo");
+                toolsWindow.Close();
+                bool oldRecipeCustom; string builtinList = Engine.CurrentListText(out oldRecipeCustom);
+                var oldRecipe = new SetupRecipe { ListText = System.Text.RegularExpressions.Regex.Replace(builtinList, @"(?m)^::DISABLED Microsoft\.VisualStudio\.BuildTools\|.*\r?\n", ""), Apps = new List<string> { "winget:7zip.7zip" }, HasWindowsSelections = false };
+                string savedSession = Engine.SessionList;
+                Call(ui, "ApplyRecipe", oldRecipe);
+                Check(Field<List<AppItem>>(ui, "apps").Exists(a => a.Id == "Microsoft.VisualStudio.BuildTools" && !a.IsSelected) && Field<List<AppItem>>(ui, "apps").Single(a => a.IsSelected).Id == "7zip.7zip", "Importing an older recipe keeps newer built-in apps available, unticked");
+                Engine.SessionList = savedSession; Call(ui, "LoadList", false);
 
                 Call(ui, "Navigate", "NavTweaks");
                 var renderedRoot = (FrameworkElement)ui.Window.Content; renderedRoot.Measure(new Size(1264, 801)); renderedRoot.Arrange(new Rect(0, 0, 1264, 801)); renderedRoot.UpdateLayout();
@@ -304,6 +328,7 @@ namespace Freshkit
                 foreach (AppItem a in apps) a.IsSelected = false;
                 AppItem first = apps[0]; first.IsSelected = true;
                 Call(ui, "OpenInstallPlan");
+                Check(Get<TextBlock>(ui, "ReviewEstimate").Text.StartsWith("Estimate: about ") && Get<DockPanel>(ui, "ReviewEstimatePanel").Visibility == Visibility.Visible, "Setup review shows a time and download estimate");
                 Check(((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs == null && Get<TextBlock>(ui, "ReviewTweaksDetail").Text.Contains("Already applied"), "Setup review identifies skipped current settings and excludes them from the actual job");
                 Call(ui, "CompleteTweakDetection", new Dictionary<string, string> { { desiredTweak.FeatureId, "Unknown" } }, new List<string>(), true, new List<string>(), true, new List<string>());
                 Check(Get<CheckBox>(ui, "ReviewTweaks").IsEnabled && Get<CheckBox>(ui, "ReviewTweaks").IsChecked != true && ((JobSpec)Call(ui, "BuildReviewedJob")).DebloatArgs == null, "A detection refresh cannot silently enable newly pending work in an open review");
@@ -446,6 +471,7 @@ namespace Freshkit
                     int shownGeneration = (int)Call(ui, "BeginPostAudit", auditTarget); Call(ui, "CompletePostAudit", shownGeneration, Field<int>(ui, "tweakStateEpoch"), auditReport);
                     foreach (string page in Field<string[]>(ui, "pages")) Get<FrameworkElement>(ui, page).Visibility = page == "PageProgress" ? Visibility.Visible : Visibility.Collapsed;
                     Render(ui, "verification-progress-small", 1064, 641);
+                    Render(ui, "verification-progress", 1264, 801);
                     var progressRoot = (FrameworkElement)ui.Window.Content; var viewVerification = Get<Button>(ui, "BtnViewVerification"); var verificationOrigin = viewVerification.TranslatePoint(new Point(), progressRoot);
                     Check(verificationOrigin.Y >= 0 && verificationOrigin.Y + viewVerification.ActualHeight <= 641, "Completed setup keeps verification results accessible at minimum size");
                     SetField(ui, "sessionSetup", null);
@@ -504,6 +530,42 @@ namespace Freshkit
                     Point origin = button.TranslatePoint(new Point(), root);
                     Check(origin.Y >= 0 && origin.Y + button.ActualHeight <= 641 && Get<ScrollViewer>(ui, "ReviewScroll").ScrollableHeight > 0, "Minimum window keeps start action visible while review scrolls");
                     Get<ScrollViewer>(ui, "ReviewScroll").ScrollToBottom(); Render(ui, "review-bottom-small", 1064, 641);
+                    // README screenshots: a realistic starter selection, clean readiness results and a neutral status line.
+                    Call(ui, "CloseReview");
+                    foreach (AppItem a in apps) { a.IsSelected = false; a.Installed = false; }
+                    foreach (var g in Field<ObservableCollection<AppGroup>>(ui, "groups")) foreach (var a in g.Items) a.Installed = false;
+                    var profiles = Get<ComboBox>(ui, "ProfileBox");
+                    for (int i = 0; i < profiles.Items.Count; i++) if ((profiles.Items[i] as string ?? "") == "Starter: essentials") profiles.SelectedIndex = i;
+                    apps.First(a => a.Id == "Discord.Discord").IsSelected = true; apps.First(a => a.Id == "Valve.Steam").IsSelected = true;
+                    Get<TextBlock>(ui, "StatusText").Text = "Ready";
+                    Call(ui, "Navigate", "NavApps");
+                    Render(ui, "readme-apps", 1264, 801);
+                    Call(ui, "OpenInstallPlan");
+                    var readinessRequest = (PreflightRequest)Call(ui, "ReviewPreflightRequest");
+                    var readiness = new PreflightSnapshot { SystemFreeBytes = 412L << 30, TempFreeBytes = 412L << 30, RestartPending = false, WingetAvailable = true, RunningProcesses = new HashSet<string>() };
+                    foreach (string s in readinessRequest.Sources) readiness.Sources[s] = true;
+                    Call(ui, "CompleteReviewPreflight", (int)Call(ui, "BeginReviewPreflight"), readiness);
+                    Get<ScrollViewer>(ui, "ReviewScroll").ScrollToTop();
+                    Render(ui, "readme-review", 1264, 801);
+                    Call(ui, "CloseReview");
+                    var toolsPreview = (Window)Call(ui, "BuildAppOptionsWindow", apps.First(a => a.Id == "Microsoft.VisualStudio.BuildTools"));
+                    RenderOptions(toolsPreview, "readme-app-options", 720, 760); toolsPreview.Close();
+                    Get<TextBox>(ui, "TweakSearch").Text = "";
+                    Call(ui, "Navigate", "NavTweaks"); Get<TextBlock>(ui, "StatusText").Text = "Ready";
+                    Render(ui, "readme-tweaks", 1264, 801);
+                    var backupTime = Get<ComboBox>(ui, "DailyBackupTime"); var backupKeep = Get<ComboBox>(ui, "DailyBackupKeep");
+                    if (backupTime.Items.Count == 0) { backupTime.Items.Add("03:00"); backupTime.SelectedIndex = 0; }
+                    if (backupKeep.Items.Count == 0) { backupKeep.Items.Add(new ComboBoxItem { Content = "Keep 7 backups" }); backupKeep.SelectedIndex = 0; }                    Call(ui, "Navigate", "NavSettings"); Get<TextBlock>(ui, "StatusText").Text = "Ready";
+                    Render(ui, "readme-settings", 1264, 801);
+                    Call(ui, "Navigate", "NavProgress");
+                    SetField(ui, "sessionSetup", completedRecord);
+                    Call(ui, "ShowSnapshot", new RunSnapshot { Status = "Completed", When = DateTime.Now }, false, false); Call(ui, "ShowSetupSteps", false);
+                    var verified = new AuditReport { CheckedUtc = DateTime.UtcNow };
+                    foreach (string name in new[] { "Mozilla Firefox", "7-Zip", "VLC media player", "Discord", "Steam" }) verified.Rows.Add(new AuditRow { Category = "Apps", Key = name, Name = name, Status = "Verified", Detail = "Installed" });
+                    int readmeGeneration = (int)Call(ui, "BeginPostAudit", auditTarget); Call(ui, "CompletePostAudit", readmeGeneration, Field<int>(ui, "tweakStateEpoch"), verified);
+                    Get<TextBlock>(ui, "StatusText").Text = "Setup finished";
+                    Render(ui, "readme-progress", 1264, 801);
+                    SetField(ui, "sessionSetup", null);
                 }
                 ui.Window.Close();
                 Console.WriteLine(checks + " UI checks passed");

@@ -105,7 +105,7 @@
       "status": "Chocolatey",
       "packageParameters": "",
       "phase": 2,
-      "note": "Enabled in the editable package list."
+      "note": ""
     },
     {
       "id": "lghub",
@@ -145,14 +145,14 @@
       "packageId": "vcredist-all",
       "status": "Chocolatey",
       "packageParameters": "",
-      "note": "Explicitly requested compatibility runtime bundle."
+      "note": "Compatibility runtime bundle."
     },
     {
       "id": "firefox",
-      "name": "Mozilla Firefox (en-GB, x64)",
+      "name": "Mozilla Firefox (x64)",
       "packageId": "Firefox",
       "status": "Chocolatey",
-      "packageParameters": "/l:en-GB",
+      "packageParameters": "",
       "note": ""
     },
     {

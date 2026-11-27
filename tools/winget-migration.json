@@ -1,7 +1,7 @@
 {
   "_comment": "Chocolatey catalog entries moved to winget (2026-11-15). Rule: official publisher package with the same or newer version, or a Chocolatey package stale for years. Kept on Chocolatey: newer there, incomparable versions, runtimes, install-order pairs (OpenRGB/PawnIO, Streamlink/Twitch GUI), Spotify (installer refuses to run elevated) and Python 3 (winget pins a minor version).",
   "map": {
-    "Firefox": "Mozilla.Firefox.en-GB", "vivaldi": "Vivaldi.Vivaldi", "opera": "Opera.Opera",
+    "Firefox": "Mozilla.Firefox", "vivaldi": "Vivaldi.Vivaldi", "opera": "Opera.Opera",
     "discord": "Discord.Discord", "chatterino": "ChatterinoTeam.Chatterino", "tutanota": "Tutanota.Tutanota", "zoom": "Zoom.Zoom",
     "microsoft-teams-new-bootstrapper": "Microsoft.Teams", "slack": "SlackTechnologies.Slack", "telegram": "Telegram.TelegramDesktop",
     "thunderbird": "Mozilla.Thunderbird", "pidgin": "Pidgin.Pidgin", "trillian": "CeruleanStudios.Trillian",

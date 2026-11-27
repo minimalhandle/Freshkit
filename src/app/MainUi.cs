@@ -87,6 +87,7 @@ namespace Freshkit
             InitProgress();
             InitUpdates();
             InitSettings();
+            InitExtras();
 
             LoadList(false);
             RefreshSystem();

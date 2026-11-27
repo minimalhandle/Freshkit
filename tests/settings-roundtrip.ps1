@@ -20,6 +20,8 @@ try{
     foreach($id in @('lghub','afterclip','sleekmeeter','mpv')){if($id -notin $profiles.id){throw "Legacy list hid built-in profile: $id"}}
     Import-Module (Join-Path $engine 'Settings.Core.psm1') -Force -DisableNameChecking
     $profile=@($profiles|Where-Object id -eq 'mpv')
+    # Isolate from apps open on this PC: the real mpv may be running, and backups skip running apps.
+    $profile[0].processes=@('freshkit-roundtrip-fixture')
     $source=Join-Path $scratch 'source';$dest=Join-Path $scratch 'restored'
     [IO.Directory]::CreateDirectory((Join-Path $source 'mpv\cache'))|Out-Null
     [IO.Directory]::CreateDirectory($dest)|Out-Null

@@ -102,7 +102,8 @@ try {
             $entry
         })
     }
-    if(-not $configured.Count){throw 'No enabled packages. Add at least one ::PACKAGE line.'}
+    # The built-in catalog ticks nothing, so only app actions need a selection; settings and driver actions still run.
+    if(-not $configured.Count -and -not $Apps -and $action -in @('Install','Plan','List')){throw 'No apps are ticked in the built-in catalog. Pass a recipe (Freshkit.exe Install setup.freshkit.json), or choose apps in the Freshkit window.'}
     $catalog.apps=$configured
     $catalog|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $catalogPath -Encoding UTF8
     # Map selected package IDs to catalogue app IDs.

@@ -328,17 +328,21 @@ namespace Freshkit
             SetPackageOptions(source, id, id, parameters);
         }
 
-        public static void SetPackageOptions(string source, string id, string targetId, string parameters)
+        public static void SetPackageOptions(string source, string id, string targetId, string parameters) { SetPackageVersionOptions(source, id, targetId, parameters, null); }
+
+        /// newName: display name for the entry (version switches), or null to keep the current one.
+        public static void SetPackageVersionOptions(string source, string id, string targetId, string parameters, string newName)
         {
             bool changedId = !string.Equals(id, targetId, StringComparison.OrdinalIgnoreCase);
-            if (changedId && (source != "winget" || !AppOptions.IsLocalizedFirefox(id) || !AppOptions.IsLocalizedFirefox(targetId)))
-                throw new InvalidDataException("Only supported Firefox language packages can be switched here.");
+            bool firefox = source == "winget" && AppOptions.IsLocalizedFirefox(id) && AppOptions.IsLocalizedFirefox(targetId);
+            if (changedId && !firefox && !AppOptions.SameVersionFamily(source, id, targetId))
+                throw new InvalidDataException("Only supported Firefox languages and app versions can be switched here.");
             string error = AppOptions.Validate(source, targetId, parameters);
             if (error != null) throw new InvalidDataException(error);
             List<string> lines = LoadLines();
             if (changedId)
                 foreach (var entry in Parse(string.Join("\r\n", lines.ToArray())).Packages)
-                    if (entry.Source == source && string.Equals(entry.Id, targetId, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("That Firefox language package is already in this session. Remove the duplicate before changing language.");
+                    if (entry.Source == source && string.Equals(entry.Id, targetId, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException(firefox ? "That Firefox language package is already in this session. Remove the duplicate before changing language." : "That version is already in this session's list. Remove the duplicate before switching.");
             string section = SectionFor(source);
             int begin = lines.FindIndex(l => l.TrimEnd() == "::BEGIN_" + section);
             int end = lines.FindIndex(l => l.TrimEnd() == "::END_" + section);
@@ -348,7 +352,7 @@ namespace Freshkit
                 {
                     string[] parts = lines[i].Split('|');
                     string prefix = Regex.Match(parts[0], @"^::\w+\s+").Value;
-                    lines[i] = prefix + targetId + "|" + (parts.Length > 1 ? parts[1] : id) + "|" + (parameters ?? "").Trim();
+                    lines[i] = prefix + targetId + "|" + (!string.IsNullOrWhiteSpace(newName) ? Clean(newName) : parts.Length > 1 ? parts[1] : id) + "|" + (parameters ?? "").Trim();
                     if (changedId)
                     {
                         string oldKey = Data.KeyFor(source, id), newKey = Data.KeyFor(source, targetId);
@@ -360,6 +364,8 @@ namespace Freshkit
                                     foreach (string key in m.Groups[2].Value.Split(',')) keys.Add(string.Equals(key.Trim(), oldKey, StringComparison.OrdinalIgnoreCase) ? newKey : key);
                                     return m.Groups[1].Value + string.Join(",", keys.ToArray());
                                 });
+                            else if (Regex.IsMatch(lines[j], @"^::REQUIRES\s+"))
+                                lines[j] = Regex.Replace(lines[j], @"(?<=^::REQUIRES\s+|[|,]\s*)" + Regex.Escape(oldKey) + @"(?=\s*(?:[|,]|$))", newKey, RegexOptions.IgnoreCase);
                     }
                     Parse(string.Join("\r\n", lines.ToArray()));
                     SaveLines(lines); return;

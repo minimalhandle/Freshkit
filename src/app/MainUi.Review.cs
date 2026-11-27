@@ -108,6 +108,7 @@ namespace Freshkit
             Get<TextBlock>("ReviewAppsDetail").Text = n > 0 ? appText.ToString() : "No apps selected. Only the enabled sections below will run.";
             Get<TextBlock>("ReviewInstalled").Text = installed > 0 ? installed + (installed == 1 ? " selected app was" : " selected apps were") + " detected as installed. Choose whether to update below." : "Installed status is based on Scan this PC; unmarked apps may already be installed.";
             Get<CheckBox>("ReviewUpgrade").IsChecked = true;
+            RefreshReviewEstimate();
             Get<CheckBox>("ReviewDrivers").IsChecked = true;
             Get<Border>("ReviewDriverCard").Visibility = n > 0 ? Visibility.Visible : Visibility.Collapsed;
             Get<CheckBox>("ReviewUpgrade").Visibility = n > 0 ? Visibility.Visible : Visibility.Collapsed;

@@ -55,8 +55,22 @@ if ($store.Count) {
 
 # ---- winget: package IDs must exist
 $wingetExe = (Get-Command winget.exe -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+# Without winget (e.g. on a CI runner), check the manifest folder in microsoft/winget-pkgs instead.
+# A GITHUB_TOKEN in the environment raises the GitHub API rate limit.
+$githubHeaders = @{ 'User-Agent' = 'Freshkit-catalog-check'; 'Accept' = 'application/vnd.github+json' }
+if ($env:GITHUB_TOKEN) { $githubHeaders['Authorization'] = 'Bearer ' + $env:GITHUB_TOKEN }
+function Get-WingetManifestPath([string]$id) { 'manifests/' + $id.Substring(0, 1).ToLowerInvariant() + '/' + ($id -replace '\.', '/') }
 foreach ($entry in @($entries | Where-Object Source -eq 'winget')) {
-    if ($SkipWinget -or -not $wingetExe) { Add-Result $entry 'SKIP' 'winget not available; ID not checked.'; continue }
+    if ($SkipWinget) { Add-Result $entry 'SKIP' 'winget check skipped; ID not checked.'; continue }
+    if (-not $wingetExe) {
+        try { $null = Invoke-RestMethod -Uri ('https://api.github.com/repos/microsoft/winget-pkgs/contents/' + (Get-WingetManifestPath $entry.Id)) -Headers $githubHeaders -UseBasicParsing -TimeoutSec 60 }
+        catch {
+            $code = 0; if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+            if ($code -eq 404) { Add-Result $entry 'ERROR' 'No manifest folder in microsoft/winget-pkgs (package removed or renamed).' }
+            else { Add-Result $entry 'WARN' ('winget-pkgs lookup failed: ' + $_.Exception.Message) }
+        }
+        continue
+    }
     $out = @(& $wingetExe show --id $entry.Id --exact --source winget --accept-source-agreements --disable-interactivity 2>&1)
     if ($LASTEXITCODE -ne 0) { Add-Result $entry 'ERROR' ('winget has no package with this ID (exit 0x{0:X8}).' -f $LASTEXITCODE) }
 }
